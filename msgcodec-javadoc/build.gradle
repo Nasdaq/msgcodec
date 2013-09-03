@@ -1,6 +1,6 @@
 description = ''
 
 dependencies {
-  compile project(':msgcodec')
+  compile project(':msgcodec:msgcodec')
   compile files("${System.properties['java.home']}/../lib/tools.jar")
 }

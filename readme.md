@@ -51,8 +51,11 @@ In a gradle project one would include the libs in dependencies section of your `
 First clone a copy of the repo:
 >git clone git@git.cinnober.com:products/msgcodec.git
 
-To build msg-codec you need gradle. Cd into msgcodec and run
+To build msg-codec you need cbuilder. Cd into msgcodec/Build and run
+>gradle getDependentModules
+then cd up one level and run
 >gradle build
+
 
 If you want to edit java files from within eclipse, run
 >gradle eclipse
