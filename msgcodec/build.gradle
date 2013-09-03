@@ -1,2 +1,3 @@
+apply plugin: 'cbuilder'
 description = ''
 

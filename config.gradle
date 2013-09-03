@@ -4,7 +4,7 @@ ext {
         'version' : 'HEAD-SNAPSHOT',
         'vcs' :  [
             'rootDevelopment' : 'git@git.cinnober.com:products/Developmentmsgcodec.git',
-            'rootCompiled' : 'http://nexus/nexus/content/repositories/buildtest_snapshots/com/cinnober/platform/release/msgcodec'
+            'rootCompiled' : 'default',
         ],
 
         // Projects that belong to this module
