@@ -1,0 +1,20 @@
+/*
+ * $Id: cBuilderConfiguration.gradle,v 1.9 2013/05/05 23:43:04 mjoberg Exp $
+ *
+ * Copyright (c) 2013 Cinnober Financial Technology AB, Stockholm,
+ * Sweden. All rights reserved.
+ */
+project.buildscript {
+    repositories {
+        maven {
+            url uri("http://nexus.cinnober.com/nexus/content/repositories/buildtest_snapshots/")
+        }
+        maven {
+            url uri("http://nexus.cinnober.com/nexus/content/repositories/buildtest_releases/")
+        }
+    }
+    dependencies {
+        classpath group: 'com.cinnober.cbuilder', name: 'cBuilder', version: '1.2.13'
+    }
+}
+
