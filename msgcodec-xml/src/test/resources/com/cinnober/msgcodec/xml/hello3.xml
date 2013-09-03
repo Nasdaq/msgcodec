@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- greeting field = element, person1 field = inline -->
+<myMessage>
+  <person1>
+    <greeting>Hello!</greeting>
+  </person1>
+  <person2>
+    <hello><greeting>Hi!</greeting></hello>
+  </person2>
+</myMessage>

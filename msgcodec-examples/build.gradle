@@ -1,0 +1,9 @@
+description = ''
+
+dependencies {
+  compile project(':msgcodec')
+  compile project(':msgcodec-blink')
+  compile project(':msgcodec-json')
+  compile project(':msgcodec-xml')
+  compile project(':msgcodec-tap')
+}

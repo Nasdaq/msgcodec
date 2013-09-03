@@ -1,0 +1,16 @@
+subprojects {
+    apply plugin: 'cbuilder'
+	repositories {
+		mavenLocal()
+	}
+
+	it.tasks.withType(JavaCompile){
+		it.sourceCompatibility = "1.7"
+		it.targetCompatibility = "1.7"
+	}
+
+
+}
+
+apply plugin: 'cbuilder-module'
+

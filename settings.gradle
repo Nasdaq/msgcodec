@@ -1,0 +1,10 @@
+rootProject.name = 'msgcodec'
+include  ':msgcodec', ':msgcodec-blink', ':msgcodec-tap', ':msgcodec-javadoc', ':msgcodec-xml', ':msgcodec-json', 'msgcodec-examples'
+
+project(':msgcodec').projectDir = "$rootDir/msgcodec" as File
+project(':msgcodec-blink').projectDir = "$rootDir/msgcodec-blink" as File
+project(':msgcodec-tap').projectDir = "$rootDir/msgcodec-tap" as File
+project(':msgcodec-javadoc').projectDir = "$rootDir/msgcodec-javadoc" as File
+project(':msgcodec-xml').projectDir = "$rootDir/msgcodec-xml" as File
+project(':msgcodec-json').projectDir = "$rootDir/msgcodec-json" as File
+project(':msgcodec-examples').projectDir = "$rootDir/msgcodec-examples" as File

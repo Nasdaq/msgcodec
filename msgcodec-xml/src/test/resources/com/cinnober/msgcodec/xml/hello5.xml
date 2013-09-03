@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- greeting field = attribute, person1 field = inline, person2 field = inline -->
+<myMessage>
+  <person1 greeting="Hello!"/>
+  <hello greeting="Hi!"/>
+</myMessage>
