@@ -1,0 +1,22 @@
+// Gradle configurations for this module
+ext {
+    msgcodec = [
+        'version' : 'HEAD-SNAPSHOT',
+        'vcs' :  [
+            'rootDevelopment' : 'git@git.cinnober.com:products/Developmentmsgcodec.git',
+            'rootCompiled' : 'http://nexus/nexus/content/repositories/buildtest_snapshots/com/cinnober/platform/release/msgcodec'
+        ],
+
+        // Projects that belong to this module
+        'projects' : [
+                'msgcodec',
+                'msgcodec-blink',
+                'msgcodec-examples',
+                'msgcodec-javadoc',
+                'msgcodec-json',
+                'msgcodec-tap',
+                'msgcodec-xml'
+        ],
+
+    ]
+}

@@ -1,9 +1,9 @@
 description = ''
 
 dependencies {
-  compile project(':msgcodec')
-  compile project(':msgcodec-blink')
-  compile project(':msgcodec-json')
-  compile project(':msgcodec-xml')
-  compile project(':msgcodec-tap')
+  compile project(':msgcodec:msgcodec')
+  compile project(':msgcodec:msgcodec-blink')
+  compile project(':msgcodec:msgcodec-json')
+  compile project(':msgcodec:msgcodec-xml')
+  compile project(':msgcodec:msgcodec-tap')
 }
