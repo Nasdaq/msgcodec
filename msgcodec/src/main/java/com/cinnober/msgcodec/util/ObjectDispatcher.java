@@ -20,15 +20,13 @@ package com.cinnober.msgcodec.util;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
-
-import com.cinnober.msgcodec.GroupBinding;
-import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.ProtocolDictionary;
 
 /**
  * An object dispatcher can dispatch objects based on their types to methods in a list of delegates.
@@ -61,15 +59,12 @@ import com.cinnober.msgcodec.ProtocolDictionary;
  * <pre>
  * MyService myService = ...;
  * MyErrorHandler myErrorHandler = ...;
- * ObjectDispatcher dispatcher = new ObjectDispatcher(
- *     Arrays.asList(Base.class, Ping.class, Pong.class, Thing.class),
- *     Arrays.asList(myService, myErrorHandler));
+ * ObjectDispatcher dispatcher = new ObjectDispatcher(Arrays.asList(myService, myErrorHandler));
  *
  * Object result;
  * result = dispatcher.dispatch(new Ping()); // calls MyService.onPing(..)
  * result = dispatcher.dispatch(new Pong()); // calls MyService.onBase(..)
  * result = dispatcher.dispatch(new Thing()); // calls MyErrorHandler.onUnhandledType(..)
- * result = dispatcher.dispatch(new Unknown()); // throws NoSuchMethodException
  * </pre>
  *
  *
@@ -77,140 +72,168 @@ import com.cinnober.msgcodec.ProtocolDictionary;
  *
  */
 public class ObjectDispatcher {
+    private static final Logger log = Logger.getLogger(ObjectDispatcher.class.getName());
+
     private static final Pattern DEFAULT_PATTERN = Pattern.compile("((on)|(process)|(handle)|(do))([A-Z0-9_].*)?");
 
     private final Map<Class<?>, Target> targets;
+    private final Class<?>[] methodSignature;
+    private final SuperTypeTraverser superTypeTraverser;
+
+    /**
+     * Create an object dispatcher using the specified delegates.
+     *
+     * <p>Method names must matching the prefix "on", "process", "handle" or "do".
+     * The methods must take one argument, i.e. no extra parameters in addition to the dispatch parameter.
+     *
+     * <p>The default super type traverser is used, which traverses super class then implemented interfaces on each
+     * level in the inheritance tree.
+     *
+     * @param delegates the delegates that should be called, not null.
+     */
+    public ObjectDispatcher(Collection<Object> delegates) {
+        this(delegates, new Class<?>[0], DEFAULT_PATTERN, new DefaultInheritanceTraverser());
+    }
+
+    /**
+     * Create an object dispatcher using the specified delegates.
+     *
+     * <p>Method names must matching the prefix "on", "process", "handle" or "do".
+     *
+     * <p>The default super type traverser is used, which traverses super class then implemented interfaces on each
+     * level in the inheritance tree.
+     *
+     * @param delegates the delegates that should be called, not null.
+     * @param methodSignature the method signature for all but the first parameter, not null.
+     */
+    public ObjectDispatcher(Collection<Object> delegates,
+            Class<?>[] methodSignature) {
+        this(delegates, methodSignature, DEFAULT_PATTERN, new DefaultInheritanceTraverser());
+    }
+
+    /**
+     * Create an object dispatcher using the specified delegates.
+     *
+     * <p>The default super type traverser is used, which traverses super class then implemented interfaces on each
+     * level in the inheritance tree.
+     *
+     * @param delegates the delegates that should be called, not null.
+     * @param methodSignature the method signature for all but the first parameter, not null.
+     * @param methodPattern the pattern of the methods names in the delegates, or null for any method name.
+     */
+    public ObjectDispatcher(Collection<Object> delegates,
+            Class<?>[] methodSignature,
+            Pattern methodPattern) {
+        this(delegates, methodSignature, methodPattern, new DefaultInheritanceTraverser());
+    }
 
 
     /**
-     * Create an object dispatcher for the types using the delegates.
-     * The method names should start with "on", "process", "handle" or "do".
+     * Create an object dispatcher using the specified delegates.
      *
-     * @param types the types that should be supported, not null.
      * @param delegates the delegates that should be called, not null.
+     * @param methodSignature the method signature for all but the first parameter, not null.
+     * @param methodPattern the pattern of the methods names in the delegates, or null for any method name.
+     * @param superTypeTraverser object that can traverse the inheritance tree of a type, not null.
+     * This traverser will be used for determining the order of type widening rules.
+     * E.g. traverse super class before implemented interfaces.
      */
-    public ObjectDispatcher(Collection<Class<?>> types, Collection<Object> delegates) {
-        this(types, delegates, DEFAULT_PATTERN);
-    }
-
-    /**
-     * Create an object dispatcher for the types using the delegates with the pattern.
-     *
-     * @param types the types that should be supported, not null.
-     * @param delegates the delegates that should be called, not null.
-     * @param pattern the pattern of the methods in the delegates.
-     */
-    public ObjectDispatcher(Collection<Class<?>> types, Collection<Object> delegates, Pattern pattern) {
-        targets = buildTargets(types, delegates, pattern);
-    }
-
-    /** Delegate the object to any of the delegates.
-     *
-     * @param obj the object to dispatch, not null.
-     * @return the return value, or null if no return value.
-     * @throws NoSuchMethodException if no delegate could handle this object type
-     * @throws InvocationTargetException if the delegate throwed an exception
-     */
-    public Object dispatch(Object obj) throws InvocationTargetException, NoSuchMethodException {
-        Target target = targets.get(obj.getClass());
-        if (target == null) {
-            throw new NoSuchMethodException("Unhandled type " + obj.getClass());
-        }
-        return target.process(obj);
-    }
-
-    /** Returns the all group classes in the specified protocol dictionary.
-     * The dictionary must be bound if any classes should be found.
-     *
-     * @param dictionary the dictionary to search in, not null.
-     * @return the found group classes, not null.
-     */
-    public static Collection<Class<?>> getGroupClasses(ProtocolDictionary dictionary) {
-        Collection<Class<?>> result = new LinkedList<>();
-        for (GroupDef groupDef : dictionary.getGroups()) {
-            GroupBinding groupBinding = groupDef.getBinding();
-            if (groupBinding != null) {
-                Object groupType = groupBinding.getGroupType();
-                if (groupType instanceof Class<?>) {
-                    result.add((Class<?>) groupType);
-                }
-            }
-        }
-        return result;
-    }
-
-    /** Build a map from class to target.
-     * @param types the types, not null
-     * @param delegates the delegates, not null
-     * @param pattern the pattern
-     * @return the map, not null
-     */
-    private static Map<Class<?>, Target> buildTargets(Collection<Class<?>> types,
-            Collection<Object> delegates, Pattern pattern) {
-        Map<Class<?>, Target> targets = new HashMap<>(types.size() * 2);
-        for (Class<?> type : types) {
-            Target target = findTarget(type, delegates, pattern);
-            if (target != null) {
-                targets.put(type, target);
-            }
-        }
-
-        return targets;
-    }
-
-    /** Find a target for the type.
-     * @param delegates
-     * @param pattern
-     * @return the target, or null
-     */
-    private static Target findTarget(Class<?> type, Collection<Object> delegates,
-            Pattern pattern) {
-        Method bestMethod = null;
-        Object bestDelegate = null;
-        Class<?> bestType = null;
-
+    public ObjectDispatcher(Collection<Object> delegates,
+            Class<?>[] methodSignature,
+            Pattern methodPattern,
+            SuperTypeTraverser superTypeTraverser) {
+        this.targets = new HashMap<>(16, 0.5f);
+        this.methodSignature = Objects.requireNonNull(methodSignature);
+        this.superTypeTraverser = Objects.requireNonNull(superTypeTraverser);
 
         for (Object delegate : delegates) {
-            for (Method method : delegate.getClass().getMethods()) {
-                if (Modifier.isStatic(method.getModifiers())) {
-                    continue;
-                }
+            addDelegate(delegate, methodPattern);
+        }
+    }
 
-                if (pattern != null && !pattern.matcher(method.getName()).matches()) {
-                    continue;
-                }
+    private void addDelegate(Object delegate, Pattern methodPattern) {
+        METHODS: for (Method method : delegate.getClass().getMethods()) {
+            if (Modifier.isStatic(method.getModifiers())) {
+                continue;
+            }
 
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                if (parameterTypes.length != 1 || !parameterTypes[0].isAssignableFrom(type)) {
-                    continue;
+            if (methodPattern != null && !methodPattern.matcher(method.getName()).matches()) {
+                continue;
+            }
+
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (parameterTypes.length != 1 + methodSignature.length) {
+                continue;
+            }
+            Class<?> targetType = parameterTypes[0];
+            for (int i = 0; i < methodSignature.length; i++) {
+                if (!parameterTypes[i+1].isAssignableFrom(methodSignature[i])) {
+                    continue METHODS;
                 }
-                Class<?> currentType = parameterTypes[0];
-                if (bestType != null) {
-                    if (currentType.isAssignableFrom(bestType)) {
-                        // current type is wider than best type
-                        continue;
-                    }
-                    if (!Modifier.isInterface(bestType.getModifiers()) &&
-                            Modifier.isInterface(currentType.getModifiers())) {
-                        // current type is interface and best type is class
-                        continue;
-                    }
-                    if (!bestType.isAssignableFrom(currentType)) {
-                        // best type is not wider than current type, i.e. unrelated (interfaces)
-                        continue;
-                    }
-                    // ok, current is the best
-                }
-                bestType = currentType;
-                bestMethod = method;
-                bestDelegate = delegate;
+            }
+
+            Target target = new Target(method, delegate);
+            if (!targets.containsKey(targetType)) {
+                targets.put(targetType, target);
+            } else {
+                log.fine("Duplicate dispatch method for class " + targetType);
             }
         }
-        if (bestType != null) {
-            return new Target(bestMethod, bestDelegate);
-        } else {
-            return null;
+    }
+
+    /**
+     * Dispatch the object to any of the delegates.
+     *
+     * @param params the parameters to dispatch, not null. The first parameter is used for choosing
+     * a suitable dispatcher.
+     * @return the return value, or null if no return value.
+     * @throws NoSuchMethodException if no delegate could handle the first parameter object type
+     * @throws InvocationTargetException if the delegate throwed an exception
+     * @throws IllegalArgumentException if the parameters does not match the required method signature.
+     */
+    public Object dispatch(Object... params)
+            throws IllegalArgumentException, InvocationTargetException, NoSuchMethodException {
+        if (params.length != 1 + methodSignature.length) {
+            throw new IllegalArgumentException("Expected " + methodSignature.length + " parameters");
         }
+
+        Class<?> type = params[0].getClass();
+        Target target = findTarget(type);
+        return target.process(params);
+    }
+
+    /**
+     * Warm-up the object type. Any internal caches are built.
+     *
+     * @param type the type to warm-up. This corresponds to the first parameter, not null.
+     * @throws NoSuchMethodException if no delegate could handle the object type
+     */
+    public void warmup(Class<?> type) throws NoSuchMethodException {
+        findTarget(type);
+    }
+
+    /**
+     * Find a target for the specified object type.
+     *
+     * @param type the type. This corresponds to the first parameter, not null.
+     * @return the target, not null.
+     * @throws NoSuchMethodException if no target was found.
+     */
+    private Target findTarget(Class<?> type) throws NoSuchMethodException {
+        Target target = targets.get(type);
+        if (target == null) {
+            for (Class<?> superType : superTypeTraverser.getSuperTypes(type)) {
+                target = targets.get(superType);
+                if (target != null) {
+                    targets.put(type, target);
+                    break;
+                }
+            }
+            if (target == null) {
+                throw new NoSuchMethodException("Unhandled type " + type);
+            }
+        }
+        return target;
     }
 
     private static class Target {
@@ -227,11 +250,41 @@ public class ObjectDispatcher {
         }
 
 
-        public Object process(Object obj) throws InvocationTargetException {
+        public Object process(Object... params) throws InvocationTargetException {
             try {
-                return method.invoke(instance, obj);
-            } catch (IllegalAccessException | IllegalArgumentException e) {
+                return method.invoke(instance, params);
+            } catch (IllegalAccessException e) {
                 throw new Error("Bug"); // should not happen
+            }
+        }
+    }
+
+    public static interface SuperTypeTraverser {
+        Iterable<Class<?>> getSuperTypes(Class<?> type);
+    }
+
+    public static class DefaultInheritanceTraverser implements SuperTypeTraverser {
+        @Override
+        public Iterable<Class<?>> getSuperTypes(Class<?> type) {
+            Collection<Class<?>> superTypes = new ArrayList<>();
+            for (Class<?> currentType = type; currentType != null; currentType = currentType.getSuperclass()) {
+                // super class
+                Class<?> superClass = currentType.getSuperclass();
+                if (superClass != null) {
+                    superTypes.add(superClass);
+                }
+                // interfaces (recursively)
+                addInterfaces(currentType, superTypes);
+            }
+
+            return superTypes;
+        }
+
+        private void addInterfaces(Class<?> type, Collection<Class<?>> superTypes) {
+            Class<?>[] interfaces = type.getInterfaces();
+            for (Class<?> interfaceType : interfaces) {
+                superTypes.add(interfaceType);
+                addInterfaces(interfaceType, superTypes);
             }
         }
     }

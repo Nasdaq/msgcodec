@@ -21,7 +21,6 @@ import static org.junit.Assert.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 
 import org.junit.Test;
@@ -35,7 +34,6 @@ public class ObjectDispatcherTest {
     @Test
     public void test() throws Exception {
         ObjectDispatcher dispatcher = new ObjectDispatcher(
-                Arrays.asList((Class<?>)String.class, Integer.class, Double.class, Date.class),
                 Arrays.asList(new MyService(), new MyErrorHandler()));
 
         assertEquals("*Hello*", dispatcher.dispatch("Hello")); // text
@@ -45,7 +43,21 @@ public class ObjectDispatcherTest {
             dispatcher.dispatch(new Date()); // object
             fail("Expected exception");
         } catch (InvocationTargetException e) {}
+    }
 
+    @Test
+    public void test2Params() throws Exception {
+        ObjectDispatcher dispatcher = new ObjectDispatcher(
+                Arrays.asList(new MyService2(), new MyErrorHandler2()),
+                new Class<?>[] { String.class });
+
+        assertEquals("*Hello*", dispatcher.dispatch("Hello", "Param2")); // text
+        assertEquals(2, dispatcher.dispatch(1, "Param2")); // integer
+        assertEquals(null, dispatcher.dispatch(1.0, "Param2")); // number
+        try {
+            dispatcher.dispatch(new Date(), "Param2"); // object
+            fail("Expected exception");
+        } catch (InvocationTargetException e) {}
     }
 
 
@@ -73,4 +85,30 @@ public class ObjectDispatcherTest {
             throw new RuntimeException("Unhandled object: " + any);
         }
     }
+
+    public static class MyService2 {
+        public void onNumber(Number number, String arg2) {
+            System.out.println("onNumber2: " + number);;
+        }
+        public int onInteger(Integer number, String arg2) {
+            System.out.println("onInteger2: " + number);;
+            return number + 1;
+        }
+        public String onText(String s, String arg2) {
+            System.out.println("onText2: " + s);
+            return "*" + s + "*";
+        }
+        public void fooDate(Date date, String arg2) {
+            System.out.println("fooDate2: " + date);
+            fail("Should be ignored");
+        }
+    }
+
+    public static class MyErrorHandler2 {
+        public void handleAny(Object any, String arg2) {
+            System.out.println("handleAny2: " + any);
+            throw new RuntimeException("Unhandled object: " + any);
+        }
+    }
+
 }
