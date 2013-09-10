@@ -156,10 +156,10 @@ public class ProtocolDictionaryBuilder {
             try {
                 constructor = group.getJavaClass().getConstructor();
             } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException("No default construction found for class " +
+                throw new IllegalArgumentException("No default constructor found for class " +
                         group.getJavaClass().getName(), e);
             } catch (SecurityException e) {
-                throw new IllegalArgumentException("No public default construction found for class " +
+                throw new IllegalArgumentException("No public default constructor found for class " +
                         group.getJavaClass().getName(), e);
             }
 
@@ -431,11 +431,11 @@ public class ProtocolDictionaryBuilder {
         } else if (type.equals(BigInteger.class)) {
             return TypeDef.BIGINT;
         } else if (type.equals(BigDecimal.class)) {
-        	if (isSmallDecimal) {
+            if (isSmallDecimal) {
                 return TypeDef.DECIMAL;
-        	} else {
-        		return TypeDef.BIGDECIMAL;
-        	}
+            } else {
+                return TypeDef.BIGDECIMAL;
+            }
         } else if (type.equals(BigDecimal.class)) {
         } else if (type.equals(float.class) || type.equals(Float.class)) {
             return TypeDef.FLOAT32;
