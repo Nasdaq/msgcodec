@@ -1,7 +1,7 @@
 apply plugin: 'cbuilder-module'
 
 subprojects {
-//    apply plugin: 'cbuilder'
+    apply plugin: 'cbuilder'
 //	repositories {
 //		mavenLocal()
 //	}
