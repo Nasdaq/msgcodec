@@ -587,6 +587,9 @@ abstract class FieldInstruction<V> {
     }
     // --- STRING ---
     private static int getMaxLength(FieldDef field) {
+        if (field == null) {
+            return -1;
+        }
         String maxLengthStr = field.getAnnotation("maxLength");
         if (maxLengthStr == null) {
             return -1;
