@@ -532,7 +532,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         @Override
         public int compare(GroupDef group1, GroupDef group2) {
             int parentCount1 = parentCount(group1, 0);
-            int parentCount2 = parentCount(group1, 0);
+            int parentCount2 = parentCount(group2, 0);
 
             if (parentCount1 < parentCount2) {
                 return -1;
