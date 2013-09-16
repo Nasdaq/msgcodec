@@ -25,7 +25,7 @@ import com.cinnober.msgcodec.GroupDef;
 /** The static group instruction can encode and decode the fields of a group.
  * Any dynamic behaviour lies outside this class, e.g. lookup of <em>which</em>
  * static group to encode/decode.
- * 
+ *
  * @author mikael.brannstrom
  */
 @SuppressWarnings("rawtypes")
@@ -44,15 +44,19 @@ class StaticGroupInstruction {
         fieldInstructions[index] = fieldInstruction;
     }
     /** Write the group id to the specified stream. Only done for dynamic groups.
-     * 
+     *
      * @param out
      * @throws IOException
      */
     public void encodeGroupId(BlinkOutputStream out) throws IOException {
-        out.writeUInt32(groupDef.getId());
+        int id = groupDef.getId();
+        if (id == -1) {
+            throw new IOException("Missing group id, cannot encode as dynamic group: " + groupDef.getName());
+        }
+        out.writeUInt32(id);
     }
     /** Write the fields of the group, including any super groups.
-     * 
+     *
      * @param group the group to be encoded
      * @param out
      * @throws IOException
@@ -66,7 +70,7 @@ class StaticGroupInstruction {
         }
     }
     /** Read the fields of a group, including any super groups.
-     * 
+     *
      * @param in
      * @return the group, not null
      * @throws IOException
@@ -77,7 +81,7 @@ class StaticGroupInstruction {
         return group;
     }
     /** Read the fields of a group, including any super groups.
-     * 
+     *
      * @param group the group where field values should be stored.
      * @param in
      * @throws IOException
