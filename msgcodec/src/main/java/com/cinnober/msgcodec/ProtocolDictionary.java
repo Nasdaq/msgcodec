@@ -403,6 +403,33 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return sortedGroups;
     }
 
+    /** Assign group ids for all groups with unassigned group id.
+     * The {@link String.hashCode} of the name is used. If the hash code is -1 then zero is chosen.
+     * @return a new ProtocolDictionay with group identifiers assigned.
+     * @throws IllegalArgumentException if duplicate identifiers were generated
+     */
+    public ProtocolDictionary assignGroupIds() {
+        Collection<GroupDef> newSortedGroups = new ArrayList<>(sortedGroups.size());
+        for (GroupDef group : sortedGroups) {
+            if (group.getId() == -1) {
+                int newGroupId = group.getName().hashCode();
+                if (newGroupId == -1) {
+                    newGroupId = 0;
+                }
+                group = new GroupDef(
+                        group.getName(),
+                        newGroupId,
+                        group.getSuperGroup(),
+                        group.getFields(),
+                        group.getAnnotations(),
+                        group.getBinding());
+            }
+            newSortedGroups.add(group);
+        }
+
+        return new ProtocolDictionary(newSortedGroups, typesByName.values(), annotations, binding);
+    }
+
 
     /**
      * Returns a human readable string representation of this protocol dictionary.
