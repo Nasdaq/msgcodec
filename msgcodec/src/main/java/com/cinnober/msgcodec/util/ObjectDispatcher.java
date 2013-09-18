@@ -254,7 +254,7 @@ public class ObjectDispatcher {
             try {
                 return method.invoke(instance, params);
             } catch (IllegalAccessException e) {
-                throw new Error("Bug"); // should not happen
+                throw new Error("Bug", e); // should not happen
             }
         }
     }
