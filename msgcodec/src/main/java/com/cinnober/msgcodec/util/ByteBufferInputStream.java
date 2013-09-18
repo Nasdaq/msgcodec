@@ -75,7 +75,7 @@ public class ByteBufferInputStream extends InputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        if (len < buffer.remaining()) {
+        if (len > buffer.remaining()) {
             len = buffer.remaining();
         }
         buffer.get(b, off, len);
@@ -84,7 +84,7 @@ public class ByteBufferInputStream extends InputStream {
 
     @Override
     public long skip(long n) throws IOException {
-        if (n < buffer.remaining()) {
+        if (n > buffer.remaining()) {
             n = buffer.remaining();
         }
         buffer.position((int)(buffer.position() + n));
