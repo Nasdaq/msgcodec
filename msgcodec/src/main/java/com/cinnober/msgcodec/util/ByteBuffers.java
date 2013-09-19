@@ -69,7 +69,7 @@ public class ByteBuffers {
         if (index != 0) {
             if (index % 16 == 0) {
                 appendTo.append('\n');
-            } else if (index % 16 == 0) {
+            } else if (index % 8 == 0) {
                 appendTo.append("  ");
             } else {
                 appendTo.append(' ');
