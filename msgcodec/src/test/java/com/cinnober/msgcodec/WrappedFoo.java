@@ -17,35 +17,10 @@
  */
 package com.cinnober.msgcodec;
 
-import java.util.List;
-
-import com.cinnober.msgcodec.anot.Enumeration;
-import com.cinnober.msgcodec.anot.Id;
-import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Sequence;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
  *
  */
-@Id(200)
-public class BarMessage extends FooMessage {
-    @Id(40)
-    public Color myEnum;
-    @Id(41)
-    @Enumeration(Size.class)
-    public int myEnumInteger;
-    @Id(42)
-    @Static @Required @Sequence(Thing.class)
-    public List<Thing> myThings;
-    @Id(43)
-    @Sequence(Thing.class)
-    public Thing[] myThingsArray;
-    @Id(44)
-    @Static
-    public Thing mySomeThing;
-    @Id(45)
-    @Static @Required
-    public Thing mySomeThingReq;
+public class WrappedFoo extends WrappedMessage<FooMessage> {
 }

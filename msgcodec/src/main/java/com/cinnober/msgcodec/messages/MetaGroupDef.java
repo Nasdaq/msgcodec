@@ -36,9 +36,17 @@ import com.cinnober.msgcodec.anot.Static;
 @Name("GroupDef")
 @Id(16001)
 public class MetaGroupDef extends MetaAnnotated {
+    @Required
+    @Id(1)
     private String name;
+    @Id(2)
     private Integer id;
+    @Id(3)
     private String superGroup;
+    @Required
+    @Static
+    @Sequence(MetaFieldDef.class)
+    @Id(4)
     private Collection<MetaFieldDef> fields;
 
     public MetaGroupDef() {}
@@ -63,8 +71,6 @@ public class MetaGroupDef extends MetaAnnotated {
     /**
      * @return the name
      */
-    @Required
-    @Id(1)
     public String getName() {
         return name;
     }
@@ -77,7 +83,6 @@ public class MetaGroupDef extends MetaAnnotated {
     /**
      * @return the id
      */
-    @Id(2)
     public Integer getId() {
         return id;
     }
@@ -90,7 +95,6 @@ public class MetaGroupDef extends MetaAnnotated {
     /**
      * @return the superGroup
      */
-    @Id(3)
     public String getSuperGroup() {
         return superGroup;
     }
@@ -103,10 +107,6 @@ public class MetaGroupDef extends MetaAnnotated {
     /**
      * @return the fields
      */
-    @Required
-    @Static
-    @Sequence(MetaFieldDef.class)
-    @Id(4)
     public Collection<MetaFieldDef> getFields() {
         return fields;
     }

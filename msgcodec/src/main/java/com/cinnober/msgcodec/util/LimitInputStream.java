@@ -22,11 +22,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * This class is an input stream that provides an optional read limit. 
- * 
- * <p>All read methods guarantees that the number of bytes requested are also read, 
- * or an {@link EOFException} is thrown. 
- * 
+ * This class is an input stream that provides an optional read limit.
+ *
+ * <p>All read methods guarantees that the number of bytes requested are also read,
+ * or an {@link EOFException} is thrown.
+ *
  * @author mikael.brannstrom
  *
  */
@@ -34,22 +34,22 @@ public class LimitInputStream extends InputStream {
 
     private InputStream in;
     private int limit = -1;
-    
+
     /** Create a new limit input stream with no limit initially.
-     * 
+     *
      * @param in the wrapped input stream.
      */
     protected LimitInputStream(InputStream in) {
         this.in = in;
     }
-    
+
     /** Returns the number of bytes remaining to the limit. */
     public int limit() {
         return limit;
     }
-    
+
     /** Set the limit.
-     * 
+     *
      * @param limit the number of bytes to be able to read, or -1 for no limit.
      */
     public void limit(int limit) {
@@ -77,9 +77,9 @@ public class LimitInputStream extends InputStream {
     }
 
     /** Read bytes from the underlying input stream.
-     * 
-     * @param buf the buffer into which the data is read 
-     * 
+     *
+     * @param buf the buffer into which the data is read
+     *
      * @return the number of bytes read, always bytes.length.
      * @throws EOFException if there is no more data.
      * @throws LimitException if the limit has been reached.
@@ -88,13 +88,13 @@ public class LimitInputStream extends InputStream {
     public int read(byte[] buf) throws IOException {
         return read(buf, 0, buf.length);
     }
-    
+
     /** Read bytes from the underlying input stream.
-     * 
+     *
      * @param buf the buffer into which the data is read
      * @param offset
-     * @param length 
-     * 
+     * @param length
+     *
      * @return the number of bytes read, always length.
      * @throws EOFException if there is no more data.
      * @throws LimitException if the limit has been reached.
@@ -119,11 +119,11 @@ public class LimitInputStream extends InputStream {
         }
         return totalRead;
     }
-    
+
     /** Skip bytes from the underlying input stream.
-     * 
-     * @param n the number of bytes to skip 
-     * 
+     *
+     * @param n the number of bytes to skip
+     *
      * @return the number of bytes skipped, always n.
      * @throws EOFException if there is no more data.
      * @throws LimitException if the limit has been reached.
@@ -143,5 +143,5 @@ public class LimitInputStream extends InputStream {
         }
         return totalSkipped;
     }
-    
+
 }

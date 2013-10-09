@@ -33,8 +33,8 @@ import org.junit.Test;
  */
 public class BlinkStreamTest {
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.1. 
-     * @throws IOException 
+    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.1.
+     * @throws IOException
      */
     @Test
     public void testIntegerExamples() throws IOException {
@@ -49,46 +49,46 @@ public class BlinkStreamTest {
         testEncodeDecodeSignedVLC(-2147483648, new byte[] { (byte)0xc4, 0x00, 0x00, 0x00, (byte)0x80 });
     }
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.2. 
-     * @throws IOException 
+    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.2.
+     * @throws IOException
      */
     @Test
     public void testStringExamples() throws IOException {
         testEncodeDecodeStringUTF8("Hello", new byte[] { 0x05, 0x48, 0x65, 0x6c, 0x6c, 0x6f });
-        
+
         testEncodeDecodeStringUTF8("Räksmörgås",
             new byte[] { 0x0d, 0x52, (byte)0xc3, (byte)0xa4, 0x6b, 0x73,
             0x6d, (byte)0xc3, (byte)0xb6, 0x72, 0x67, (byte)0xc3, (byte)0xa5, 0x73});
 
         testEncodeDecodeStringUTF8("", new byte[] { 0x00 });
-    }   
+    }
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.5. 
-     * @throws IOException 
+    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.5.
+     * @throws IOException
      */
     @Test
     public void testDecimalExamples() throws IOException {
         testEncodeDecodeDecimal(BigDecimal.valueOf(10000, 2), // 100.00
                 new byte[] { 0x7e, (byte)0xc2, 0x10, 0x27 });
-    }   
+    }
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.6. 
-     * @throws IOException 
+    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.6.
+     * @throws IOException
      */
     @Test
     public void testFloatExamples() throws IOException {
         testEncodeDecodeFloat64(1.23456789,
-            new byte[] { (byte)0xc8, 0x1b, (byte)0xde, (byte)0x83, 0x42, 
+            new byte[] { (byte)0xc8, 0x1b, (byte)0xde, (byte)0x83, 0x42,
             (byte)0xca, (byte)0xc0, (byte)0xf3, 0x3f });
-        
+
         testEncodeDecodeFloat64(Double.POSITIVE_INFINITY,
-            new byte[] { (byte)0xc8, 0x00, 0x00, 0x00, 0x00, 
+            new byte[] { (byte)0xc8, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, (byte)0xf0, 0x7f });
-    }   
-    
-    
-    
-    
+    }
+
+
+
+
     private void testEncodeDecodeUnsignedVLC(long value, byte[] encoded) throws IOException {
         testEncodeDecode(value, encoded, new StreamOp<Long>() {
             @Override
@@ -149,7 +149,7 @@ public class BlinkStreamTest {
             }
         });
     }
-    
+
     private <V> void testEncodeDecode(V value, byte[] encoded, StreamOp<V> streamOp) throws IOException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         BlinkOutputStream out = new BlinkOutputStream(bout);
@@ -165,13 +165,13 @@ public class BlinkStreamTest {
         BlinkInputStream in = new BlinkInputStream(bin);
         V decodedValue = streamOp.readValue(in);
         assertEquals("Decoded value", value, decodedValue);
-        
+
         assertEquals("Remaining bytes after decode", 0, in.available());
-    }   
-    
+    }
+
     private interface StreamOp<V> {
         void writeValue(V value, BlinkOutputStream out) throws IOException;
         V readValue(BlinkInputStream in) throws IOException;
     }
-    
+
 }

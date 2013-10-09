@@ -37,8 +37,16 @@ import com.cinnober.msgcodec.anot.Static;
 @Name("ProtocolDictionary")
 @Id(16000)
 public class MetaProtocolDictionary extends MetaAnnotated {
-    private Collection<MetaGroupDef> groups;
-    private Collection<MetaNamedType> namedTypes;
+    @Static
+    @Required
+    @Sequence(MetaGroupDef.class)
+    @Id(1)
+    public Collection<MetaGroupDef> groups;
+
+    @Static
+    @Sequence(MetaNamedType.class)
+    @Id(2)
+    public Collection<MetaNamedType> namedTypes;
 
     public MetaProtocolDictionary() {}
 
@@ -56,10 +64,6 @@ public class MetaProtocolDictionary extends MetaAnnotated {
     /**
      * @return the groups
      */
-    @Static
-    @Required
-    @Sequence(MetaGroupDef.class)
-    @Id(1)
     public Collection<MetaGroupDef> getGroups() {
         return groups;
     }
@@ -73,9 +77,6 @@ public class MetaProtocolDictionary extends MetaAnnotated {
     /**
      * @return the namedTypes
      */
-    @Static
-    @Sequence(MetaNamedType.class)
-    @Id(2)
     public Collection<MetaNamedType> getNamedTypes() {
         return namedTypes;
     }

@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.messages;
 
+import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
@@ -26,8 +27,12 @@ import com.cinnober.msgcodec.anot.Required;
  *
  */
 @Name("Annotation")
-public class MetaAnnotation {
+public class MetaAnnotation extends MsgObject {
+    @Required
+    @Id(1)
     private String name;
+    @Required
+    @Id(2)
     private String value;
 
     public MetaAnnotation() {
@@ -42,13 +47,9 @@ public class MetaAnnotation {
         this.value = value;
     }
 
-
-
     /**
      * @return the name
      */
-    @Required
-    @Id(1)
     public String getName() {
         return name;
     }
@@ -61,8 +62,6 @@ public class MetaAnnotation {
     /**
      * @return the value
      */
-    @Required
-    @Id(2)
     public String getValue() {
         return value;
     }

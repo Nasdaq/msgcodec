@@ -123,12 +123,12 @@ public class XmlCodecTest {
     }
 
     public static class Hello {
+        @Required
         private String greeting;
         public Hello() {}
         public Hello(String greeting) {
             this.greeting = greeting;
         }
-        @Required
         public String getGreeting() {
             return greeting;
         }
@@ -142,12 +142,12 @@ public class XmlCodecTest {
     }
 
     public static class MyMessage {
+        @Static
         private Hello person1;
         private Hello person2;
         /**
          * @return the person1
          */
-        @Static
         public Hello getPerson1() {
             return person1;
         }

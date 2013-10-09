@@ -63,6 +63,8 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Ref") @Id(16003)
     public static class MetaRef extends MetaTypeDef {
+        @Required
+        @Id(1)
         private String type;
         public MetaRef() {}
 
@@ -76,8 +78,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the type
          */
-        @Required
-        @Id(1)
         public String getType() {
             return type;
         }
@@ -96,6 +96,7 @@ public class MetaTypeDef extends MetaAnnotated {
     }
     @Name("DynRef") @Id(16004)
     public static class MetaDynRef extends MetaTypeDef {
+        @Id(1)
         private String type;
         public MetaDynRef() {}
 
@@ -109,7 +110,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the type
          */
-        @Id(1)
         public String getType() {
             return type;
         }
@@ -127,6 +127,8 @@ public class MetaTypeDef extends MetaAnnotated {
     }
     @Name("Sequence") @Id(16005)
     public static class MetaSequence extends MetaTypeDef {
+        @Required
+        @Id(1)
         private MetaTypeDef type;
         public MetaSequence() {}
 
@@ -141,8 +143,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the type
          */
-        @Required
-        @Id(1)
         public MetaTypeDef getType() {
             return type;
         }
@@ -161,9 +161,15 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Time") @Id(16006)
     public static class MetaTime extends MetaTypeDef {
+        @Required
+        @Id(1)
         private TimeUnit unit;
+        @Required
+        @Id(2)
         private Epoch epoch;
+        @Id(3)
         private String timeZone;
+
         public MetaTime() {}
 
         /**
@@ -181,8 +187,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the unit
          */
-        @Required
-        @Id(1)
         public TimeUnit getUnit() {
             return unit;
         }
@@ -195,8 +199,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the epoch
          */
-        @Required
-        @Id(2)
         public Epoch getEpoch() {
             return epoch;
         }
@@ -209,7 +211,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the timeZone
          */
-        @Id(3)
         public String getTimeZone() {
             return timeZone;
         }
@@ -227,7 +228,12 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Enum") @Id(16007)
     public static class MetaEnum extends MetaTypeDef {
+        @Required
+        @Static
+        @com.cinnober.msgcodec.anot.Sequence(MetaSymbol.class)
+        @Id(1)
         private Collection<MetaSymbol> symbols;
+
         public MetaEnum() {}
 
         /**
@@ -240,10 +246,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the symbols
          */
-        @Required
-        @Static
-        @com.cinnober.msgcodec.anot.Sequence(MetaSymbol.class)
-        @Id(1)
         public Collection<MetaSymbol> getSymbols() {
             return symbols;
         }
@@ -352,8 +354,12 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Symbol")
     public static class MetaSymbol extends MetaAnnotated {
+        @Required
+        @Id(1)
         private String name;
+        @Id(2)
         private int id;
+
         public MetaSymbol() {}
 
         /**
@@ -368,8 +374,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the name
          */
-        @Required
-        @Id(1)
         public String getName() {
             return name;
         }
@@ -382,7 +386,6 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * @return the id
          */
-        @Id(2)
         public int getId() {
             return id;
         }

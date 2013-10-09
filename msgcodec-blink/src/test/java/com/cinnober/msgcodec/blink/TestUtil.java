@@ -25,10 +25,10 @@ import java.util.Arrays;
  *
  */
 public class TestUtil {
-    
+
     private static final char[] HEX_CHAR = new char[]
             { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-    
+
     public static final String toHex(byte[] data) {
         StringBuilder str = new StringBuilder(data.length * 3);
 
@@ -46,7 +46,7 @@ public class TestUtil {
 
         return str.toString();
     }
-    
+
     public static void assertEquals(byte[] expected, byte[] actual) {
         assertEquals(null, expected, actual);
     }

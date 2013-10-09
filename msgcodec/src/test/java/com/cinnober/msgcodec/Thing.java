@@ -24,14 +24,7 @@ import com.cinnober.msgcodec.anot.Id;
  *
  */
 @Id(300)
-public class Thing {
-    private String description;
-
+public class Thing extends MsgObject {
     @Id(1)
-    public String getDescription() {
-        return description;
-    }
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String description;
 }

@@ -17,10 +17,9 @@
  */
 package com.cinnober.msgcodec.javadoc;
 
-import java.text.BreakIterator;
 import java.util.Properties;
 
-import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.FieldDoc;
 
 /**
  * @author mikael.brannstrom
@@ -28,31 +27,19 @@ import com.sun.javadoc.MethodDoc;
  */
 public class FieldDefDoc {
     private final String name;
-    private final MethodDoc getMethodDoc;
-    @SuppressWarnings("unused")
-    private final MethodDoc setMethodDoc;
+    private final FieldDoc fieldDoc;
     /**
      * @param name
      * @param getMethodDoc
      * @param setMethodDoc
      */
-    public FieldDefDoc(String name, MethodDoc getMethodDoc,
-            MethodDoc setMethodDoc) {
+    public FieldDefDoc(String name, FieldDoc fieldDoc) {
         this.name = name;
-        this.getMethodDoc = getMethodDoc;
-        this.setMethodDoc = setMethodDoc;
+        this.fieldDoc = fieldDoc;
     }
 
     public void addDoc(Properties properties, String annotationName, String groupName) {
-        String doc = getMethodDoc.commentText();
-        BreakIterator sentence = BreakIterator.getSentenceInstance();
-        sentence.setText(doc);
-        int index = sentence.next();
-        if (index == BreakIterator.DONE) {
-            doc = "";
-        } else {
-            doc = doc.substring(index);
-        }
+        String doc = fieldDoc.commentText();
 
         if (doc.trim().length() > 0) {
             properties.setProperty(groupName + "." + name + "@" + annotationName,

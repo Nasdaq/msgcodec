@@ -30,103 +30,103 @@ import com.cinnober.msgcodec.anot.Required;
  */
 @Id('8')
 public class ExecutionReport {
+    @Id(37)
+    @Required
     private String orderID;
+    @Id(11)
     private String clOrdID;
+    @Id(41)
     private String origClOrdID;
+    @Id(17)
+    @Required
     private String execID;
+    @Id(150)
     private int execType;
+    @Id(39)
     private int ordStatus;
+    @Id(55)
     private String symbol;
+    @Id(54)
     private int side;
 
+    @Id(44)
     private BigDecimal price;
+    @Id(31)
     private BigDecimal lastPx;
+    @Id(151)
+    @Required
     private BigDecimal leavesQty;
+    @Id(14)
+    @Required
     private BigDecimal cumQty;
 
 
-    @Id(37)
-    @Required
     public String getOrderID() {
         return orderID;
     }
     public void setOrderID(String orderID) {
         this.orderID = orderID;
     }
-    @Id(11)
     public String getClOrdID() {
         return clOrdID;
     }
     public void setClOrdID(String clOrdID) {
         this.clOrdID = clOrdID;
     }
-    @Id(41)
     public String getOrigClOrdID() {
         return origClOrdID;
     }
     public void setOrigClOrdID(String origClOrdID) {
         this.origClOrdID = origClOrdID;
     }
-    @Id(17)
-    @Required
     public String getExecID() {
         return execID;
     }
     public void setExecID(String execID) {
         this.execID = execID;
     }
-    @Id(150)
     public int getExecType() {
         return execType;
     }
     public void setExecType(int execType) {
         this.execType = execType;
     }
-    @Id(39)
     public int getOrdStatus() {
         return ordStatus;
     }
     public void setOrdStatus(int ordStatus) {
         this.ordStatus = ordStatus;
     }
-    @Id(55)
     public String getSymbol() {
         return symbol;
     }
     public void setSymbol(String symbol) {
         this.symbol = symbol;
     }
-    @Id(54)
     public int getSide() {
         return side;
     }
     public void setSide(int side) {
         this.side = side;
     }
-    @Id(44)
     public BigDecimal getPrice() {
         return price;
     }
     public void setPrice(BigDecimal price) {
         this.price = price;
     }
-    @Id(31)
     public BigDecimal getLastPx() {
         return lastPx;
     }
     public void setLastPx(BigDecimal lastPx) {
         this.lastPx = lastPx;
     }
-    @Id(151)
-    @Required
     public BigDecimal getLeavesQty() {
         return leavesQty;
     }
     public void setLeavesQty(BigDecimal leavesQty) {
         this.leavesQty = leavesQty;
     }
-    @Id(14)
-    @Required
     public BigDecimal getCumQty() {
         return cumQty;
     }

@@ -19,13 +19,11 @@ package com.cinnober.msgcodec.javadoc;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import com.sun.javadoc.ClassDoc;
-import com.sun.javadoc.MethodDoc;
+import com.sun.javadoc.FieldDoc;
 
 /**
  * @author mikael.brannstrom
@@ -43,104 +41,30 @@ public class GroupDefDoc {
         this.className = classDoc.qualifiedName();
 
         // fields
-        MethodDoc[] methods = getMethods(classDoc);
-        Map<String, MethodDoc> getMethodsByPropertyName = new HashMap<>(methods.length);
-        Map<String, MethodDoc> setMethodsByPropertyName = new HashMap<>(methods.length);
-
-        // clear all non-public or static methods
-        for (int i=0; i<methods.length; i++) {
-            if (!methods[i].isPublic() || methods[i].isStatic()) {
-                methods[i] = null;
-            }
-        }
-
-        // find get methods
-        for (MethodDoc method : methods) {
-            if (method == null) {
+        fields = new ArrayList<FieldDefDoc>();
+        for (FieldDoc field : getFields(classDoc)) {
+            if (field.isStatic()) {
                 continue;
             }
-            if (method.parameters().length != 0) {
-                continue; // must not have any parameters
-            }
-            if (method.returnType().equals("void")) { // TODO
-                continue; // must have a return type
-            }
-            // check prefix
-            String propertyName = null;
-            if (method.name().startsWith("get")) {
-                propertyName = toPropertyName(method.name().substring(3));
-            } else if (method.name().startsWith("is") &&
-                    (method.returnType().equals("boolean") || // TODO
-                            method.returnType().equals("Boolean"))) { // TODO
-                propertyName = toPropertyName(method.name().substring(2));
-            }
+            String name = DocAnnotationDoclet.getNameAnnotation(field.annotations(), field.name());
 
-            if (propertyName != null) {
-                getMethodsByPropertyName.put(propertyName, method);
-            }
-        }
-
-        // find set methods
-        for (MethodDoc method : methods) {
-            if (method == null) {
-                continue;
-            }
-            if (method.parameters().length != 1) {
-                continue; // must have one parameter
-            }
-            // relax: ignore return type (should be void)
-
-            // check prefix
-            if (method.name().startsWith("set")) {
-                String propertyName = toPropertyName(method.name().substring(3));
-                MethodDoc getMethod = getMethodsByPropertyName.get(propertyName);
-                if (getMethod == null) {
-                    continue; // no matching get method
-                }
-                if (!getMethod.returnType().qualifiedTypeName().equals(
-                        method.parameters()[0].type().qualifiedTypeName())) {
-                    continue; // parameter type of set-method must match return type of get-method
-                }
-                setMethodsByPropertyName.put(propertyName, method);
-            }
-        }
-
-        fields = new ArrayList<FieldDefDoc>(setMethodsByPropertyName.size());
-        for (Map.Entry<String, MethodDoc> entry : setMethodsByPropertyName.entrySet()) {
-            MethodDoc setMethod = entry.getValue();
-            MethodDoc getMethod = getMethodsByPropertyName.get(entry.getKey());
-            String name = entry.getKey();
-
-            name = DocAnnotationDoclet.getNameAnnotation(getMethod.annotations(), name);
-            name = DocAnnotationDoclet.getNameAnnotation(setMethod.annotations(), name);
-
-            fields.add(new FieldDefDoc(name, getMethod, setMethod));
+            fields.add(new FieldDefDoc(name, field));
         }
 
     }
 
-    private MethodDoc[] getMethods(ClassDoc classDoc) {
-        ArrayList<MethodDoc> methods = new ArrayList<MethodDoc>(classDoc.methods().length * 3);
-        addMethods(classDoc, methods);
-        return methods.toArray(new MethodDoc[methods.size()]);
+    private static Collection<FieldDoc> getFields(ClassDoc classDoc) {
+        ArrayList<FieldDoc> fields = new ArrayList<FieldDoc>();
+        addFields(classDoc, fields);
+        return fields;
     }
-    private void addMethods(ClassDoc classDoc, Collection<MethodDoc> methods) {
+    private static void addFields(ClassDoc classDoc, Collection<FieldDoc> fields) {
         ClassDoc superClass = classDoc.superclass();
         if (superClass != null) {
-            addMethods(superClass, methods);
+            addFields(superClass, fields);
         }
-        for (MethodDoc method : classDoc.methods()) {
-            methods.add(method);
-        }
-    }
-
-    private String toPropertyName(String name) {
-        if (name.length() == 0) {
-            return "";
-        } else {
-            StringBuilder str = new StringBuilder(name);
-            str.setCharAt(0, Character.toLowerCase(str.charAt(0)));
-            return str.toString();
+        for (FieldDoc method : classDoc.fields()) {
+            fields.add(method);
         }
     }
 

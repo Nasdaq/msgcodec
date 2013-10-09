@@ -19,6 +19,7 @@ package com.cinnober.msgcodec.examples.messages;
 
 import java.util.Objects;
 
+import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
@@ -28,7 +29,10 @@ import com.cinnober.msgcodec.anot.Required;
  * @author Mikael Brannstrom
  */
 @Id(1) // <- Numeric identifier for this message type
-public class Hello {
+public class Hello extends MsgObject {
+    @Id(1) // <- Numeric identifier for this field
+    @Required // <- Make the field required
+    @Annotate({"maxLength=100"}) // <- some codecs interpret this as max string length
     private String greeting;
 
     public Hello() { // <- A default constructor must exist.
@@ -44,9 +48,6 @@ public class Hello {
     /** Returns the greeting.
      * @return the greeting
      */
-    @Id(1) // <- Numeric identifier for this field
-    @Required // <- Make the field required
-    @Annotate({"maxLength=100"}) // <- some codecs interpret this as max string length
     public String getGreeting() {
         return greeting;
     }
@@ -54,10 +55,6 @@ public class Hello {
         this.greeting = greeting;
     }
 
-    @Override
-    public String toString() {
-        return "Hello [greeting=" + greeting + "]";
-    }
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {

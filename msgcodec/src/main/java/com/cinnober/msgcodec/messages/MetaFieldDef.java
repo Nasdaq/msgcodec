@@ -28,9 +28,15 @@ import com.cinnober.msgcodec.anot.Required;
  */
 @Name("FieldDef")
 public class MetaFieldDef extends MetaAnnotated {
+    @Required
+    @Id(1)
     private String name;
+    @Id(2)
     private Integer id;
+    @Id(3)
     private boolean required;
+    @Required
+    @Id(4)
     private MetaTypeDef type;
 
     /**
@@ -59,8 +65,6 @@ public class MetaFieldDef extends MetaAnnotated {
     /**
      * @return the name
      */
-    @Required
-    @Id(1)
     public String getName() {
         return name;
     }
@@ -73,7 +77,6 @@ public class MetaFieldDef extends MetaAnnotated {
     /**
      * @return the id
      */
-    @Id(2)
     public Integer getId() {
         return id;
     }
@@ -86,7 +89,6 @@ public class MetaFieldDef extends MetaAnnotated {
     /**
      * @return the required
      */
-    @Id(3)
     public boolean isRequired() {
         return required;
     }
@@ -99,8 +101,6 @@ public class MetaFieldDef extends MetaAnnotated {
     /**
      * @return the type
      */
-    @Required
-    @Id(4)
     public MetaTypeDef getType() {
         return type;
     }

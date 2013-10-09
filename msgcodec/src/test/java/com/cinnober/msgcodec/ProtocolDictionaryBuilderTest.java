@@ -45,4 +45,13 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
     }
 
+    /** Test of generic class parameters, as well as recursive add of referred components.
+     */
+    @Test
+    public void testWrappedFoo() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.build(WrappedFoo.class);
+        System.out.println(dict.toString());
+    }
+
 }

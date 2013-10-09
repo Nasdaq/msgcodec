@@ -30,13 +30,17 @@ import com.cinnober.msgcodec.anot.Sequence;
  */
 @Id(4)
 public class SpecialNode extends Node {
-    private Collection<String> bunchOfStrings = Collections.emptyList();
-    private String[] moreStrings;
-    private Object ext;
-
     @Id(10)
     @Sequence(String.class) // <- this is a sequence of string
     @Required
+    private Collection<String> bunchOfStrings = Collections.emptyList();
+    @Id(11)
+    @Sequence(String.class) // <- also a sequence of string
+    private String[] moreStrings;
+    // This is a dynamic group reference, i.e. it may contain any group
+    @Id(100)
+    private Object ext;
+
     public Collection<String> getBunchOfStrings() {
         return bunchOfStrings;
     }
@@ -45,8 +49,6 @@ public class SpecialNode extends Node {
         this.bunchOfStrings = bunchOfStrings;
     }
 
-    @Id(11)
-    @Sequence(String.class) // <- also a sequence of string
     public String[] getMoreStrings() {
         return moreStrings;
     }
@@ -55,8 +57,6 @@ public class SpecialNode extends Node {
         this.moreStrings = moreStrings;
     }
 
-    // This is a dynamic group reference, i.e. it may contain any group
-    @Id(100)
     public Object getExt() {
         return ext;
     }

@@ -23,13 +23,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that the field is required. Primitive types are always required. Object types are optional by default.
- * 
+ * Specifies that the field is required. Primitive types are always required (need to annotate).
+ * Object types are optional by default.
+ *
  * @author mikael.brannstrom
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.FIELD})
 public @interface Required {
 
 }

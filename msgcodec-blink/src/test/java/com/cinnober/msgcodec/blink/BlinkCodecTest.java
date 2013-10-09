@@ -188,12 +188,12 @@ public class BlinkCodecTest {
 
     @Id(1)
     public static class Hello {
+        @Required
         private String greeting;
         public Hello() {}
         public Hello(String greeting) {
             this.greeting = greeting;
         }
-        @Required
         public String getGreeting() {
             return greeting;
         }
@@ -204,20 +204,20 @@ public class BlinkCodecTest {
 
     @Id(2)
     public static class Foo {
+        @Id(1)
         private int id;
+        @Id(2)
         private Foo foo;
         public Foo() {}
         public Foo(int id) {
             this.id = id;
         }
-        @Id(1)
         public int getId() {
             return id;
         }
         public void setId(int id) {
             this.id = id;
         }
-        @Id(2)
         public Foo getFoo() {
             return foo;
         }
@@ -246,6 +246,7 @@ public class BlinkCodecTest {
 
     @Id(3)
     public static class Bar extends Foo {
+        @Id(3)
         private int data;
         public Bar() {}
         public Bar(int id) {
@@ -254,7 +255,6 @@ public class BlinkCodecTest {
         public int getData() {
             return data;
         }
-        @Id(3)
         public void setData(int data) {
             this.data = data;
         }

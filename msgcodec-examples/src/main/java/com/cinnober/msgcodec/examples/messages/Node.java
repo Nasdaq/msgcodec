@@ -26,12 +26,16 @@ import com.cinnober.msgcodec.anot.Static;
  */
 @Id(3)
 public class Node {
+    @Id(1)
     private String description;
+    @Id(2)
+    // Note: this is a dynamic reference, i.e. can contain refer to a subclass node
     private Node parent;
+    @Id(3)
+    @Static // <- can only refer to Numbers, not any subclass
     private Numbers numbers;
 
 
-    @Id(1)
     public String getDescription() {
         return description;
     }
@@ -40,8 +44,6 @@ public class Node {
         this.description = description;
     }
 
-    @Id(2)
-    // Note: this is a dynamic reference, i.e. can contain refer to a subclass node
     public Node getParent() {
         return parent;
     }
@@ -50,8 +52,6 @@ public class Node {
         this.parent = parent;
     }
 
-    @Id(3)
-    @Static // <- can only refer to Numbers, not any subclass
     public Numbers getNumbers() {
         return numbers;
     }

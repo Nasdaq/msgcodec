@@ -117,79 +117,87 @@ public class TapCodecTest {
 
     @Id(1)
     public static class AmPosition {
-        private Integer positionType;
-        private String settlementDate;
-        private PositionInfo longPositionInfo;
-        private PositionInfo shortPositionInfo;
-        private long unsettledPaymentIn;
-        private long unsettledPaymentOut;
-        private long unsettledDeliveryIn;
-        private long unsettledDeliveryOut;
-        private long unsettledPaymentInAffectsCollateralBalance;
-        private long unsettledPaymentOutAffectsCollateralBalance;
-        private PositionKey positionKey;
-        private String globalPositionKeyIdentifier;
-        private RtcCustomDetails customAttributes;
-        private AmPositionExt amPositionExt;
         @Id(1)
+        private Integer positionType;
+        @Id(2)
+        private String settlementDate;
+        @Id(3)
+        @Static
+        private PositionInfo longPositionInfo;
+        @Id(4)
+        @Static
+        private PositionInfo shortPositionInfo;
+        @Id(5)
+        private long unsettledPaymentIn;
+        @Id(6)
+        private long unsettledPaymentOut;
+        @Id(7)
+        private long unsettledDeliveryIn;
+        @Id(8)
+        private long unsettledDeliveryOut;
+        @Id(9)
+        private long unsettledPaymentInAffectsCollateralBalance;
+        @Id(10)
+        private long unsettledPaymentOutAffectsCollateralBalance;
+        @Id(11)
+        @Static
+        private PositionKey positionKey;
+        @Id(12)
+        private String globalPositionKeyIdentifier;
+        @Id(13)
+        @Static
+        private RtcCustomDetails customAttributes;
+        @Id(14)
+        @Static
+        private AmPositionExt amPositionExt;
         public Integer getPositionType() {
             return positionType;
         }
         public void setPositionType(Integer positionType) {
             this.positionType = positionType;
         }
-        @Id(2)
         public String getSettlementDate() {
             return settlementDate;
         }
         public void setSettlementDate(String settlementDate) {
             this.settlementDate = settlementDate;
         }
-        @Id(3)
-        @Static
         public PositionInfo getLongPositionInfo() {
             return longPositionInfo;
         }
         public void setLongPositionInfo(PositionInfo longPositionInfo) {
             this.longPositionInfo = longPositionInfo;
         }
-        @Id(4)
-        @Static
         public PositionInfo getShortPositionInfo() {
             return shortPositionInfo;
         }
         public void setShortPositionInfo(PositionInfo shortPositionInfo) {
             this.shortPositionInfo = shortPositionInfo;
         }
-        @Id(5)
         public long getUnsettledPaymentIn() {
             return unsettledPaymentIn;
         }
         public void setUnsettledPaymentIn(long unsettledPaymentIn) {
             this.unsettledPaymentIn = unsettledPaymentIn;
         }
-        @Id(6)
         public long getUnsettledPaymentOut() {
             return unsettledPaymentOut;
         }
         public void setUnsettledPaymentOut(long unsettledPaymentOut) {
             this.unsettledPaymentOut = unsettledPaymentOut;
         }
-        @Id(7)
         public long getUnsettledDeliveryIn() {
             return unsettledDeliveryIn;
         }
         public void setUnsettledDeliveryIn(long unsettledDeliveryIn) {
             this.unsettledDeliveryIn = unsettledDeliveryIn;
         }
-        @Id(8)
         public long getUnsettledDeliveryOut() {
             return unsettledDeliveryOut;
         }
         public void setUnsettledDeliveryOut(long unsettledDeliveryOut) {
             this.unsettledDeliveryOut = unsettledDeliveryOut;
         }
-        @Id(9)
         public long getUnsettledPaymentInAffectsCollateralBalance() {
             return unsettledPaymentInAffectsCollateralBalance;
         }
@@ -197,7 +205,6 @@ public class TapCodecTest {
                 long unsettledPaymentInAffectsCollateralBalance) {
             this.unsettledPaymentInAffectsCollateralBalance = unsettledPaymentInAffectsCollateralBalance;
         }
-        @Id(10)
         public long getUnsettledPaymentOutAffectsCollateralBalance() {
             return unsettledPaymentOutAffectsCollateralBalance;
         }
@@ -205,31 +212,24 @@ public class TapCodecTest {
                 long unsettledPaymentOutAffectsCollateralBalance) {
             this.unsettledPaymentOutAffectsCollateralBalance = unsettledPaymentOutAffectsCollateralBalance;
         }
-        @Id(11)
-        @Static
         public PositionKey getPositionKey() {
             return positionKey;
         }
         public void setPositionKey(PositionKey positionKey) {
             this.positionKey = positionKey;
         }
-        @Id(12)
         public String getGlobalPositionKeyIdentifier() {
             return globalPositionKeyIdentifier;
         }
         public void setGlobalPositionKeyIdentifier(String globalPositionKeyIdentifier) {
             this.globalPositionKeyIdentifier = globalPositionKeyIdentifier;
         }
-        @Id(13)
-        @Static
         public RtcCustomDetails getCustomAttributes() {
             return customAttributes;
         }
         public void setCustomAttributes(RtcCustomDetails customAttributes) {
             this.customAttributes = customAttributes;
         }
-        @Id(14)
-        @Static
         public AmPositionExt getAmPositionExt() {
             return amPositionExt;
         }
@@ -247,52 +247,52 @@ public class TapCodecTest {
     }
     @Id(3)
     public static class PositionInfo {
+        @Id(1)
         private Long quantity = 0L;
+        @Id(2)
         private Long tradeIndependentquantity = 0L;
+        @Id(3)
         private Long initialValue = 0L;
+        @Id(4)
         private Long marketValue = 0L;
+        @Id(5)
         private Long reservedQuantity = 0L;
+        @Id(6)
+        @Static
         private RtcCustomDetails customAttributes;
         public PositionInfo() {
         }
 
-        @Id(1)
         public Long getQuantity() {
             return quantity;
         }
         public void setQuantity(Long quantity) {
             this.quantity = quantity;
         }
-        @Id(2)
         public Long getTradeIndependentquantity() {
             return tradeIndependentquantity;
         }
         public void setTradeIndependentquantity(Long tradeIndependentquantity) {
             this.tradeIndependentquantity = tradeIndependentquantity;
         }
-        @Id(3)
         public Long getInitialValue() {
             return initialValue;
         }
         public void setInitialValue(Long initialValue) {
             this.initialValue = initialValue;
         }
-        @Id(4)
         public Long getMarketValue() {
             return marketValue;
         }
         public void setMarketValue(Long marketValue) {
             this.marketValue = marketValue;
         }
-        @Id(5)
         public Long getReservedQuantity() {
             return reservedQuantity;
         }
         public void setReservedQuantity(Long reservedQuantity) {
             this.reservedQuantity = reservedQuantity;
         }
-        @Id(6)
-        @Static
         public RtcCustomDetails getCustomAttributes() {
             return customAttributes;
         }
@@ -310,9 +310,9 @@ public class TapCodecTest {
     }
     @Id(6)
     public static class BiMessageData {
+        @Id(1)
         private Object message;
 
-        @Id(1)
         public Object getMessage() {
             return message;
         }
@@ -326,89 +326,99 @@ public class TapCodecTest {
     @Id(1)
     @Name("AmPosition")
     public static class AmPosition2 {
-        private PositionType positionType;
-        private String settlementDate;
-        private PositionInfo2 longPositionInfo;
-        private PositionInfo2 shortPositionInfo;
-        private BigDecimal unsettledPaymentIn = BigDecimal.ZERO;
-        private BigDecimal unsettledPaymentOut = BigDecimal.ZERO;
-        private BigDecimal unsettledDeliveryIn = BigDecimal.ZERO;
-        private BigDecimal unsettledDeliveryOut = BigDecimal.ZERO;
-        private BigDecimal unsettledPaymentInAffectsCollateralBalance = BigDecimal.ZERO;
-        private BigDecimal unsettledPaymentOutAffectsCollateralBalance = BigDecimal.ZERO;
-        private PositionKey positionKey;
-        private String globalPositionKeyIdentifier;
-        private RtcCustomDetails customAttributes;
-        private AmPositionExt amPositionExt;
         @Id(1)
+        private PositionType positionType;
+        @Id(2)
+        private String settlementDate;
+        @Id(3)
+        @Static
+        private PositionInfo2 longPositionInfo;
+        @Id(4)
+        @Static
+        private PositionInfo2 shortPositionInfo;
+        @Id(5)
+        @Required
+        @SmallDecimal
+        private BigDecimal unsettledPaymentIn = BigDecimal.ZERO;
+        @Id(6)
+        @Required
+        @SmallDecimal
+        private BigDecimal unsettledPaymentOut = BigDecimal.ZERO;
+        @Id(7)
+        @Required
+        @SmallDecimal
+        private BigDecimal unsettledDeliveryIn = BigDecimal.ZERO;
+        @Id(8)
+        @Required
+        @SmallDecimal
+        private BigDecimal unsettledDeliveryOut = BigDecimal.ZERO;
+        @Id(9)
+        @Required
+        @SmallDecimal
+        private BigDecimal unsettledPaymentInAffectsCollateralBalance = BigDecimal.ZERO;
+        @Id(10)
+        @Required
+        @SmallDecimal
+        private BigDecimal unsettledPaymentOutAffectsCollateralBalance = BigDecimal.ZERO;
+        @Id(11)
+        @Static
+        private PositionKey positionKey;
+        @Id(12)
+        private String globalPositionKeyIdentifier;
+        @Id(13)
+        @Static
+        private RtcCustomDetails customAttributes;
+        @Id(14)
+        @Static
+        private AmPositionExt amPositionExt;
         public PositionType getPositionType() {
             return positionType;
         }
         public void setPositionType(PositionType positionType) {
             this.positionType = positionType;
         }
-        @Id(2)
         public String getSettlementDate() {
             return settlementDate;
         }
         public void setSettlementDate(String settlementDate) {
             this.settlementDate = settlementDate;
         }
-        @Id(3)
-        @Static
         public PositionInfo2 getLongPositionInfo() {
             return longPositionInfo;
         }
         public void setLongPositionInfo(PositionInfo2 longPositionInfo) {
             this.longPositionInfo = longPositionInfo;
         }
-        @Id(4)
-        @Static
         public PositionInfo2 getShortPositionInfo() {
             return shortPositionInfo;
         }
         public void setShortPositionInfo(PositionInfo2 shortPositionInfo) {
             this.shortPositionInfo = shortPositionInfo;
         }
-        @Id(5)
-        @Required
-        @SmallDecimal
         public BigDecimal getUnsettledPaymentIn() {
             return unsettledPaymentIn;
         }
         public void setUnsettledPaymentIn(BigDecimal unsettledPaymentIn) {
             this.unsettledPaymentIn = unsettledPaymentIn;
         }
-        @Id(6)
-        @Required
-        @SmallDecimal
         public BigDecimal getUnsettledPaymentOut() {
             return unsettledPaymentOut;
         }
         public void setUnsettledPaymentOut(BigDecimal unsettledPaymentOut) {
             this.unsettledPaymentOut = unsettledPaymentOut;
         }
-        @Id(7)
-        @Required
-        @SmallDecimal
         public BigDecimal getUnsettledDeliveryIn() {
             return unsettledDeliveryIn;
         }
         public void setUnsettledDeliveryIn(BigDecimal unsettledDeliveryIn) {
             this.unsettledDeliveryIn = unsettledDeliveryIn;
         }
-        @Id(8)
-        @Required
-        @SmallDecimal
         public BigDecimal getUnsettledDeliveryOut() {
             return unsettledDeliveryOut;
         }
         public void setUnsettledDeliveryOut(BigDecimal unsettledDeliveryOut) {
             this.unsettledDeliveryOut = unsettledDeliveryOut;
         }
-        @Id(9)
-        @Required
-        @SmallDecimal
         public BigDecimal getUnsettledPaymentInAffectsCollateralBalance() {
             return unsettledPaymentInAffectsCollateralBalance;
         }
@@ -416,9 +426,6 @@ public class TapCodecTest {
                 BigDecimal unsettledPaymentInAffectsCollateralBalance) {
             this.unsettledPaymentInAffectsCollateralBalance = unsettledPaymentInAffectsCollateralBalance;
         }
-        @Id(10)
-        @Required
-        @SmallDecimal
         public BigDecimal getUnsettledPaymentOutAffectsCollateralBalance() {
             return unsettledPaymentOutAffectsCollateralBalance;
         }
@@ -426,31 +433,24 @@ public class TapCodecTest {
                 BigDecimal unsettledPaymentOutAffectsCollateralBalance) {
             this.unsettledPaymentOutAffectsCollateralBalance = unsettledPaymentOutAffectsCollateralBalance;
         }
-        @Id(11)
-        @Static
         public PositionKey getPositionKey() {
             return positionKey;
         }
         public void setPositionKey(PositionKey positionKey) {
             this.positionKey = positionKey;
         }
-        @Id(12)
         public String getGlobalPositionKeyIdentifier() {
             return globalPositionKeyIdentifier;
         }
         public void setGlobalPositionKeyIdentifier(String globalPositionKeyIdentifier) {
             this.globalPositionKeyIdentifier = globalPositionKeyIdentifier;
         }
-        @Id(13)
-        @Static
         public RtcCustomDetails getCustomAttributes() {
             return customAttributes;
         }
         public void setCustomAttributes(RtcCustomDetails customAttributes) {
             this.customAttributes = customAttributes;
         }
-        @Id(14)
-        @Static
         public AmPositionExt getAmPositionExt() {
             return amPositionExt;
         }
@@ -461,55 +461,55 @@ public class TapCodecTest {
 
     @Id(3)
     public static class PositionInfo2 {
-        private BigDecimal quantity = BigDecimal.ZERO;
-        private BigDecimal tradeIndependentquantity = BigDecimal.ZERO;
-        private BigDecimal initialValue = BigDecimal.ZERO;
-        private BigDecimal marketValue = BigDecimal.ZERO;
-        private BigDecimal reservedQuantity = BigDecimal.ZERO;
-        private RtcCustomDetails customAttributes;
-
         @Id(1)
         @SmallDecimal
+        private BigDecimal quantity = BigDecimal.ZERO;
+        @Id(2)
+        @SmallDecimal
+        private BigDecimal tradeIndependentquantity = BigDecimal.ZERO;
+        @Id(3)
+        @SmallDecimal
+        private BigDecimal initialValue = BigDecimal.ZERO;
+        @Id(4)
+        @SmallDecimal
+        private BigDecimal marketValue = BigDecimal.ZERO;
+        @Id(5)
+        @SmallDecimal
+        private BigDecimal reservedQuantity = BigDecimal.ZERO;
+        @Id(6)
+        @Static
+        private RtcCustomDetails customAttributes;
+
         public BigDecimal getQuantity() {
             return quantity;
         }
         public void setQuantity(BigDecimal quantity) {
             this.quantity = quantity;
         }
-        @Id(2)
-        @SmallDecimal
         public BigDecimal getTradeIndependentquantity() {
             return tradeIndependentquantity;
         }
         public void setTradeIndependentquantity(BigDecimal tradeIndependentquantity) {
             this.tradeIndependentquantity = tradeIndependentquantity;
         }
-        @Id(3)
-        @SmallDecimal
         public BigDecimal getInitialValue() {
             return initialValue;
         }
         public void setInitialValue(BigDecimal initialValue) {
             this.initialValue = initialValue;
         }
-        @Id(4)
-        @SmallDecimal
         public BigDecimal getMarketValue() {
             return marketValue;
         }
         public void setMarketValue(BigDecimal marketValue) {
             this.marketValue = marketValue;
         }
-        @Id(5)
-        @SmallDecimal
         public BigDecimal getReservedQuantity() {
             return reservedQuantity;
         }
         public void setReservedQuantity(BigDecimal reservedQuantity) {
             this.reservedQuantity = reservedQuantity;
         }
-        @Id(6)
-        @Static
         public RtcCustomDetails getCustomAttributes() {
             return customAttributes;
         }

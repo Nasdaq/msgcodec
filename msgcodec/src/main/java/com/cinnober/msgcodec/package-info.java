@@ -10,8 +10,7 @@
  * {@link com.cinnober.msgcodec.StreamCodec} implementation can be instantiated.
  *
  * <p>There is a {@link com.cinnober.msgcodec.ProtocolDictionaryBuilder} that can build a
- * {@link com.cinnober.msgcodec.ProtocolDictionary} based on annotated plain old Java objects with
- * getters and setters according to the Java beans pattern.
+ * {@link com.cinnober.msgcodec.ProtocolDictionary} based on annotated plain old Java objects.
  *
  * <p>Example usage:<pre>
  * ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();

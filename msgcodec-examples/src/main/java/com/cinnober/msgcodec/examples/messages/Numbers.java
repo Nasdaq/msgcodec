@@ -31,69 +31,69 @@ import com.cinnober.msgcodec.anot.Unsigned;
  */
 @Id(2)
 public class Numbers {
+    @Id(1)
     private int signedReq;
+    @Id(2)
+    @Unsigned // <- negative numbers are interpreted as the high values, e.g. -1 = 2^32-1
     private int unsignedReq;
+    @Id(3)
     private Integer signed;
+    @Id(4)
+    @Unsigned
     private Integer unsigned;
 
+    @Id(5)
+    @SmallDecimal // <- not big decimal, limited to 64-bit integer as mantissa
     private BigDecimal decimal;
+    @Id(6)
     private BigDecimal bigDecimal;
+    @Id(7)
     private BigInteger bigInt;
+    @Id(8)
+    @Required // <- make it required
     private BigInteger bigIntReq;
-    @Id(1)
     public int getSignedReq() {
         return signedReq;
     }
     public void setSignedReq(int signedReq) {
         this.signedReq = signedReq;
     }
-    @Id(2)
-    @Unsigned // <- negative numbers are interpreted as the high values, e.g. -1 = 2^32-1
     public int getUnsignedReq() {
         return unsignedReq;
     }
     public void setUnsignedReq(int unsignedReq) {
         this.unsignedReq = unsignedReq;
     }
-    @Id(3)
     public Integer getSigned() {
         return signed;
     }
     public void setSigned(Integer signed) {
         this.signed = signed;
     }
-    @Id(4)
-    @Unsigned
     public Integer getUnsigned() {
         return unsigned;
     }
     public void setUnsigned(Integer unsigned) {
         this.unsigned = unsigned;
     }
-    @Id(5)
-    @SmallDecimal // <- not big decimal, limited to 64-bit integer as mantissa
     public BigDecimal getDecimal() {
         return decimal;
     }
     public void setDecimal(BigDecimal decimal) {
         this.decimal = decimal;
     }
-    @Id(6)
     public BigDecimal getBigDecimal() {
         return bigDecimal;
     }
     public void setBigDecimal(BigDecimal bigDecimal) {
         this.bigDecimal = bigDecimal;
     }
-    @Id(7)
     public BigInteger getBigInt() {
         return bigInt;
     }
     public void setBigInt(BigInteger bigInt) {
         this.bigInt = bigInt;
     }
-    @Id(8)
-    @Required // <- make it required
     public BigInteger getBigIntReq() {
         return bigIntReq;
     }

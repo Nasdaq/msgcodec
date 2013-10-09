@@ -36,7 +36,7 @@ import com.cinnober.msgcodec.Epoch;
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.FIELD})
 public @interface Time {
     /** The granularity of the time. */
     TimeUnit unit() default TimeUnit.MILLISECONDS;

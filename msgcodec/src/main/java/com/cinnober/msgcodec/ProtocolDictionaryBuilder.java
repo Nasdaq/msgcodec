@@ -17,23 +17,28 @@
  */
 package com.cinnober.msgcodec;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 
 import com.cinnober.msgcodec.TypeDef.Symbol;
@@ -50,37 +55,29 @@ import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
  * The protocol dictionary builder can build a protocol dictionary from a collection of java classes.
- * <p>The methods of the Java classes must be annotated properly. See the com.cinnober.msgcodec.anot package.
+ * <p>All non-static fields of the Java classes must be annotated properly, see the com.cinnober.msgcodec.anot package.
+ * The default constructor must exist.
  *
  * <p>Example:
  * <pre>
  * {@literal @}Id(123) // optional message id (recommended)
- * public class MyMessage {
- *     private int id;
- *     private String name;
- *     private Long optionalValue;
- *     private MyMessage embedded;
- *
- *     public MyMessage() {} // default constructor must exist
- *
+ * public class MyMessage extends MsgObj { // extend MsgObject to get toString
  *     {@literal @}Id(1) // optional field id (recommended)
  *     {@literal @}Unsigned // negative values are treated as the positive values 2^31 up to 2^32 - 1.
- *     public int getId() { return id; }
- *     public void setId(int id) { this.id = id; }
+ *     public int id;
  *
  *     {@literal @}Id(2)
  *     {@literal @}Required // null values are not permitted, checked by the message codec
- *     public String getName() { return name; }
- *     public void setName(String name) { this.name = name; }
+ *     public String name;
  *
  *     {@literal @}Id(3)
- *     public Long getOptionalValue() { return optionalValue; }
- *     public void setOptionalValue(Long optionalValue) { this.optionalValue = optionalValue; }
+ *     public Long optionalValue;
  *
  *     {@literal @}Id(4)
  *     {@literal @}Static // only instances of MyMessage are permitted, not sub classes
- *     public MyMessage getEmbedded() { return embedded; }
- *     public void setEmbedded(MyMessage embedded) { this.embedded = embedded; }
+ *     public MyMessage embedded;
+ *
+ *     public MyMessage() {} // default constructor must exist
  * }
  * </pre>
  *
@@ -89,11 +86,28 @@ import com.cinnober.msgcodec.anot.Unsigned;
  */
 public class ProtocolDictionaryBuilder {
 
+    private static final Set<Class<?>> nativeTypes =
+            new HashSet<>(new ArrayList<Class<?>>(Arrays.asList(
+                    byte.class, Byte.class,
+                    short.class, Short.class,
+                    int.class, Integer.class,
+                    long.class, Long.class,
+                    float.class, Float.class,
+                    double.class, Double.class,
+                    BigDecimal.class,
+                    BigInteger.class,
+                    Date.class,
+                    boolean.class, Boolean.class,
+                    String.class,
+                    byte[].class
+                    )));
+
     /** Build a protocol dictionary from the specified Java classes.
      *
      * <p>The protocol dictionary built is bound to the specified classes.
      *
      * @param messageTypes the Java classes that should be included in the protocol dictionary.
+     * Any component groups or enumerations that are referred to will be automatically included.
      * @return the created protocol dictionary.
      * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
      * E.g. wrong annotations etc.
@@ -111,6 +125,7 @@ public class ProtocolDictionaryBuilder {
      * <p>The protocol dictionary built is bound to the specified classes.
      *
      * @param messageTypes the Java classes that should be included in the protocol dictionary.
+     * Any component groups or enumerations that are referred to will be automatically included.
      * @return the created protocol dictionary.
      * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
      * E.g. wrong annotations etc.
@@ -132,6 +147,15 @@ public class ProtocolDictionaryBuilder {
     @SuppressWarnings({ "rawtypes" })
     private ProtocolDictionary internalBuild(Map<Class<?>, GroupMeta> groups) throws IllegalArgumentException {
 
+        Map<String, NamedType> namedTypes = new LinkedHashMap<>();
+
+        // scan groups for referenced component groups
+        LinkedList<GroupMeta> groupsToScan = new LinkedList<>(groups.values());
+        while (!groupsToScan.isEmpty()) {
+            GroupMeta group = groupsToScan.removeFirst();
+            scanGroup(group, groups, namedTypes, groupsToScan);
+        }
+
         // infer group names, ids and inheritance
         for (GroupMeta group : groups.values()) {
             inferGroupName(group);
@@ -139,8 +163,6 @@ public class ProtocolDictionaryBuilder {
             group.setAnnotations(toAnnotationsMap(group.getJavaClass().getAnnotation(Annotate.class)));
             inferGroupInheritance(group, groups);
         }
-
-        Map<String, NamedType> namedTypes = new LinkedHashMap<>();
 
         // find fields, traverse groups starting from the top (inheritance wise)
         ArrayList<GroupMeta> sortedGroups = new ArrayList<GroupMeta>(groups.values());
@@ -179,6 +201,74 @@ public class ProtocolDictionaryBuilder {
         return new ProtocolDictionary(groupDefs, namedTypes.values(), binding);
     }
 
+
+    /**
+     * Scan all field types to automatically add GroupMeta objects for all group types.
+     *
+     * @param group the group to scan, not null.
+     * @param groups all groups, not null. Newly found groups will be added here.
+     * @param namedTypes the named types, not null
+     * @param groupsToScan the groups to be scanned, not null. Newly found groups will be added here.
+     */
+    private void scanGroup(GroupMeta group,
+            Map<Class<?>, GroupMeta> groups,
+            Map<String, NamedType> namedTypes,
+            LinkedList<GroupMeta> groupsToScan) {
+        HashMap<TypeVariable<?>, Class<?>> genericParameters = new HashMap<>();
+
+        Class<?> javaClass = group.getJavaClass();
+        do {
+            for (Field field : javaClass.getDeclaredFields()) {
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+                scanType(getType(field, genericParameters),
+                        field.getAnnotation(Sequence.class), groups, namedTypes, groupsToScan);
+            }
+
+            updateGenericParameters(javaClass, genericParameters);
+            javaClass = javaClass.getSuperclass();
+        } while (javaClass != null);
+    }
+
+
+
+    /**
+     * Scan the type to automatically add GroupMeta objects for group types.
+     *
+     * If the type is a group type, a new GroupMeta is added to groups and groupsToScan.
+     *
+     * @param type the type, not null
+     * @param sequenceAnot sequence annotation, or null
+     * @param groups all groups, not null. Newly found groups will be added here.
+     * @param namedTypes the named types, not null
+     * @param groupsToScan the groups to be scanned, not null. Newly found groups will be added here.
+     */
+    private void scanType(Class<?> type, Sequence sequenceAnot,
+            Map<Class<?>,
+            GroupMeta> groups,
+            Map<String, NamedType> namedTypes,
+            LinkedList<GroupMeta> groupsToScan) {
+        if (nativeTypes.contains(type) || type.isEnum()) {
+            return;
+        }
+
+        if (type.isArray()) {
+            scanType(type.getComponentType(), null, groups, namedTypes, groupsToScan);
+        } else if (sequenceAnot != null) {
+            scanType(sequenceAnot.value(), null, groups, namedTypes, groupsToScan);
+        } else {
+            if (type.equals(Object.class)) {
+                return; // placeholder for any type
+            }
+
+            if (!groups.containsKey(type)) {
+                GroupMeta group = new GroupMeta(type);
+                groups.put(type, group);
+                groupsToScan.add(group);
+            }
+        }
+    }
 
     /** Infer and set the group name.
      * @param group
@@ -246,89 +336,37 @@ public class ProtocolDictionaryBuilder {
      * @param group
      */
     private void findFields(GroupMeta group, Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groupsByClass) {
-        findFields(group, group.getJavaClass(), namedTypes, groupsByClass);
+        findFields(group, group.getJavaClass(), new HashMap<TypeVariable<?>, Class<?>>(), namedTypes, groupsByClass);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private void findFields(GroupMeta group, Class<?> javaClass, Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groupsByClass) {
+    private void findFields(GroupMeta group, Class<?> javaClass,
+            Map<TypeVariable<?>, Class<?>> genericParameters,
+            Map<String, NamedType> namedTypes,
+            Map<Class<?>, GroupMeta> groupsByClass) {
         if (javaClass == null ||
             (group.getParent() != null && group.getParent().getJavaClass().equals(javaClass))) {
             return;
         }
-        findFields(group, javaClass.getSuperclass(), namedTypes, groupsByClass);
 
-        // methods are not sorted in any order, not even as they appear in the source code
+        updateGenericParameters(javaClass, genericParameters);
+        findFields(group, javaClass.getSuperclass(), genericParameters, namedTypes, groupsByClass); // TODO: pass on generic type info here
+
+        // fields are not sorted in any order, not even as they appear in the source code
         // instead we sort the fields according to id and name (later on)
-        Method[] methods = javaClass.getDeclaredMethods();
-        Map<String, Method> getMethodsByPropertyName = new HashMap<String, Method>(methods.length);
-        Map<String, Method> setMethodsByPropertyName = new HashMap<String, Method>(methods.length);
 
-        // clear all non-public or static methods
-        for (int i=0; i<methods.length; i++) {
-            if (!Modifier.isPublic(methods[i].getModifiers()) ||
-                Modifier.isStatic(methods[i].getModifiers())) {
-                methods[i] = null;
-            }
-        }
+        Field[] fields = javaClass.getDeclaredFields();
+        ArrayList<FieldDef> fieldDefs = new ArrayList<>();
 
-        // find get methods
-        for (Method method : methods) {
-            if (method == null) {
+        for (Field field : fields) {
+            if (Modifier.isStatic(field.getModifiers())) {
                 continue;
             }
-            if (method.getParameterTypes().length != 0) {
-                continue; // must not have any parameters
-            }
-            if (method.getReturnType().equals(void.class)) {
-                continue; // must have a return type
-            }
-            // check prefix
-            String propertyName = null;
-            if (method.getName().startsWith("get")) {
-                propertyName = toPropertyName(method.getName().substring(3));
-            } else if (method.getName().startsWith("is") &&
-                       (method.getReturnType().equals(boolean.class) ||
-                        method.getReturnType().equals(Boolean.class))) {
-                propertyName = toPropertyName(method.getName().substring(2));
-            }
 
-            if (propertyName != null) {
-                getMethodsByPropertyName.put(propertyName, method);
-            }
-        }
-
-        // find set methods
-        for (Method method : methods) {
-            if (method == null) {
-                continue;
-            }
-            if (method.getParameterTypes().length != 1) {
-                continue; // must have one parameter
-            }
-            // relax: ignore return type (should be void)
-
-            // check prefix
-            if (method.getName().startsWith("set")) {
-                String propertyName = toPropertyName(method.getName().substring(3));
-                Method getMethod = getMethodsByPropertyName.get(propertyName);
-                if (getMethod == null) {
-                    continue; // no matching get method
-                }
-                if (!getMethod.getReturnType().equals(method.getParameterTypes()[0])) {
-                    continue; // parameter type of set-method must match return type of get-method
-                }
-                setMethodsByPropertyName.put(propertyName, method);
-            }
-        }
-
-        ArrayList<FieldDef> fields = new ArrayList<FieldDef>(setMethodsByPropertyName.size());
-        for (Map.Entry<String, Method> entry : setMethodsByPropertyName.entrySet()) {
-            Method setMethod = entry.getValue();
-            Method getMethod = getMethodsByPropertyName.get(entry.getKey());
-            String name = entry.getKey();
-            Class type = getMethod.getReturnType();
-            Id idAnot = getAnnotation(Id.class, getMethod, setMethod);
-            Name nameAnot = getAnnotation(Name.class, getMethod, setMethod);
+            String name = field.getName();
+            Class type = getType(field, genericParameters);
+            Id idAnot = field.getAnnotation(Id.class);
+            Name nameAnot = field.getAnnotation(Name.class);
 
             if (nameAnot != null) {
                 name = nameAnot.value();
@@ -337,19 +375,19 @@ public class ProtocolDictionaryBuilder {
             if (idAnot != null) {
                 id = idAnot.value();
             }
-            Accessor<Object, Object> accessor = new MethodAccessor(getMethod, setMethod);
+            Accessor<Object, Object> accessor = new FieldAccessor(field);
 
-            Required requiredAnot = getAnnotation(Required.class, getMethod, setMethod);
+            Required requiredAnot = field.getAnnotation(Required.class);
             boolean required = type.isPrimitive() || requiredAnot != null;
 
-            Enumeration enumAnot = getAnnotation(Enumeration.class, getMethod, setMethod);
-            Time timeAnot = getAnnotation(Time.class, getMethod, setMethod);
-            Sequence sequenceAnot = getAnnotation(Sequence.class, getMethod, setMethod);
-            Static staticAnot = getAnnotation(Static.class, getMethod, setMethod);
-            Unsigned unsignedAnot = getAnnotation(Unsigned.class, getMethod, setMethod);
-            SmallDecimal smallDecimalAnot = getAnnotation(SmallDecimal.class, getMethod, setMethod);
+            Enumeration enumAnot = field.getAnnotation(Enumeration.class);
+            Time timeAnot = field.getAnnotation(Time.class);
+            Sequence sequenceAnot = field.getAnnotation(Sequence.class);
+            Static staticAnot = field.getAnnotation(Static.class);
+            Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
+            SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
             Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
-            Annotate annotateAnot = getAnnotation(Annotate.class, getMethod, setMethod);
+            Annotate annotateAnot = field.getAnnotation(Annotate.class);
 
             TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
                     staticAnot != null, unsignedAnot != null, smallDecimalAnot != null,
@@ -357,15 +395,70 @@ public class ProtocolDictionaryBuilder {
             FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
                     toAnnotationsMap(annotateAnot),
                     new FieldBinding(accessor, type, componentType));
-            fields.add(fieldDef);
+            fieldDefs.add(fieldDef);
         }
 
         // sort fields according to id and then name
-        Collections.sort(fields, new FieldDefComparator());
-        for (FieldDef field : fields) {
+        Collections.sort(fieldDefs, new FieldDefComparator());
+        for (FieldDef field : fieldDefs) {
             group.addField(field);
         }
+    }
 
+    /**
+     * Returns the field type, by also resolving any generic type variables using
+     * the supplied generic parameters map.
+     *
+     * @param field the field to return the type of, not null
+     * @param genericParameters the map, not null
+     * @return the field type, not null
+     */
+    private Class<?> getType(Field field, Map<TypeVariable<?>, Class<?>> genericParameters) {
+        Type genericType = field.getGenericType();
+        if (genericType instanceof TypeVariable) {
+            TypeVariable<?> genericVar = (TypeVariable<?>) genericType;
+            Class<?> type = genericParameters.get(genericVar);
+            if (type != null) {
+                return type;
+            }
+        }
+        return field.getType();
+    }
+
+    /**
+     * Update the generic parameters map for any type parameters set in the <b>extends</b>
+     * part of this class.
+     *
+     * For example,
+     * we have the classes <code>Base&lt;T&gt;</code> and <code>Foo extends Base&gt;Bar&lt;</code>.
+     * Then this method is invoked on Foo, which means that the type parameter T is mapped to Bar.class.
+     * When the type parameter T is referenced in Base this will be replaced with Bar in this context.
+     *
+     * @param javaClass the class, not null.
+     * @param genericParameters the parameters map, not null. This map will be updated
+     */
+    private void updateGenericParameters(Class<?> javaClass,
+            Map<TypeVariable<?>, Class<?>> genericParameters) {
+        Class<?> superclass = javaClass.getSuperclass();
+        if (superclass == null) {
+            return;
+        }
+        Type genericSuperclass = javaClass.getGenericSuperclass();
+        if (genericSuperclass instanceof ParameterizedType) {
+            ParameterizedType parametrizedSuperclass = (ParameterizedType) genericSuperclass;
+            TypeVariable<?>[] typeParameters = superclass.getTypeParameters();
+            Type[] actualTypeArguments = parametrizedSuperclass.getActualTypeArguments();
+            for (int i=0; i<typeParameters.length; i++) {
+                if (actualTypeArguments[i] instanceof Class) {
+                    genericParameters.put(typeParameters[i], (Class<?>) actualTypeArguments[i]);
+                } else if (actualTypeArguments[i] instanceof TypeVariable) {
+                    Class<?> actualType = genericParameters.get(actualTypeArguments[i]);
+                    if (actualType != null) {
+                        genericParameters.put(typeParameters[i], actualType);
+                    }
+                }
+            }
+        }
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -373,18 +466,19 @@ public class ProtocolDictionaryBuilder {
             boolean isStatic, boolean isUnsigned, boolean isSmallDecimal,
             Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groups) {
         // sequence
-        if (sequenceAnot != null) {
+        if (sequenceAnot != null || (type.isArray() && !type.equals(byte[].class))) {
             if (!Collection.class.isAssignableFrom(type) && !type.isArray()) {
                 throw new IllegalArgumentException(
                         "Illegal Sequence annotation. Field type must be Collection (or subclass) or array.");
             }
-            if (type.isArray() && !type.getComponentType().equals(sequenceAnot.value())) {
+            if (type.isArray() && sequenceAnot != null && !type.getComponentType().equals(sequenceAnot.value())) {
                 throw new IllegalArgumentException(
                         "Illegal sequence annotation. Field type must be array of " +
                 type.getComponentType().getName());
             }
 
-            TypeDef elementType = getTypeDef(sequenceAnot.value(), null, enumAnot, timeAnot,
+            Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
+            TypeDef elementType = getTypeDef(componentType, null, enumAnot, timeAnot,
                     isStatic, isUnsigned, isSmallDecimal, namedTypes, groups);
             return new TypeDef.Sequence(elementType);
         }
@@ -468,27 +562,6 @@ public class ProtocolDictionaryBuilder {
         throw new IllegalArgumentException("Illegal field type. " + type.getName());
     }
 
-     private <T extends Annotation> T getAnnotation(Class<T> annotationClass, Method ... methods) {
-        for (Method method : methods) {
-            T annotation = method.getAnnotation(annotationClass);
-            if (annotation != null) {
-                return annotation;
-            }
-        }
-        return null;
-    }
-
-    private String toPropertyName(String name) {
-        if (name.length() == 0) {
-            return "";
-        } else {
-            StringBuilder str = new StringBuilder(name);
-            str.setCharAt(0, Character.toLowerCase(str.charAt(0)));
-            return str.toString();
-        }
-    }
-
-
     private static class GroupMeta {
         private final Class<?> javaClass;
         private int id;
@@ -567,31 +640,26 @@ public class ProtocolDictionaryBuilder {
     }
 
     @SuppressWarnings("rawtypes")
-    private static class MethodAccessor implements Accessor {
-        private final Method getMethod;
-        private final Method setMethod;
-        public MethodAccessor(Method getMethod, Method setMethod) {
-            this.getMethod = getMethod;
-            this.setMethod = setMethod;
+    private static class FieldAccessor implements Accessor {
+        private final Field field;
+        public FieldAccessor(Field field) {
+            this.field = field;
+            field.setAccessible(true);
         }
         @Override
         public Object getValue(Object obj) {
             try {
-                return getMethod.invoke(obj);
-            } catch (IllegalAccessException e) {
+                return field.get(obj);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new Error("Should not happen", e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException("Getter throwed exception", e);
             }
         }
         @Override
         public void setValue(Object obj, Object value) {
             try {
-                setMethod.invoke(obj, value);
-            } catch (IllegalAccessException e) {
+                field.set(obj, value);
+            } catch (IllegalArgumentException | IllegalAccessException e) {
                 throw new Error("Should not happen", e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException("Setter throwed exception", e);
             }
         }
     }

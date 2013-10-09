@@ -24,12 +24,12 @@ import java.lang.annotation.Target;
 
 /**
  * Specifies that the field is of a sequence type.
- * 
+ *
  * @author mikael.brannstrom
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD})
+@Target({ElementType.FIELD})
 public @interface Sequence {
     /** The element type. */
     Class<?> value();

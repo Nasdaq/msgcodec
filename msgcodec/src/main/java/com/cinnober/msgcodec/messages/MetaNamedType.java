@@ -28,7 +28,9 @@ import com.cinnober.msgcodec.anot.Required;
 @Name("NamedType")
 @Id(16002)
 public class MetaNamedType extends MetaAnnotated {
+    @Required
     private String name;
+    @Required
     private MetaTypeDef type;
     public MetaNamedType() {
     }
@@ -45,7 +47,6 @@ public class MetaNamedType extends MetaAnnotated {
     /**
      * @return the name
      */
-    @Required
     public String getName() {
         return name;
     }
@@ -58,7 +59,6 @@ public class MetaNamedType extends MetaAnnotated {
     /**
      * @return the type
      */
-    @Required
     public MetaTypeDef getType() {
         return type;
     }
