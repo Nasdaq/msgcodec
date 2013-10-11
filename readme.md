@@ -4,17 +4,12 @@ A library to encode and decode messages in various formats where messages are de
 ## Usage ##
 Given a POJO:
 
-    class Hello {
-        private String greeting;
+    public class Hello extends MsgObject {
+        /** The greeting. */
+        @Required
+        public String greeting;
         public Hello() {}
         public Hello(String greeting) {
-            this.greeting = greeting;
-        }
-        @Required
-        public String getGreeting() {
-            return greeting;
-        }
-        public void setGreeting(String greeting) {
             this.greeting = greeting;
         }
     }
@@ -49,13 +44,13 @@ In a gradle project one would include the libs in dependencies section of your `
 
 ## Building msgcodec ##
 First clone a copy of the repo:
->git clone git@git.cinnober.com:products/msgcodec.git
+>git clone git@gitrepo.cinnober.com:clearing/msgcodec.git
 
 To build msg-codec you need cbuilder. Cd into msgcodec/Build and run
+>cd msgcodec/Build
 >gradle getDependentModules
-then cd up one level and run
+>cd ..
 >gradle build
-
 
 If you want to edit java files from within eclipse, run
 >gradle eclipse
