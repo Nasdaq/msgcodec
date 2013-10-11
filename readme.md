@@ -43,6 +43,8 @@ In a gradle project one would include the libs in dependencies section of your `
     }
 
 ## Building msgcodec ##
+PENDING: maybe we can remove the "Development" prefix below?
+
 First clone a copy of the repo:
 >git clone git@gitrepo.cinnober.com:clearing/msgcodec.git Developmentmsgcodec
 
