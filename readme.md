@@ -27,7 +27,7 @@ We can generate a Blink message like this:
 ...and decode it back to an object like this:
 
     Hello decoded = (Hello) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
-    System.out.println(decoded.getGreeting().equals(msg.getGreeting()) + " = true");
+    System.out.println(decoded.greeting.equals(msg.greeting) + " = true");
 
 Note that the same dictionary can be used with another encoder to produce for example TAP messages. See javadoc and tests for more examples.
 
@@ -62,6 +62,10 @@ See the javadoc of `msgcodec`. To build the javadoc run:
 >gradle javadoc
 
 The result ends up in msgcodec/build/docs/javadoc/.
+
+## Examples ##
+
+See msgcodec-examples for example usage of msgcodec.
 
 ## Undocumented ##
 How are tests run?
