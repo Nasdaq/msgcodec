@@ -44,12 +44,11 @@ In a gradle project one would include the libs in dependencies section of your `
 
 ## Building msgcodec ##
 First clone a copy of the repo:
->git clone git@gitrepo.cinnober.com:clearing/msgcodec.git
+>git clone git@gitrepo.cinnober.com:clearing/msgcodec.git Developmentmsgcodec
 
-To build msg-codec you need cbuilder. Cd into msgcodec/Build and run
->cd msgcodec/Build
->gradle getDependentModules
->cd ..
+Bootstrap dependencies (cBuilder) and build:
+>cd Developmentmsgcodec
+>cd Build && gradle getDependentModules && cd -
 >gradle build
 
 If you want to edit java files from within eclipse, run
@@ -66,6 +65,17 @@ The result ends up in msgcodec/build/docs/javadoc/.
 ## Examples ##
 
 See msgcodec-examples for example usage of msgcodec.
+
+## Structure ##
+
+The code is divided into the following projects:
+- msgcodec: contains annotations etc required for defining messages and protocols
+- msgcodec-json: JSON codec
+- msgcodec-xml: XML codec
+- msgcodec-blink: Blink (compact format) codec
+- msgcodec-tap: TAP codec
+- msgcodec-javadoc: Javadoc doclet for extracting javadoc comments from messages.
+- msgcodec-examples: Examples of how to use msgcodec.
 
 ## Undocumented ##
 How are tests run?
