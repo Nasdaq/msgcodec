@@ -1,0 +1,6 @@
+apply plugin: 'cbuilder'
+description = ''
+
+dependencies {
+  compile project(':msgcodec:msgcodec')
+}
