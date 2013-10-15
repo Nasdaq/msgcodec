@@ -15,7 +15,7 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.test.messages;
 
 import java.util.Collection;
 
@@ -30,7 +30,7 @@ import com.cinnober.msgcodec.anot.Unsigned;
  * @author mikael.brannstrom
  *
  */
-@Id(100)
+@Id(108)
 public class SequencesMessage extends MsgObject {
 
     @Sequence(byte.class)
@@ -54,15 +54,15 @@ public class SequencesMessage extends MsgObject {
 
 
     @Sequence(Integer.class)
-    Collection<Integer> collectionInts;
+    public Collection<Integer> collectionInts;
 
     @Unsigned @Sequence(Integer.class)
-    Collection<Integer> collectionUInts;
+    public Collection<Integer> collectionUInts;
 
     @Sequence(Person.class)
-    Collection<Person> collectionPeople;
+    public Collection<Person> collectionPeople;
 
     @Static @Sequence(Employee.class)
-    Collection<Employee> collectionEmployees;
+    public Collection<Employee> collectionEmployees;
 
 }

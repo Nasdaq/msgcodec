@@ -15,7 +15,7 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
@@ -25,7 +25,7 @@ import com.cinnober.msgcodec.anot.Required;
  * @author mikael.brannstrom
  *
  */
-@Id(100)
+@Id(109)
 public class StringsMessage extends MsgObject {
 
     @Id(23)

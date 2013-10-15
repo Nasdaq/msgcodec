@@ -15,16 +15,25 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.test.messages;
 
-import com.cinnober.msgcodec.anot.Unsigned;
+import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Id;
 
 /**
  * @author mikael.brannstrom
  *
  */
-public class Employee extends Person {
-    @Unsigned
-    public long employeeNumber;
+@Id(104)
+public class FloatsMessage extends MsgObject {
+    @Id(9)
+    public float myFloat;
+    @Id(10)
+    public double myDouble;
+
+    @Id(20)
+    public Float myFloatObj;
+    @Id(21)
+    public Double myDoubleObj;
 
 }

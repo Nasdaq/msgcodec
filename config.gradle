@@ -10,7 +10,6 @@ ext {
         // Projects that belong to this module
         'projects' : [
                 'msgcodec',
-                'msgcodec-test',
                 'msgcodec-blink',
                 'msgcodec-examples',
                 'msgcodec-javadoc',

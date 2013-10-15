@@ -15,20 +15,25 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
 
 /**
  * @author mikael.brannstrom
  *
  */
-@Id(100)
-public class MiscMessage extends MsgObject {
-    @Id(11)
-    public boolean myBoolean;
-    @Id(22)
-    public Boolean myBooleanObj;
+@Id(103)
+public class EnumsMessage extends MsgObject {
+    public Color myColor;
+    @Required
+    public Color myColorReq;
 
+    @Enumeration(Color.class)
+    public Integer myIntColor;
+    @Enumeration(Color.class)
+    public int myIntColorReq;
 }

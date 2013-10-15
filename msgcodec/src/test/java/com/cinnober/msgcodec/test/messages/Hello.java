@@ -15,25 +15,25 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
 
 /**
  * @author mikael.brannstrom
  *
  */
-@Id(100)
-public class FloatsMessage extends MsgObject {
-    @Id(9)
-    public float myFloat;
-    @Id(10)
-    public double myDouble;
+@Id(1)
+public class Hello extends MsgObject {
+    @Required
+    public String greeting;
 
-    @Id(20)
-    public Float myFloatObj;
-    @Id(21)
-    public Double myDoubleObj;
+    public Hello() {
+    }
 
+    public Hello(String greeting) {
+        this.greeting = greeting;
+    }
 }

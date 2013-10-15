@@ -581,7 +581,7 @@ abstract class FieldInstruction<V> {
             if (time == null) {
                 return null;
             } else {
-                return new Date(in.readInt64()*timeUnitInMillis+epochOffset);
+                return new Date(time*timeUnitInMillis+epochOffset);
             }
         }
     }

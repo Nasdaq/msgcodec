@@ -15,30 +15,18 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
-
-import java.math.BigDecimal;
+package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.SmallDecimal;
 
 /**
  * @author mikael.brannstrom
  *
  */
-@Id(101)
-public class DecimalsMessage extends MsgObject {
-    @Id(1)
-    public BigDecimal myDecimal;
+@Id(110)
+public class Person extends MsgObject {
     @Required
-    @Id(2)
-    public BigDecimal myDecimalReq;
-
-    @Id(3) @SmallDecimal
-    public BigDecimal mySmallDecimal;
-    @Required
-    @Id(4) @SmallDecimal
-    public BigDecimal mySmallDecimalReq;
+    public String name;
 }

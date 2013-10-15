@@ -15,14 +15,26 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.blink;
+
+import org.junit.runners.model.InitializationError;
+
+import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
+import com.cinnober.msgcodec.test.messages.TestProtocol;
 
 /**
  * @author mikael.brannstrom
  *
  */
-public enum Color {
-    RED,
-    GREEN,
-    BLUE,
+public class BlinkTestMessagesSuiteImpl extends TestMessagesSuite {
+
+    public BlinkTestMessagesSuiteImpl(Class<?> rootClass)
+            throws InitializationError {
+        super(rootClass, createCodec());
+    }
+
+    private static StreamCodec createCodec() {
+        return new BlinkCodec(TestProtocol.getProtocolDictionary());
+    }
 }

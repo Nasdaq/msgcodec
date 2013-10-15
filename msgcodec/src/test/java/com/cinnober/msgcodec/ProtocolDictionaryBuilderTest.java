@@ -19,6 +19,8 @@ package com.cinnober.msgcodec;
 
 import org.junit.Test;
 
+import com.cinnober.msgcodec.test.messages.TestProtocol;
+
 
 /**
  * @author mikael.brannstrom
@@ -42,6 +44,12 @@ public class ProtocolDictionaryBuilderTest {
     public void testFooBar() {
         ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
         ProtocolDictionary dict = builder.build(FooMessage.class, BarMessage.class, Thing.class);
+        System.out.println(dict.toString());
+    }
+
+    @Test
+    public void testTestProtocol() {
+        ProtocolDictionary dict = TestProtocol.getProtocolDictionary();
         System.out.println(dict.toString());
     }
 

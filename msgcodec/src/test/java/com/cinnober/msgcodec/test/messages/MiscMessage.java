@@ -15,16 +15,41 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.test;
+package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
  *
  */
-public class Person extends MsgObject {
+@Id(106)
+public class MiscMessage extends MsgObject {
+    @Id(1)
+    public boolean myBoolean;
+    @Id(2)
+    public Boolean myBooleanObj;
+
+    @Id(3)
+    public Object myAny;
+
+    @Id(4)
+    public Person myDynPerson;
+    @Id(5)
+    @Static
+    public Person myStatPerson;
+
+    @Id(6)
     @Required
-    public String name;
+    public Object myAnyReq;
+    @Id(7)
+    @Required
+    public Person myDynPersonReq;
+    @Id(8)
+    @Static
+    @Required
+    public Person myStatPersonReq;
 }
