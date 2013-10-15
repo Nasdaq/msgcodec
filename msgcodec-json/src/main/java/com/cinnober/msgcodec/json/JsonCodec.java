@@ -20,6 +20,7 @@ package com.cinnober.msgcodec.json;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -121,6 +122,10 @@ public class JsonCodec implements StreamCodec {
             return JsonValueHandler.BIGDECIMAL;
         case BIGINT:
             return JsonValueHandler.BIGINT;
+        case FLOAT32:
+            return JsonValueHandler.FLOAT32;
+        case FLOAT64:
+            return JsonValueHandler.FLOAT64;
         case SEQUENCE:
             if (javaClass.isArray()) {
                 return new JsonValueHandler.ArraySequenceHandler(
@@ -139,6 +144,16 @@ public class JsonCodec implements StreamCodec {
                 return new JsonValueHandler.EnumHandler((TypeDef.Enum)type, javaClass);
             } else { // integer
                 return new JsonValueHandler.IntEnumHandler((TypeDef.Enum)type);
+            }
+        case TIME:
+            if (javaClass.equals(Date.class)) {
+                return new JsonValueHandler.DateTimeHandler((TypeDef.Time)type);
+            } else if(javaClass.equals(Integer.class) || javaClass.equals(int.class)) {
+                return new JsonValueHandler.IntTimeHandler((TypeDef.Time)type);
+            } else if(javaClass.equals(Long.class) || javaClass.equals(long.class)) {
+                return new JsonValueHandler.LongTimeHandler((TypeDef.Time)type);
+            } else {
+                throw new IllegalArgumentException("Illegal time java class: " + javaClass);
             }
 
         default:

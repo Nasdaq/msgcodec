@@ -23,12 +23,15 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.EnumSymbols;
+import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
@@ -60,6 +63,8 @@ abstract class JsonValueHandler<T> {
     static final DecimalHandler DECIMAL = new DecimalHandler();
     static final BigDecimalHandler BIGDECIMAL = new BigDecimalHandler();
     static final BigIntHandler BIGINT = new BigIntHandler();
+    static final Float32Handler FLOAT32 = new Float32Handler();
+    static final Float64Handler FLOAT64 = new Float64Handler();
 
     abstract void writeValue(T value, JsonGenerator g) throws IOException;
     abstract T readValue(JsonParser p) throws IOException;
@@ -211,7 +216,137 @@ abstract class JsonValueHandler<T> {
             return p.getBigIntegerValue();
         }
     }
+    static class Float32Handler extends JsonValueHandler<Float> {
+        @Override
+        void writeValue(Float value, JsonGenerator g) throws IOException {
+            g.writeNumber(value);
+        }
+        @Override
+        Float readValue(JsonParser p) throws IOException {
+            return p.getFloatValue();
+        }
+    }
+    static class Float64Handler extends JsonValueHandler<Double> {
+        @Override
+        void writeValue(Double value, JsonGenerator g) throws IOException {
+            g.writeNumber(value);
+        }
+        @Override
+        Double readValue(JsonParser p) throws IOException {
+            return p.getDoubleValue();
+        }
+    }
 
+    static abstract class TimeHandler<T> extends JsonValueHandler<T> {
+        private final Epoch epoch;
+        private final TimeUnit unit;
+
+        public TimeHandler(TypeDef.Time type) {
+            this.epoch = type.getEpoch();
+            this.unit = type.getUnit();
+        }
+
+        /** Convert the value to a long value for the specified epoch and time unit. */
+        protected abstract long convertToLong(T value);
+        /** Convert the value from a long value for the specified epoch and time unit. */
+        protected abstract T convertFromLong(long value);
+
+        @Override
+        void writeValue(T value, JsonGenerator g) throws IOException {
+            long timeValue = convertToLong(value);
+            // TODO: format long to string
+            String timeStr = "TODO-TIME:" + Long.toString(timeValue);
+            g.writeString(timeStr);
+        }
+
+        @Override
+        T readValue(JsonParser p) throws IOException {
+            String s = p.getText();
+            long timeValue = Long.parseLong(s.substring("TODO-TIME:".length()));
+            return convertFromLong(timeValue);
+        }
+    }
+
+    static class IntTimeHandler extends TimeHandler<Integer> {
+        public IntTimeHandler(TypeDef.Time type) {
+            super(type);
+        }
+
+        @Override
+        protected long convertToLong(Integer value) {
+            return value;
+        }
+
+        @Override
+        protected Integer convertFromLong(long value) {
+            return (int)value;
+        }
+    }
+
+    static class LongTimeHandler extends TimeHandler<Long> {
+        public LongTimeHandler(TypeDef.Time type) {
+            super(type);
+        }
+
+        @Override
+        protected long convertToLong(Long value) {
+            return value;
+        }
+
+        @Override
+        protected Long convertFromLong(long value) {
+            return value;
+        }
+    }
+
+    private static long getTimeInMillis(TimeUnit unit) {
+        switch (unit) {
+        case MILLISECONDS:
+            return 1;
+        case SECONDS:
+            return 1000;
+        case MINUTES:
+            return 60*1000;
+        case HOURS:
+            return 60*60*1000;
+        case DAYS:
+            return 24*60*60*1000;
+        default:
+            throw new IllegalArgumentException("Date does not support " + unit);
+        }
+    }
+    private static long getEpochOffset(Epoch epoch) {
+        switch (epoch) {
+        case UNIX:
+            return 0;
+        case Y2K:
+            return 946706400000L;
+        case MIDNIGHT:
+            return 0;
+        default:
+            throw new IllegalArgumentException("Date does not support " + epoch);
+        }
+    }
+    static class DateTimeHandler extends TimeHandler<Date> {
+        private final long timeUnitInMillis;
+        private final long epochOffset;
+        public DateTimeHandler(TypeDef.Time type) {
+            super(type);
+            timeUnitInMillis = getTimeInMillis(type.getUnit());
+            epochOffset = getEpochOffset(type.getEpoch());
+        }
+
+        @Override
+        protected long convertToLong(Date value) {
+            return (value.getTime()-epochOffset)/timeUnitInMillis;
+
+        }
+
+        @Override
+        protected Date convertFromLong(long value) {
+            return new Date(value*timeUnitInMillis+epochOffset);
+        }
+    }
     static class EnumHandler<E extends Enum<E>> extends JsonValueHandler<E> {
         private final EnumSymbols<E> enumSymbols;
         public EnumHandler(TypeDef.Enum typeDef, Class<E> enumClass) {
