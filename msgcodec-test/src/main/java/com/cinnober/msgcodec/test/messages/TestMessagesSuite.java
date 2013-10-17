@@ -99,7 +99,7 @@ public abstract class TestMessagesSuite extends Suite {
 
         @Override
         public void run(RunNotifier notifier) {
-            notifier.fireTestRunStarted(description);
+            notifier.fireTestStarted(description);
 
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
