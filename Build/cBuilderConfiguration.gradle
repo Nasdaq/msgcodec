@@ -14,7 +14,7 @@ project.buildscript {
         }
     }
     dependencies {
-        classpath group: 'com.cinnober.cbuilder', name: 'cBuilder', version: '1.2.21'
+        classpath group: 'com.cinnober.cbuilder', name: 'cBuilder', version: 'HEAD-SNAPSHOT'
     }
 }
 
