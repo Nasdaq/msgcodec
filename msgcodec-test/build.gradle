@@ -3,5 +3,5 @@ description = ''
 
 dependencies {
   compile project(':msgcodec:msgcodec')
-  testCompile project(':msgcodec:msgcodec-test')
+  compile group: 'junit', name: 'junit', version:'4.11'
 }
