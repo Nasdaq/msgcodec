@@ -23,7 +23,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that the field is of a sequence type.
+ * Specifies that the field is of a sequence type, and what the element type is.
+ * This is required for sequences of type {@link Collection}. 
+ * Arrays are sequences by default, except for byte[] which is treated as a binary by default.
  *
  * @author mikael.brannstrom
  *

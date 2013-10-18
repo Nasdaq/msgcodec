@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that the field is required. Primitive types are always required (need to annotate).
+ * Specifies that the field is required.
+ * Primitive types are always required (no need to annotate).
  * Object types are optional by default.
  *
  * @author mikael.brannstrom

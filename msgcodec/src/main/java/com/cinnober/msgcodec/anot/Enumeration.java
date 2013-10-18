@@ -23,8 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that the field is of an enumeration type.
- * The type of the field itself may be an integer but the symbols are declared in the enumeration.
+ * Specifies that an integer field is of an enumeration type.
+ * The allowed enumeration values are declared in the enumeration.
  *
  * <p>When applied to a sequence, this meaning of this annotation is transferred to the element type of the sequence.
  *

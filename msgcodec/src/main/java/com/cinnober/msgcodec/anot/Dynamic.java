@@ -23,8 +23,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that a field is a dynamic group type, i.e. not static.
- *
+ * Specifies that a field is a dynamic group type, i.e. subclasses of the type are allowed as values.
+ * Default is that group types are static, i.e. only the specified type is allowed as values.
+ * Object references (to "any") are dynamic by default (cannot be static).
+ * 
  * <p>When applied to a sequence, the meaning of this annotation is transferred to the element type of the sequence.
  *
  * @author mikael.brannstrom

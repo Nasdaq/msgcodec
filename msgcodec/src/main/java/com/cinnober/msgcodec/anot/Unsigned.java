@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that a field value is an unsigned integer. Only applicable to integer types.
+ * Specifies that a integer field value is an unsigned integer. 
+ * Only applicable to byte, Byte, short, Short, int, Integer, long and Long.
  *
  * <p>When applied to a sequence, the meaning of this annotation is transferred to the element type of the sequence.
  *

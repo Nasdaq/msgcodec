@@ -23,7 +23,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that a field value is a (small) decimal, i.e. not big decimal. Only applicable to decimal types.
+ * Specifies that a BigDecimal field value is a (small) decimal, i.e. with restricted precision.
+ * Default for BigDecimal fields are that they are of big decimal type ("unlimited" precision).
  *
  * <p>When applied to a sequence, the meaning of this annotation is transferred to the element type of the sequence.
  *
