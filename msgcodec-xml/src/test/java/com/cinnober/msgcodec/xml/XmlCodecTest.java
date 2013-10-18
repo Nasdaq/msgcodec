@@ -24,8 +24,8 @@ import com.cinnober.msgcodec.Annotations;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -142,8 +142,8 @@ public class XmlCodecTest {
     }
 
     public static class MyMessage {
-        @Static
         private Hello person1;
+        @Dynamic
         private Hello person2;
         /**
          * @return the person1

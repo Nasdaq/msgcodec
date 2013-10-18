@@ -43,13 +43,13 @@ import java.util.TimeZone;
 
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.anot.Annotate;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.SmallDecimal;
-import com.cinnober.msgcodec.anot.Static;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
 
@@ -102,6 +102,8 @@ public class ProtocolDictionaryBuilder {
                     byte[].class
                     )));
 
+    private boolean strict;
+    
     /** Build a protocol dictionary from the specified Java classes.
      *
      * <p>The protocol dictionary built is bound to the specified classes.
@@ -378,19 +380,25 @@ public class ProtocolDictionaryBuilder {
             Accessor<Object, Object> accessor = new FieldAccessor(field);
 
             Required requiredAnot = field.getAnnotation(Required.class);
+            if (strict && requiredAnot != null && type.isPrimitive()) {
+                throw new IllegalArgumentException("@Required is not needed for primitives. " + field.toString());
+            }
             boolean required = type.isPrimitive() || requiredAnot != null;
 
             Enumeration enumAnot = field.getAnnotation(Enumeration.class);
+            if (strict && enumAnot != null && type.isEnum()) {
+                throw new IllegalArgumentException("@Enum is not needed for Java enum types. " + field.toString());
+            }
             Time timeAnot = field.getAnnotation(Time.class);
             Sequence sequenceAnot = field.getAnnotation(Sequence.class);
-            Static staticAnot = field.getAnnotation(Static.class);
+            Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
             Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
             SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
             Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
             Annotate annotateAnot = field.getAnnotation(Annotate.class);
 
             TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
-                    staticAnot != null, unsignedAnot != null, smallDecimalAnot != null,
+                    dynamicAnot, unsignedAnot != null, smallDecimalAnot != null,
                     namedTypes, groupsByClass);
             FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
                     toAnnotationsMap(annotateAnot),
@@ -463,7 +471,7 @@ public class ProtocolDictionaryBuilder {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private TypeDef getTypeDef(Class<?> type, Sequence sequenceAnot, Enumeration enumAnot, Time timeAnot,
-            boolean isStatic, boolean isUnsigned, boolean isSmallDecimal,
+            Dynamic dynamicAnot, boolean isUnsigned, boolean isSmallDecimal,
             Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groups) {
         // sequence
         if (sequenceAnot != null || (type.isArray() && !type.equals(byte[].class))) {
@@ -479,7 +487,7 @@ public class ProtocolDictionaryBuilder {
 
             Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
             TypeDef elementType = getTypeDef(componentType, null, enumAnot, timeAnot,
-                    isStatic, isUnsigned, isSmallDecimal, namedTypes, groups);
+                    dynamicAnot, isUnsigned, isSmallDecimal, namedTypes, groups);
             return new TypeDef.Sequence(elementType);
         }
 
@@ -545,14 +553,14 @@ public class ProtocolDictionaryBuilder {
 
         // reference
         if (type.equals(Object.class)) {
-            if (isStatic) {
-                throw new IllegalArgumentException("Illegal Static annotation. Object references cannot be static.");
+            if (strict && dynamicAnot != null) {
+                throw new IllegalArgumentException("@Dynamic is not needed for any/Object reference.");
             }
             return new TypeDef.DynamicReference(null);
         }
         GroupMeta group = groups.get(type);
         if (group != null) {
-            if (isStatic) {
+            if (dynamicAnot == null) {
                 return new TypeDef.Reference(group.getName());
             } else {
                 return new TypeDef.DynamicReference(group.getName());

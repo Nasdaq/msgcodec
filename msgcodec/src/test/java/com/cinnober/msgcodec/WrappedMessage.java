@@ -19,7 +19,6 @@ package com.cinnober.msgcodec;
 
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Static;
 import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
@@ -32,6 +31,6 @@ public class WrappedMessage<T> extends MsgObject {
     public long sequenceNumber;
 
     @Id(2)
-    @Required @Static
+    @Required
     public T wrapped;
 }

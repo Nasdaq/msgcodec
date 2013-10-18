@@ -31,6 +31,7 @@ import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 
@@ -207,6 +208,7 @@ public class BlinkCodecTest {
         @Id(1)
         private int id;
         @Id(2)
+        @Dynamic
         private Foo foo;
         public Foo() {}
         public Foo(int id) {

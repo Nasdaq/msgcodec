@@ -23,7 +23,6 @@ import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -37,15 +36,14 @@ public class BarMessage extends FooMessage {
     @Enumeration(Size.class)
     public int myEnumInteger;
     @Id(42)
-    @Static @Required @Sequence(Thing.class)
+    @Required @Sequence(Thing.class)
     public List<Thing> myThings;
     @Id(43)
     @Sequence(Thing.class)
     public Thing[] myThingsArray;
     @Id(44)
-    @Static
     public Thing mySomeThing;
     @Id(45)
-    @Static @Required
+    @Required
     public Thing mySomeThingReq;
 }

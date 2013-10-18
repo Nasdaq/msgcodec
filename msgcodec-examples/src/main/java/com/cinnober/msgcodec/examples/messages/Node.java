@@ -17,8 +17,8 @@
  */
 package com.cinnober.msgcodec.examples.messages;
 
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author Mikael Brannstrom
@@ -29,10 +29,10 @@ public class Node {
     @Id(1)
     private String description;
     @Id(2)
-    // Note: this is a dynamic reference, i.e. can contain refer to a subclass node
+    @Dynamic // <- this is a dynamic reference, i.e. can contain refer to a subclass node
     private Node parent;
     @Id(3)
-    @Static // <- can only refer to Numbers, not any subclass
+    // Note: can only refer to Numbers, not any subclass
     private Numbers numbers;
 
 

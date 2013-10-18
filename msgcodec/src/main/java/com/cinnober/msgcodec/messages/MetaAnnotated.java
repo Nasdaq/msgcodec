@@ -27,7 +27,6 @@ import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Sequence;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -36,7 +35,6 @@ import com.cinnober.msgcodec.anot.Static;
 @Name("Annotated")
 public class MetaAnnotated extends MsgObject {
     @Id(100)
-    @Static
     @Sequence(MetaAnnotation.class)
     private Collection<MetaAnnotation> annotations;
 

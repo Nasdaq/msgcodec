@@ -31,7 +31,6 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.SmallDecimal;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -122,10 +121,8 @@ public class TapCodecTest {
         @Id(2)
         private String settlementDate;
         @Id(3)
-        @Static
         private PositionInfo longPositionInfo;
         @Id(4)
-        @Static
         private PositionInfo shortPositionInfo;
         @Id(5)
         private long unsettledPaymentIn;
@@ -140,15 +137,12 @@ public class TapCodecTest {
         @Id(10)
         private long unsettledPaymentOutAffectsCollateralBalance;
         @Id(11)
-        @Static
         private PositionKey positionKey;
         @Id(12)
         private String globalPositionKeyIdentifier;
         @Id(13)
-        @Static
         private RtcCustomDetails customAttributes;
         @Id(14)
-        @Static
         private AmPositionExt amPositionExt;
         public Integer getPositionType() {
             return positionType;
@@ -258,7 +252,6 @@ public class TapCodecTest {
         @Id(5)
         private Long reservedQuantity = 0L;
         @Id(6)
-        @Static
         private RtcCustomDetails customAttributes;
         public PositionInfo() {
         }
@@ -331,10 +324,8 @@ public class TapCodecTest {
         @Id(2)
         private String settlementDate;
         @Id(3)
-        @Static
         private PositionInfo2 longPositionInfo;
         @Id(4)
-        @Static
         private PositionInfo2 shortPositionInfo;
         @Id(5)
         @Required
@@ -361,15 +352,12 @@ public class TapCodecTest {
         @SmallDecimal
         private BigDecimal unsettledPaymentOutAffectsCollateralBalance = BigDecimal.ZERO;
         @Id(11)
-        @Static
         private PositionKey positionKey;
         @Id(12)
         private String globalPositionKeyIdentifier;
         @Id(13)
-        @Static
         private RtcCustomDetails customAttributes;
         @Id(14)
-        @Static
         private AmPositionExt amPositionExt;
         public PositionType getPositionType() {
             return positionType;
@@ -477,7 +465,6 @@ public class TapCodecTest {
         @SmallDecimal
         private BigDecimal reservedQuantity = BigDecimal.ZERO;
         @Id(6)
-        @Static
         private RtcCustomDetails customAttributes;
 
         public BigDecimal getQuantity() {

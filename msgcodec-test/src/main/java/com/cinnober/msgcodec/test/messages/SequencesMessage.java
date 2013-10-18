@@ -20,10 +20,10 @@ package com.cinnober.msgcodec.test.messages;
 import java.util.Collection;
 
 import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
-import com.cinnober.msgcodec.anot.Static;
 import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
@@ -59,10 +59,10 @@ public class SequencesMessage extends MsgObject {
     @Unsigned @Sequence(Integer.class)
     public Collection<Integer> collectionUInts;
 
-    @Sequence(Person.class)
+    @Sequence(Person.class) @Dynamic
     public Collection<Person> collectionPeople;
 
-    @Static @Sequence(Employee.class)
+    @Sequence(Employee.class)
     public Collection<Employee> collectionEmployees;
 
 }

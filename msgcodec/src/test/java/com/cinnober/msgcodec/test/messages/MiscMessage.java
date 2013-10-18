@@ -18,9 +18,9 @@
 package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -36,20 +36,18 @@ public class MiscMessage extends MsgObject {
     @Id(3)
     public Object myAny;
 
-    @Id(4)
+    @Id(4) @Dynamic
     public Person myDynPerson;
     @Id(5)
-    @Static
     public Person myStatPerson;
 
     @Id(6)
     @Required
     public Object myAnyReq;
     @Id(7)
-    @Required
+    @Required @Dynamic
     public Person myDynPersonReq;
     @Id(8)
-    @Static
     @Required
     public Person myStatPersonReq;
 }

@@ -29,7 +29,6 @@ import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -229,7 +228,6 @@ public class MetaTypeDef extends MetaAnnotated {
     @Name("Enum") @Id(16007)
     public static class MetaEnum extends MetaTypeDef {
         @Required
-        @Static
         @com.cinnober.msgcodec.anot.Sequence(MetaSymbol.class)
         @Id(1)
         private Collection<MetaSymbol> symbols;

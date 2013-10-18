@@ -27,7 +27,6 @@ import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.anot.Id;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -103,10 +102,8 @@ public class RtcPositionMessageTest {
         @Id(2)
         private String settlementDate;
         @Id(3)
-        @Static
         private PositionInfo longPositionInfo;
         @Id(4)
-        @Static
         private PositionInfo shortPositionInfo;
         @Id(5)
         private long unsettledPaymentIn;
@@ -121,15 +118,12 @@ public class RtcPositionMessageTest {
         @Id(10)
         private long unsettledPaymentOutAffectsCollateralBalance;
         @Id(11)
-        @Static
         private PositionKey positionKey;
         @Id(12)
         private String globalPositionKeyIdentifier;
         @Id(13)
-        @Static
         private RtcCustomDetails customAttributes;
         @Id(14)
-        @Static
         private AmPositionExt amPositionExt;
         public Integer getPositionType() {
             return positionType;
@@ -239,7 +233,6 @@ public class RtcPositionMessageTest {
         @Id(5)
         private Long reservedQuantity = 0L;
         @Id(6)
-        @Static
         private RtcCustomDetails customAttributes;
         public PositionInfo() {
         }

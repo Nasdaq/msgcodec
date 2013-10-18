@@ -27,7 +27,6 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -44,7 +43,6 @@ public class MetaGroupDef extends MetaAnnotated {
     @Id(3)
     private String superGroup;
     @Required
-    @Static
     @Sequence(MetaFieldDef.class)
     @Id(4)
     private Collection<MetaFieldDef> fields;

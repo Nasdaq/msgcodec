@@ -28,7 +28,6 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
-import com.cinnober.msgcodec.anot.Static;
 
 /**
  * @author mikael.brannstrom
@@ -37,13 +36,11 @@ import com.cinnober.msgcodec.anot.Static;
 @Name("ProtocolDictionary")
 @Id(16000)
 public class MetaProtocolDictionary extends MetaAnnotated {
-    @Static
     @Required
     @Sequence(MetaGroupDef.class)
     @Id(1)
     public Collection<MetaGroupDef> groups;
 
-    @Static
     @Sequence(MetaNamedType.class)
     @Id(2)
     public Collection<MetaNamedType> namedTypes;
