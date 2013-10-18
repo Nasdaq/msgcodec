@@ -52,6 +52,7 @@ import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.SmallDecimal;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
+import java.lang.annotation.Annotation;
 
 /**
  * The protocol dictionary builder can build a protocol dictionary from a collection of java classes.
@@ -103,6 +104,21 @@ public class ProtocolDictionaryBuilder {
                     )));
 
     private boolean strict;
+
+    /**
+     * Create a protocol dictionary builder with default behaviour.
+     */
+    public ProtocolDictionaryBuilder() {
+    }
+    
+    /** 
+     * Create a protocol dictionary builder.
+     * 
+     * @param strict true if unecessary annotations should be checked for, otherwise false (default).
+     */
+    public ProtocolDictionaryBuilder(boolean strict) {
+        this.strict = strict;
+    }
     
     /** Build a protocol dictionary from the specified Java classes.
      *
@@ -386,9 +402,6 @@ public class ProtocolDictionaryBuilder {
             boolean required = type.isPrimitive() || requiredAnot != null;
 
             Enumeration enumAnot = field.getAnnotation(Enumeration.class);
-            if (strict && enumAnot != null && type.isEnum()) {
-                throw new IllegalArgumentException("@Enum is not needed for Java enum types. " + field.toString());
-            }
             Time timeAnot = field.getAnnotation(Time.class);
             Sequence sequenceAnot = field.getAnnotation(Sequence.class);
             Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
@@ -398,7 +411,7 @@ public class ProtocolDictionaryBuilder {
             Annotate annotateAnot = field.getAnnotation(Annotate.class);
 
             TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
-                    dynamicAnot, unsignedAnot != null, smallDecimalAnot != null,
+                    dynamicAnot, unsignedAnot, smallDecimalAnot,
                     namedTypes, groupsByClass);
             FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
                     toAnnotationsMap(annotateAnot),
@@ -460,7 +473,7 @@ public class ProtocolDictionaryBuilder {
                 if (actualTypeArguments[i] instanceof Class) {
                     genericParameters.put(typeParameters[i], (Class<?>) actualTypeArguments[i]);
                 } else if (actualTypeArguments[i] instanceof TypeVariable) {
-                    Class<?> actualType = genericParameters.get(actualTypeArguments[i]);
+                    Class<?> actualType = genericParameters.get((TypeVariable)actualTypeArguments[i]);
                     if (actualType != null) {
                         genericParameters.put(typeParameters[i], actualType);
                     }
@@ -471,45 +484,57 @@ public class ProtocolDictionaryBuilder {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private TypeDef getTypeDef(Class<?> type, Sequence sequenceAnot, Enumeration enumAnot, Time timeAnot,
-            Dynamic dynamicAnot, boolean isUnsigned, boolean isSmallDecimal,
+            Dynamic dynamicAnot, Unsigned unsignedAnot, SmallDecimal smallDecimalAnot,
             Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groups) {
         // sequence
         if (sequenceAnot != null || (type.isArray() && !type.equals(byte[].class))) {
             if (!Collection.class.isAssignableFrom(type) && !type.isArray()) {
                 throw new IllegalArgumentException(
-                        "Illegal Sequence annotation. Field type must be Collection (or subclass) or array.");
+                        "Illegal @Sequence. Field type must be Collection or array.");
             }
             if (type.isArray() && sequenceAnot != null && !type.getComponentType().equals(sequenceAnot.value())) {
                 throw new IllegalArgumentException(
-                        "Illegal sequence annotation. Field type must be array of " +
+                        "Illegal @Sequence. Field type must be array of " +
                 type.getComponentType().getName());
+            }
+            if (strict && sequenceAnot != null && type.isArray() && !type.equals(byte[].class)) {
+                throw new IllegalArgumentException("@Sequence is not needed for arrays.");
             }
 
             Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
             TypeDef elementType = getTypeDef(componentType, null, enumAnot, timeAnot,
-                    dynamicAnot, isUnsigned, isSmallDecimal, namedTypes, groups);
+                    dynamicAnot, unsignedAnot, smallDecimalAnot, namedTypes, groups);
+            if (elementType.getType() == TypeDef.Type.SEQUENCE) {
+                throw new IllegalArgumentException("Sequence of sequence is not allowed");
+            }
             return new TypeDef.Sequence(elementType);
         }
-
+        
         // enumeration
         if (type.isEnum() || enumAnot != null) {
             if (enumAnot != null && !type.equals(int.class) && !type.equals(Integer.class) &&
-                    !type.equals(enumAnot.value())) {
-                    throw new IllegalArgumentException(
-                            "Illegal Enum annotation. Field type must be int, Integer or " +
-                    enumAnot.value().getName());
-                }
+                !type.equals(enumAnot.value())) {
+                throw new IllegalArgumentException(
+                        "Illegal @Enum. Field type must be int, Integer or " +
+                enumAnot.value().getName());
+            }
+            if (strict && enumAnot != null && type.isEnum()) {
+                throw new IllegalArgumentException("@Enum is not needed for Java enum types.");
+            }
             Class enumType = enumAnot != null ? enumAnot.value() : type;
 
             Collection<Symbol> symbols = EnumSymbols.createSymbolMap(enumType).values();
             NamedType namedType = new NamedType(enumType.getSimpleName(), new TypeDef.Enum(symbols), null);
             namedTypes.put(namedType.getName(), namedType);
 
+            assertNotAnnotated("Enum", timeAnot, dynamicAnot, unsignedAnot, smallDecimalAnot);
+            
             return new TypeDef.Reference(enumType.getSimpleName());
         }
 
         // time
         if (type.equals(Date.class) || timeAnot != null) {
+            assertNotAnnotated("Time", dynamicAnot, unsignedAnot, smallDecimalAnot);
             if (timeAnot == null) {
                 return TypeDef.DATETIME_MILLIS_UTC;
             } else {
@@ -522,39 +547,51 @@ public class ProtocolDictionaryBuilder {
         }
 
         // basic types
+        boolean isUnsigned = unsignedAnot != null;
         if (type.equals(byte.class) || type.equals(Byte.class)) {
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
             return isUnsigned ? TypeDef.UINT8 : TypeDef.INT8;
         } else if (type.equals(short.class) || type.equals(Short.class)) {
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
             return isUnsigned ? TypeDef.UINT16 : TypeDef.INT16;
         } else if (type.equals(int.class) || type.equals(Integer.class)) {
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
             return isUnsigned ? TypeDef.UINT32 : TypeDef.INT32;
         } else if (type.equals(long.class) || type.equals(Long.class)) {
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
             return isUnsigned ? TypeDef.UINT64 : TypeDef.INT64;
         } else if (type.equals(BigInteger.class)) {
+            assertNotAnnotated("BigInteger", unsignedAnot, dynamicAnot, smallDecimalAnot);
             return TypeDef.BIGINT;
         } else if (type.equals(BigDecimal.class)) {
-            if (isSmallDecimal) {
+            assertNotAnnotated("BigInteger", unsignedAnot, dynamicAnot);
+            if (smallDecimalAnot != null) {
                 return TypeDef.DECIMAL;
             } else {
                 return TypeDef.BIGDECIMAL;
             }
-        } else if (type.equals(BigDecimal.class)) {
         } else if (type.equals(float.class) || type.equals(Float.class)) {
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
             return TypeDef.FLOAT32;
         } else if (type.equals(double.class) || type.equals(Double.class)) {
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
             return TypeDef.FLOAT64;
         } else if (type.equals(String.class)) {
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
             return TypeDef.STRING;
         } else if (type.equals(byte[].class)) {
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
             return TypeDef.BINARY;
         } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
             return TypeDef.BOOLEAN;
         }
 
         // reference
+        assertNotAnnotated("Group", unsignedAnot, smallDecimalAnot);
         if (type.equals(Object.class)) {
             if (strict && dynamicAnot != null) {
-                throw new IllegalArgumentException("@Dynamic is not needed for any/Object reference.");
+                throw new IllegalArgumentException("@Dynamic is not needed for Object.");
             }
             return new TypeDef.DynamicReference(null);
         }
@@ -570,6 +607,15 @@ public class ProtocolDictionaryBuilder {
         throw new IllegalArgumentException("Illegal field type. " + type.getName());
     }
 
+    private static void assertNotAnnotated(String notApplicableFor, Annotation ... annotations) {
+        for (Annotation annotation : annotations) {
+            if (annotation != null) {
+                throw new IllegalArgumentException("Illegal @" + annotation.annotationType().getSimpleName() + 
+                        ". Not applicable for " + notApplicableFor + ".");
+            }
+        }
+    }
+    
     private static class GroupMeta {
         private final Class<?> javaClass;
         private int id;
