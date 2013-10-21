@@ -110,16 +110,16 @@ public class ProtocolDictionaryBuilder {
      */
     public ProtocolDictionaryBuilder() {
     }
-    
-    /** 
+
+    /**
      * Create a protocol dictionary builder.
-     * 
+     *
      * @param strict true if unecessary annotations should be checked for, otherwise false (default).
      */
     public ProtocolDictionaryBuilder(boolean strict) {
         this.strict = strict;
     }
-    
+
     /** Build a protocol dictionary from the specified Java classes.
      *
      * <p>The protocol dictionary built is bound to the specified classes.
@@ -377,46 +377,51 @@ public class ProtocolDictionaryBuilder {
         ArrayList<FieldDef> fieldDefs = new ArrayList<>();
 
         for (Field field : fields) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                continue;
+            try {
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
+
+                String name = field.getName();
+                Class type = getType(field, genericParameters);
+                Id idAnot = field.getAnnotation(Id.class);
+                Name nameAnot = field.getAnnotation(Name.class);
+
+                if (nameAnot != null) {
+                    name = nameAnot.value();
+                }
+                int id = -1;
+                if (idAnot != null) {
+                    id = idAnot.value();
+                }
+                Accessor<Object, Object> accessor = new FieldAccessor(field);
+
+                Required requiredAnot = field.getAnnotation(Required.class);
+                if (strict && requiredAnot != null && type.isPrimitive()) {
+                    throw new IllegalArgumentException("@Required is not needed for primitives.");
+                }
+                boolean required = type.isPrimitive() || requiredAnot != null;
+
+                Enumeration enumAnot = field.getAnnotation(Enumeration.class);
+                Time timeAnot = field.getAnnotation(Time.class);
+                Sequence sequenceAnot = field.getAnnotation(Sequence.class);
+                Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
+                Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
+                SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
+                Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
+                Annotate annotateAnot = field.getAnnotation(Annotate.class);
+
+                TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
+                        dynamicAnot, unsignedAnot, smallDecimalAnot,
+                        namedTypes, groupsByClass);
+                FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
+                        toAnnotationsMap(annotateAnot),
+                        new FieldBinding(accessor, type, componentType));
+                fieldDefs.add(fieldDef);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Illegal field type and/or annotations: " +
+                    field.getDeclaringClass().getName() + "." + field.getName(), e);
             }
-
-            String name = field.getName();
-            Class type = getType(field, genericParameters);
-            Id idAnot = field.getAnnotation(Id.class);
-            Name nameAnot = field.getAnnotation(Name.class);
-
-            if (nameAnot != null) {
-                name = nameAnot.value();
-            }
-            int id = -1;
-            if (idAnot != null) {
-                id = idAnot.value();
-            }
-            Accessor<Object, Object> accessor = new FieldAccessor(field);
-
-            Required requiredAnot = field.getAnnotation(Required.class);
-            if (strict && requiredAnot != null && type.isPrimitive()) {
-                throw new IllegalArgumentException("@Required is not needed for primitives. " + field.toString());
-            }
-            boolean required = type.isPrimitive() || requiredAnot != null;
-
-            Enumeration enumAnot = field.getAnnotation(Enumeration.class);
-            Time timeAnot = field.getAnnotation(Time.class);
-            Sequence sequenceAnot = field.getAnnotation(Sequence.class);
-            Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
-            Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
-            SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
-            Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
-            Annotate annotateAnot = field.getAnnotation(Annotate.class);
-
-            TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
-                    dynamicAnot, unsignedAnot, smallDecimalAnot,
-                    namedTypes, groupsByClass);
-            FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
-                    toAnnotationsMap(annotateAnot),
-                    new FieldBinding(accessor, type, componentType));
-            fieldDefs.add(fieldDef);
         }
 
         // sort fields according to id and then name
@@ -473,7 +478,7 @@ public class ProtocolDictionaryBuilder {
                 if (actualTypeArguments[i] instanceof Class) {
                     genericParameters.put(typeParameters[i], (Class<?>) actualTypeArguments[i]);
                 } else if (actualTypeArguments[i] instanceof TypeVariable) {
-                    Class<?> actualType = genericParameters.get((TypeVariable)actualTypeArguments[i]);
+                    Class<?> actualType = genericParameters.get((TypeVariable<?>)actualTypeArguments[i]);
                     if (actualType != null) {
                         genericParameters.put(typeParameters[i], actualType);
                     }
@@ -509,7 +514,7 @@ public class ProtocolDictionaryBuilder {
             }
             return new TypeDef.Sequence(elementType);
         }
-        
+
         // enumeration
         if (type.isEnum() || enumAnot != null) {
             if (enumAnot != null && !type.equals(int.class) && !type.equals(Integer.class) &&
@@ -528,7 +533,7 @@ public class ProtocolDictionaryBuilder {
             namedTypes.put(namedType.getName(), namedType);
 
             assertNotAnnotated("Enum", timeAnot, dynamicAnot, unsignedAnot, smallDecimalAnot);
-            
+
             return new TypeDef.Reference(enumType.getSimpleName());
         }
 
@@ -610,12 +615,12 @@ public class ProtocolDictionaryBuilder {
     private static void assertNotAnnotated(String notApplicableFor, Annotation ... annotations) {
         for (Annotation annotation : annotations) {
             if (annotation != null) {
-                throw new IllegalArgumentException("Illegal @" + annotation.annotationType().getSimpleName() + 
+                throw new IllegalArgumentException("Illegal @" + annotation.annotationType().getSimpleName() +
                         ". Not applicable for " + notApplicableFor + ".");
             }
         }
     }
-    
+
     private static class GroupMeta {
         private final Class<?> javaClass;
         private int id;
