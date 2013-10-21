@@ -34,7 +34,7 @@ public class MetaProtocol {
      * @return the protocol dictionary
      */
     private static ProtocolDictionary createProtocolDictionary() {
-        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder(true);
         ProtocolDictionary dictionary =  builder.build(
                 MetaProtocolDictionary.class,
                 MetaAnnotated.class,
