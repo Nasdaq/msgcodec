@@ -33,7 +33,7 @@ public class Hello extends MsgObject {
     @Id(1) // <- Numeric identifier for this field
     @Required // <- Make the field required
     @Annotate({"maxLength=100"}) // <- some codecs interpret this as max string length
-    private String greeting;
+    public String greeting;
 
     public Hello() { // <- A default constructor must exist.
     }
@@ -42,16 +42,6 @@ public class Hello extends MsgObject {
      * @param greeting the greeting
      */
     public Hello(String greeting) {
-        this.greeting = greeting;
-    }
-
-    /** Returns the greeting.
-     * @return the greeting
-     */
-    public String getGreeting() {
-        return greeting;
-    }
-    public void setGreeting(String greeting) {
         this.greeting = greeting;
     }
 
@@ -65,5 +55,12 @@ public class Hello extends MsgObject {
         }
         Hello other = (Hello) obj;
         return Objects.equals(greeting, other.greeting);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 71 * hash + Objects.hashCode(this.greeting);
+        return hash;
     }
 }

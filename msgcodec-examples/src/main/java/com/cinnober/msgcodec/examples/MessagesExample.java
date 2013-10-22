@@ -24,14 +24,14 @@ import java.math.BigInteger;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
-import com.cinnober.msgcodec.examples.messages.Node;
+import com.cinnober.msgcodec.examples.messages.Person;
 import com.cinnober.msgcodec.examples.messages.Numbers;
-import com.cinnober.msgcodec.examples.messages.SpecialNode;
+import com.cinnober.msgcodec.examples.messages.Carpenter;
 import com.cinnober.msgcodec.json.JsonCodec;
 import com.cinnober.msgcodec.xml.XmlCodec;
 
 /** Basic example of message codec. Create a dictionary from java messages, encode and decode using the
- * json codec.
+ * JSON and XML codecs.
  *
  * @author Mikael Brannstrom
  *
@@ -40,7 +40,7 @@ public class MessagesExample {
     public static void main(String... args) throws Exception {
         // build a dictionary from Java messages
         ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
-        ProtocolDictionary dictionary = builder.build(Node.class, SpecialNode.class, Numbers.class);
+        ProtocolDictionary dictionary = builder.build(Person.class, Carpenter.class, Numbers.class);
 
         // print the protocol specification
         System.out.println("Protocol specification:");
@@ -48,33 +48,32 @@ public class MessagesExample {
 
         // construct messages
         Numbers numbers = new Numbers();
-        numbers.setBigIntReq(BigInteger.TEN.pow(30));
-        numbers.setSignedReq(-1);
-        numbers.setUnsignedReq(-1); // 2^32 - 1
-        numbers.setDecimal(BigDecimal.valueOf(123456, 3)); // 123.456
+        numbers.bigIntReq = BigInteger.TEN.pow(30);
+        numbers.signedReq = -1;
+        numbers.unsignedReq = -1; // 2^32 - 1
+        numbers.decimal = BigDecimal.valueOf(123456, 3); // 123.456
 
-        Node root = new Node();
-        root.setDescription("root");
+        Person alice = new Person();
+        alice.name = "Alice";
 
-        SpecialNode special = new SpecialNode();
-        special.setParent(root);
-        special.setDescription("special");
-        special.setMoreStrings(new String[]{"one", "two"});
+        Carpenter bob = new Carpenter();
+        bob.name = "Bob";
+        bob.tools = new String[] {"hammer", "screwdriver"};
 
-        Node child = new Node();
-        child.setDescription("child");
-        child.setParent(special);
-        child.setNumbers(numbers);
-
+        Person charlie = new Person();
+        charlie.name = "Charlie";
+        charlie.mom = alice;
+        charlie.dad = bob;
+        
         // Create a codec, the codec can be reused
         StreamCodec jsonCodec = new JsonCodec(dictionary);
         StreamCodec xmlCodec = new XmlCodec(dictionary);
 
         // encode to system out
         System.out.println("\n* JSON *");
-        encode(jsonCodec, numbers, root, special, child);
+        encode(jsonCodec, numbers, alice, bob, charlie);
         System.out.println("\n* XML *");
-        encode(xmlCodec, numbers, root, special, child);
+        encode(xmlCodec, numbers, alice, bob, charlie);
     }
 
     private static void encode(StreamCodec codec, Object... messages) throws IOException {

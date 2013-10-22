@@ -17,51 +17,17 @@
  */
 package com.cinnober.msgcodec.examples.messages;
 
-import com.cinnober.msgcodec.anot.Dynamic;
+
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
 
 /**
  * @author Mikael Brannstrom
  *
  */
-@Id(3)
-public class Node {
-    @Id(1)
-    private String description;
-    @Id(2)
-    @Dynamic // <- this is a dynamic reference, i.e. can contain refer to a subclass node
-    private Node parent;
-    @Id(3)
-    // Note: can only refer to Numbers, not any subclass
-    private Numbers numbers;
-
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Node getParent() {
-        return parent;
-    }
-
-    public void setParent(Node parent) {
-        this.parent = parent;
-    }
-
-    public Numbers getNumbers() {
-        return numbers;
-    }
-
-    public void setNumbers(Numbers numbers) {
-        this.numbers = numbers;
-    }
-
-
-
-
-
+@Id(4)
+public class Carpenter extends Person {
+    @Id(10)
+    @Required
+    public String[] tools;
 }
