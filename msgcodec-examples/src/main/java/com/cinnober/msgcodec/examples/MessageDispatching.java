@@ -88,6 +88,9 @@ public class MessageDispatching {
         }
     }
 
+    /**
+     * Error handler service.
+     */
     public static class ErrorHandler {
         public void onUnhandled(Object message, MessageContext ctx) {
             System.out.format("Oh no! Unhandled message: %s\n", message);
