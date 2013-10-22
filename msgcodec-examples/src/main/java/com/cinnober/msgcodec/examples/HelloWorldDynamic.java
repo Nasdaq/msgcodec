@@ -56,7 +56,7 @@ public class HelloWorldDynamic {
     private static final String TAP = "TAP";
 
     public static void main(String... args) throws Exception {
-        String format = args.length > 0 ? args[0] :  BLINK;
+        String format = args.length > 0 ? args[0] :  XML;
 
         // we've got the protocol dictionary in an encoded format, from somewhere
         byte[] encodedDictionary = getEncodedDictionary(format);
