@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.messages;
 
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
@@ -30,7 +31,7 @@ import com.cinnober.msgcodec.anot.Required;
 public class MetaNamedType extends MetaAnnotated {
     @Required
     private String name;
-    @Required
+    @Required @Dynamic
     private MetaTypeDef type;
     public MetaNamedType() {
     }

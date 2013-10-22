@@ -18,6 +18,7 @@
 package com.cinnober.msgcodec.messages;
 
 import com.cinnober.msgcodec.FieldDef;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
@@ -35,7 +36,7 @@ public class MetaFieldDef extends MetaAnnotated {
     private Integer id;
     @Id(3)
     private boolean required;
-    @Required
+    @Required @Dynamic
     @Id(4)
     private MetaTypeDef type;
 
