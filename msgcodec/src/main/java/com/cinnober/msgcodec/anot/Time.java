@@ -28,7 +28,7 @@ import com.cinnober.msgcodec.Epoch;
 
 /**
  * Specifies that an integer or Date field is of a time type.
- * The type of the field may be int, Integer or {@link Date}.
+ * The type of the field may be int, Integer, long, Long or {@link Date}.
  * Date fields are milliseconds since the Unix epoch in UTC by default.
  *
  * <p>When applied to a sequence, the meaning of this annotation is transferred to the element type of the sequence.
