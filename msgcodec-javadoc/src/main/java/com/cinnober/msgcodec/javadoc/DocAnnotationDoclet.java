@@ -67,7 +67,7 @@ public class DocAnnotationDoclet extends Doclet {
         if (!outputFile.getParentFile().exists()) {
             outputFile.getParentFile().mkdirs();
         }
-        System.out.println("output=" + outputFile.getAbsolutePath());
+        //System.out.println("output=" + outputFile.getAbsolutePath());
 
         // build
         Map<String, GroupDefDoc> groupsByName = new HashMap<>();
