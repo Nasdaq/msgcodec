@@ -1,19 +1,19 @@
 apply plugin: 'cbuilder-module'
 
 subprojects {
-    apply plugin: 'cbuilder'
+  apply plugin: 'cbuilder'
 //	repositories {
 //		mavenLocal()
 //	}
 
-	it.tasks.withType(JavaCompile){
-		it.sourceCompatibility = "1.7"
-		it.targetCompatibility = "1.7"
-	}
-
-    dependencies {
-        testCompile group: 'junit', name: 'junit', version:'4.11'
-    }
+  it.tasks.withType(JavaCompile){
+    it.sourceCompatibility = "1.7"
+    it.targetCompatibility = "1.7"
+  }
+  
+  dependencies {
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+  }
 }
 
 

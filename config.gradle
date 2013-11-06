@@ -3,7 +3,7 @@ ext {
     msgcodec = [
         'version' : 'HEAD-SNAPSHOT',
         'vcs' :  [
-            'rootDevelopment' : 'git@git.cinnober.com:products/Developmentmsgcodec.git',
+            'rootDevelopment' : 'git@gitrepo.cinnober.com:clearing/msgcodec.git',
             'rootCompiled' : 'default',
         ],
 
