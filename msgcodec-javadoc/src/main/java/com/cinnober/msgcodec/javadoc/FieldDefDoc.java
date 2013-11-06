@@ -28,11 +28,7 @@ import com.sun.javadoc.FieldDoc;
 public class FieldDefDoc {
     private final String name;
     private final FieldDoc fieldDoc;
-    /**
-     * @param name
-     * @param getMethodDoc
-     * @param setMethodDoc
-     */
+
     public FieldDefDoc(String name, FieldDoc fieldDoc) {
         this.name = name;
         this.fieldDoc = fieldDoc;

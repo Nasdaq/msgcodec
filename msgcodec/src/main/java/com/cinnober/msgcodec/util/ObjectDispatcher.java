@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * An object dispatcher can dispatch objects based on their types to methods in a list of delegates.
  *
- * <p>The dispatcher has a single entry point, {@link #dispatch(Object)}. The dispatcher will delegate
+ * <p>The dispatcher has a single entry point, {@link #dispatch(Object...)}. The dispatcher will delegate
  * the call to the most specific method in one of the delegates. The delegates should declare methods
  * with one parameter, which will be matched against the object type, and optionally a return value.
  * The name of the methods must match the specified pattern.

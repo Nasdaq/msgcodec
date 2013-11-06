@@ -404,7 +404,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     }
 
     /** Assign group ids for all groups with unassigned group id.
-     * The {@link String.hashCode} of the name is used. If the hash code is -1 then zero is chosen.
+     * The {@link String#hashCode()} of the name is used. If the hash code is -1 then zero is chosen.
      * @return a new ProtocolDictionay with group identifiers assigned.
      * @throws IllegalArgumentException if duplicate identifiers were generated
      */

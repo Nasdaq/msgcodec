@@ -365,10 +365,6 @@ public class XmlCodec implements StreamCodec {
         }
     }
 
-    /**
-     * @param name
-     * @return
-     */
     public StaticGroupValue lookupGroup(NsName name) {
         return staticGroupsByNsName.get(name);
     }
