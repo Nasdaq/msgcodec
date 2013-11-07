@@ -1,7 +1,7 @@
 // Gradle configurations for this module
 ext {
     msgcodec = [
-        'version' : 'HEAD-SNAPSHOT',
+        'version' : '1.0.0',
         'vcs' :  [
             'rootDevelopment' : 'git@gitrepo.cinnober.com:clearing/msgcodec.git',
             'rootCompiled' : 'default',
