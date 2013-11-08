@@ -30,7 +30,7 @@ import java.lang.annotation.Target;
  * The default value is unspecified (-1).</dd>
  *
  * <dt>Field</dt><dd>The id of a field must be unique within a group, including any super groups.
- * The default value is unspecified (-1). Annotate a get or set method.</dd>
+ * The default value is unspecified (-1).</dd>
  *
  * <dt>Enum constant</dt><dd>The id of an enumeration constant must be unique within an enum definition.
  * The default value is the previous enum id plus one, or zero for the first enum value.</dd>
