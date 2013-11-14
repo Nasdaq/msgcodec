@@ -59,7 +59,7 @@ import java.util.Objects;
 /**
  * The protocol dictionary builder can build a protocol dictionary from a collection of java classes.
  * <p>All non-static fields of the Java classes must be annotated properly, see the com.cinnober.msgcodec.anot package.
- * The default constructor must exist.
+ * The default constructor must exist, but it need not be public.
  *
  * <p>Example:
  * <pre>
@@ -233,6 +233,10 @@ public class ProtocolDictionaryBuilder {
                     constructor.setAccessible(true);
                     break;
                 }
+            }
+            if (constructor == null) {
+                throw new IllegalArgumentException("No default constructor found for class " +
+                        group.getJavaClass().getName());
             }
 
             ConstructorFactory factory = new ConstructorFactory(constructor);

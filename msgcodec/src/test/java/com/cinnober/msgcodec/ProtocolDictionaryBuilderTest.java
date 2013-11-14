@@ -79,4 +79,12 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
         assertNotNull(dict.getGroup("SecretMessage").getFactory().newInstance());
     }
+    @Test
+    public void testPrivate2() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        try {
+            ProtocolDictionary dict = builder.build(SecretMessage2.class);
+            fail("Expected exception: no default constructor");
+        } catch (IllegalArgumentException e) {}
+    }
 }
