@@ -17,23 +17,20 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
-import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.anot.Id;
-import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.ProtocolDictionary;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 
 /**
  * @author mikael.brannstrom
  *
  */
-@Id(1)
-public class Hello extends MsgObject {
-    @Required
-    public String greeting;
+public class TestProtocolTest {
 
-    public Hello() {
-    }
-
-    public Hello(String greeting) {
-        this.greeting = greeting;
+    @Test
+    public void testTestProtocol() {
+        ProtocolDictionary dict = TestProtocol.getProtocolDictionary();
+        System.out.println(dict.toString());
     }
 }

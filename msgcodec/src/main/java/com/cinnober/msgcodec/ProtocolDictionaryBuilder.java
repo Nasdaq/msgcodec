@@ -165,7 +165,7 @@ public class ProtocolDictionaryBuilder {
      * E.g. wrong annotations etc.
      */
     public ProtocolDictionary build(Class<?> ... messageTypes) throws IllegalArgumentException {
-        Map<Class<?>, GroupMeta> groups = new HashMap<Class<?>, GroupMeta>(messageTypes.length * 2);
+        Map<Class<?>, GroupMeta> groups = new HashMap<>(messageTypes.length * 2);
         for (Class<?> messageType : messageTypes) {
             groups.put(messageType, new GroupMeta(messageType));
         }
@@ -183,7 +183,7 @@ public class ProtocolDictionaryBuilder {
      * E.g. wrong annotations etc.
      */
     public ProtocolDictionary build(Collection<Class<?>> messageTypes) throws IllegalArgumentException {
-        Map<Class<?>, GroupMeta> groups = new HashMap<Class<?>, GroupMeta>(messageTypes.size() * 2);
+        Map<Class<?>, GroupMeta> groups = new HashMap<>(messageTypes.size() * 2);
         for (Class<?> messageType : messageTypes) {
             groups.put(messageType, new GroupMeta(messageType));
         }
@@ -217,24 +217,22 @@ public class ProtocolDictionaryBuilder {
         }
 
         // find fields, traverse groups starting from the top (inheritance wise)
-        ArrayList<GroupMeta> sortedGroups = new ArrayList<GroupMeta>(groups.values());
+        ArrayList<GroupMeta> sortedGroups = new ArrayList<>(groups.values());
         Collections.sort(sortedGroups, new GroupMetaComparator());
         for (GroupMeta group : sortedGroups) {
             findFields(group, namedTypes, groups);
         }
 
         // build group definitions
-        Collection<GroupDef> groupDefs = new ArrayList<GroupDef>(sortedGroups.size());
+        Collection<GroupDef> groupDefs = new ArrayList<>(sortedGroups.size());
         for (GroupMeta group : sortedGroups) {
-            Constructor constructor;
-            try {
-                constructor = group.getJavaClass().getConstructor();
-            } catch (NoSuchMethodException e) {
-                throw new IllegalArgumentException("No default constructor found for class " +
-                        group.getJavaClass().getName(), e);
-            } catch (SecurityException e) {
-                throw new IllegalArgumentException("No public default constructor found for class " +
-                        group.getJavaClass().getName(), e);
+            Constructor constructor = null;
+            for (Constructor constr : group.getJavaClass().getDeclaredConstructors()) {
+                if (constr.getParameterTypes().length == 0) {
+                    constructor = constr;
+                    constructor.setAccessible(true);
+                    break;
+                }
             }
 
             ConstructorFactory factory = new ConstructorFactory(constructor);
@@ -357,7 +355,7 @@ public class ProtocolDictionaryBuilder {
         for (Map.Entry<Class<? extends Annotation>, AnnotationMapper> entry : annotationMappers.entrySet()) {
             Annotation anot = element.getAnnotation(entry.getKey());
             if (anot != null) {
-                putAnnotation(map, entry.getValue().map(annotateAnot));
+                putAnnotation(map, entry.getValue().map(anot));
             }
         }
         return map;
@@ -744,7 +742,7 @@ public class ProtocolDictionaryBuilder {
         private final Field field;
         public FieldAccessor(Field field) {
             this.field = field;
-            field.setAccessible(true);
+            this.field.setAccessible(true);
         }
         @Override
         public Object getValue(Object obj) {
@@ -769,6 +767,7 @@ public class ProtocolDictionaryBuilder {
         private final Constructor constructor;
         public ConstructorFactory(Constructor constructor) {
             this.constructor = constructor;
+            this.constructor.setAccessible(true);
         }
 
         @Override

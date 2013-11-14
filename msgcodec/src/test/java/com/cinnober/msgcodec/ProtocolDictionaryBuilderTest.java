@@ -18,8 +18,9 @@
 package com.cinnober.msgcodec;
 
 import org.junit.Test;
+import static org.junit.Assert.*;
 
-import com.cinnober.msgcodec.test.messages.TestProtocol;
+//import com.cinnober.msgcodec.test.messages.TestProtocol;
 
 
 /**
@@ -47,12 +48,6 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
     }
 
-    @Test
-    public void testTestProtocol() {
-        ProtocolDictionary dict = TestProtocol.getProtocolDictionary();
-        System.out.println(dict.toString());
-    }
-
     /** Test of generic class parameters, as well as recursive add of referred components.
      */
     @Test
@@ -62,4 +57,26 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
     }
 
+    @Test
+    public void testAnnotationMapper() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        builder.addAnnotationMapper(CustomAnnotation.class, new AnnotationMapper<CustomAnnotation>() {
+            @Override
+            public String map(CustomAnnotation annotation) {
+                return "custom=" + annotation.value();
+            }
+        });
+        ProtocolDictionary dict = builder.build(FooMessage.class);
+        System.out.println("annotationMapper: \n" + dict.toString());
+        assertEquals("FooMessage", dict.getGroup("FooMessage").getAnnotation("custom"));
+        assertEquals("myByte", dict.getGroup("FooMessage").getField("myByte").getAnnotation("custom"));
+    }
+
+    @Test
+    public void testPrivate() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.build(SecretMessage.class);
+        System.out.println(dict.toString());
+        assertNotNull(dict.getGroup("SecretMessage").getFactory().newInstance());
+    }
 }

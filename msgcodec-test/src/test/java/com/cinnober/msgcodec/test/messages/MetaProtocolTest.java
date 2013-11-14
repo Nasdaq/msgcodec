@@ -15,12 +15,14 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.messages;
+package com.cinnober.msgcodec.test.messages;
 
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.messages.MetaProtocol;
+import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
 
 /**
  * @author mikael.brannstrom
