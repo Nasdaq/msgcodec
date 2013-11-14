@@ -53,6 +53,8 @@ import com.cinnober.msgcodec.anot.SmallDecimal;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
+import java.util.Objects;
 
 /**
  * The protocol dictionary builder can build a protocol dictionary from a collection of java classes.
@@ -104,6 +106,7 @@ public class ProtocolDictionaryBuilder {
                     )));
 
     private boolean strict;
+    private final Map<Class<? extends Annotation>, AnnotationMapper> annotationMappers = new HashMap<>();
 
     /**
      * Create a protocol dictionary builder with default behaviour.
@@ -119,6 +122,37 @@ public class ProtocolDictionaryBuilder {
     public ProtocolDictionaryBuilder(boolean strict) {
         this.strict = strict;
     }
+
+    /**
+     * Set strict validation mode.
+     * 
+     * @param strict true if unecessary annotations should be checked for, otherwise false (default).
+     */
+    public void setStrict(boolean strict) {
+        this.strict = strict;
+    }
+
+    /**
+     * Returns true if strict validation should be applied.
+     * 
+     * @return true if unecessary annotations should be checked for, otherwise false.
+     */
+    public boolean isStrict() {
+        return strict;
+    }
+
+    /**
+     * Add an annotation mapper to automatically import the specified annotation type.
+     * The specified annotation type will be imported from classes and fields and converted to a "key=value" string.
+     *
+     * @param <T> the annotation type
+     * @param annotationType the annotation type, not null
+     * @param mapper the mapper that can convert the annotation to a "key=value" string.
+     */
+    public <T extends Annotation> void addAnnotationMapper(Class<T> annotationType, AnnotationMapper<T> mapper) {
+        annotationMappers.put(Objects.requireNonNull(annotationType), Objects.requireNonNull(mapper));
+    }
+
 
     /** Build a protocol dictionary from the specified Java classes.
      *
@@ -178,7 +212,7 @@ public class ProtocolDictionaryBuilder {
         for (GroupMeta group : groups.values()) {
             inferGroupName(group);
             inferGroupId(group);
-            group.setAnnotations(toAnnotationsMap(group.getJavaClass().getAnnotation(Annotate.class)));
+            group.setAnnotations(toAnnotationsMap(group.getJavaClass()));
             inferGroupInheritance(group, groups);
         }
 
@@ -311,23 +345,31 @@ public class ProtocolDictionaryBuilder {
         group.setId(id);
     }
 
-    private Map<String, String> toAnnotationsMap(Annotate annotateAnot) {
-        if (annotateAnot == null) {
-            return Collections.emptyMap();
-        } else {
-            Map<String, String> map = new HashMap<>(annotateAnot.value().length * 2);
+    @SuppressWarnings("unchecked")
+    private Map<String, String> toAnnotationsMap(AnnotatedElement element) {
+        Map<String, String> map = new HashMap<>();
+        Annotate annotateAnot = element.getAnnotation(Annotate.class);
+        if (annotateAnot != null) {
             for (String keyValue : annotateAnot.value()) {
-                int idx = keyValue.indexOf('=');
-                if (idx == -1) {
-                    throw new IllegalArgumentException("Illegal annotation \"" + keyValue + "\"");
-                }
-                String key = keyValue.substring(0, idx);
-                String value = keyValue.substring(idx + 1);
-                map.put(key, value);
+                putAnnotation(map, keyValue);
             }
-            return map;
         }
-
+        for (Map.Entry<Class<? extends Annotation>, AnnotationMapper> entry : annotationMappers.entrySet()) {
+            Annotation anot = element.getAnnotation(entry.getKey());
+            if (anot != null) {
+                putAnnotation(map, entry.getValue().map(annotateAnot));
+            }
+        }
+        return map;
+    }
+    private static void putAnnotation(Map<String, String> map, String keyValue) {
+        int idx = keyValue.indexOf('=');
+        if (idx == -1) {
+            throw new IllegalArgumentException("Illegal annotation \"" + keyValue + "\"");
+        }
+        String key = keyValue.substring(0, idx);
+        String value = keyValue.substring(idx + 1);
+        map.put(key, value);
     }
 
     /**
@@ -409,13 +451,12 @@ public class ProtocolDictionaryBuilder {
                 Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
                 SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
                 Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
-                Annotate annotateAnot = field.getAnnotation(Annotate.class);
 
                 TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
                         dynamicAnot, unsignedAnot, smallDecimalAnot,
                         namedTypes, groupsByClass);
                 FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
-                        toAnnotationsMap(annotateAnot),
+                        toAnnotationsMap(field),
                         new FieldBinding(accessor, type, componentType));
                 fieldDefs.add(fieldDef);
             } catch (IllegalArgumentException e) {
