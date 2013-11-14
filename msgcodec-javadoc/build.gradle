@@ -3,5 +3,5 @@ description = ''
 
 dependencies {
   compile project(':msgcodec:msgcodec')
-  compile files("${System.properties['java.home']}/../lib/tools.jar")
+  compile group: 'com.oracle.java', name: 'tools', version:'1.7.0-EXT'
 }
