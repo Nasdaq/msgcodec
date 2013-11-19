@@ -19,8 +19,6 @@ package com.cinnober.msgcodec;
 
 import com.cinnober.msgcodec.anot.Id;
 import org.junit.Test;
-
-import com.cinnober.msgcodec.test.messages.TestProtocol;
 import java.util.List;
 import static org.junit.Assert.*;
 
@@ -50,12 +48,6 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
     }
 
-    @Test
-    public void testTestProtocol() {
-        ProtocolDictionary dict = TestProtocol.getProtocolDictionary();
-        System.out.println(dict.toString());
-    }
-
     /** Test of generic class parameters, as well as recursive add of referred components.
      */
     @Test
@@ -81,8 +73,38 @@ public class ProtocolDictionaryBuilderTest {
         assertEquals("i6", fields.get(5).getName());
     }
 
+    @Test
+    public void testAnnotationMapper() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        builder.addAnnotationMapper(CustomAnnotation.class, new AnnotationMapper<CustomAnnotation>() {
+            @Override
+            public String map(CustomAnnotation annotation) {
+                return "custom=" + annotation.value();
+            }
+        });
+        ProtocolDictionary dict = builder.build(FooMessage.class);
+        System.out.println("annotationMapper: \n" + dict.toString());
+        assertEquals("FooMessage", dict.getGroup("FooMessage").getAnnotation("custom"));
+        assertEquals("myByte", dict.getGroup("FooMessage").getField("myByte").getAnnotation("custom"));
+    }
 
-    public static class FieldOrderMsg {
+    @Test
+    public void testPrivate() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.build(SecretMessage.class);
+        System.out.println(dict.toString());
+        assertNotNull(dict.getGroup("SecretMessage").getFactory().newInstance());
+    }
+    @Test
+    public void testPrivate2() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        try {
+            ProtocolDictionary dict = builder.build(SecretMessage2.class);
+            fail("Expected exception: no default constructor");
+        } catch (IllegalArgumentException e) {}
+    }
+
+    public static class FieldOrderMsg extends MsgObject {
         @Id(1)
         public int i1;
         @Id(3)

@@ -30,8 +30,10 @@ import com.cinnober.msgcodec.anot.Unsigned;
  * @author mikael.brannstrom
  *
  */
-@Id(100)
+@CustomAnnotation("FooMessage")
+@Id(1001)
 public class FooMessage extends MsgObject {
+    @CustomAnnotation("myByte")
     @Id(1)
     public byte myByte;
     @Id(2)

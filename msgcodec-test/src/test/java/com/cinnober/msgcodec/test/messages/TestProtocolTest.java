@@ -17,23 +17,20 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
-import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.ProtocolDictionary;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 
 /**
  * @author mikael.brannstrom
  *
  */
-@Id(104)
-public class FloatsMessage extends MsgObject {
-    @Id(9)
-    public float myFloat;
-    @Id(10)
-    public double myDouble;
+public class TestProtocolTest {
 
-    @Id(20)
-    public Float myFloatObj;
-    @Id(21)
-    public Double myDoubleObj;
-
+    @Test
+    public void testTestProtocol() {
+        ProtocolDictionary dict = TestProtocol.getProtocolDictionary();
+        System.out.println(dict.toString());
+    }
 }

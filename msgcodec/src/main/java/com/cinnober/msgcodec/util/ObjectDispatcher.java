@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -176,7 +177,7 @@ public class ObjectDispatcher {
             if (!targets.containsKey(targetType)) {
                 targets.put(targetType, target);
             } else {
-                log.fine("Duplicate dispatch method for class " + targetType);
+                log.log(Level.FINE, "Duplicate dispatch method for class {0}", targetType);
             }
         }
     }
@@ -246,6 +247,7 @@ public class ObjectDispatcher {
          */
         Target(Method method, Object instance) {
             this.method = method;
+            this.method.setAccessible(true); // make it faster
             this.instance = instance;
         }
 
