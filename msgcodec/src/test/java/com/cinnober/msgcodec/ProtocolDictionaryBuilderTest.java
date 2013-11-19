@@ -17,9 +17,12 @@
  */
 package com.cinnober.msgcodec;
 
+import com.cinnober.msgcodec.anot.Id;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.test.messages.TestProtocol;
+import java.util.List;
+import static org.junit.Assert.*;
 
 
 /**
@@ -62,4 +65,35 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
     }
 
+    @Test
+    public void testFieldOrder() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.build(FieldOrderMsg.class);
+        System.out.println(dict.toString());
+
+        GroupDef group = dict.getGroup(FieldOrderMsg.class);
+        List<FieldDef> fields = group.getFields();
+        assertEquals("i1", fields.get(0).getName());
+        assertEquals("i4", fields.get(1).getName());
+        assertEquals("i2", fields.get(2).getName());
+        assertEquals("i5", fields.get(3).getName());
+        assertEquals("i3", fields.get(4).getName());
+        assertEquals("i6", fields.get(5).getName());
+    }
+
+
+    public static class FieldOrderMsg {
+        @Id(1)
+        public int i1;
+        @Id(3)
+        public int i2;
+        @Id(5)
+        public int i3;
+        @Id(2)
+        public int i4;
+        @Id(4)
+        public int i5;
+        @Id(6)
+        public int i6;
+    }
 }
