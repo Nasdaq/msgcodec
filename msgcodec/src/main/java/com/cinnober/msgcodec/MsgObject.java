@@ -73,7 +73,7 @@ public class MsgObject {
             ArrayList<FieldHandler> fields = new ArrayList<>();
 
             // copy fields from superclass
-            if (!superClass.equals(MsgObject.class) && !superClass.equals(Object.class)) {
+            if (superClass != null && !superClass.equals(MsgObject.class) && !superClass.equals(Object.class)) {
                 @SuppressWarnings("unchecked")
                 GroupHandler superClassToString = getGroupValueHandler(superClass);
                 for (FieldHandler fieldToString : superClassToString.fields()) {
