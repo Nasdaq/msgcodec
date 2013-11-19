@@ -63,6 +63,7 @@ public class TestProtocol {
 
         putAll(messages, "Dates.", DatesMessage.createMessages());
         putAll(messages, "Decimals.", DecimalsMessage.createMessages());
+        putAll(messages, "Sequences.", SequencesMessage.createMessages());
 
         return messages;
     }

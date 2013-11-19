@@ -33,6 +33,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 
 import com.cinnober.msgcodec.StreamCodec;
+import org.junit.Assert;
 
 /**
  * Base class for standard test messages for testing a codec implementation.
@@ -112,7 +113,7 @@ public abstract class TestMessagesSuite extends Suite {
                 } else if (!object.getClass().equals(message.getClass())) {
                     fail("Decodec message is not same type as encoded message");
                 }
-                // TODO: check equals
+                Assert.assertEquals(message, object);
             } catch (Throwable e) {
                 notifier.fireTestFailure(new Failure(description, e));
             }

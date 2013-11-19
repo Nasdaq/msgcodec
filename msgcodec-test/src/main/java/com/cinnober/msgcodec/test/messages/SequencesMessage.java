@@ -25,6 +25,8 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.Unsigned;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author mikael.brannstrom
@@ -65,4 +67,44 @@ public class SequencesMessage extends MsgObject {
     @Sequence(Employee.class)
     public Collection<Employee> collectionEmployees;
 
+    public Employee[] arrayEmployees;
+
+    /**
+     * Returns messages suitable for testing a codec. This includes border cases.
+     * Each message is labeled with a name, e.g. "zero" or "border1" that describes what
+     * the message tries to test.
+     *
+     * All messages are encodable, i.e. any required fields are set.
+     *
+     * @return a map from message label to message.
+     */
+    public static Map<String, SequencesMessage> createMessages() {
+        Map<String, SequencesMessage> messages = new LinkedHashMap<>();
+
+        SequencesMessage msg;
+
+        msg = new SequencesMessage();
+        messages.put("clean", msg);
+        msg.arrayBytesReq = new byte[]{};
+        msg.arrayShortsReq = new short[]{};
+        msg.arrayIntsReq = new int[]{};
+        msg.arrayLongsReq = new long[]{};
+
+        msg = new SequencesMessage();
+        messages.put("arrayObjs", msg);
+        msg.arrayBytesReq = new byte[]{};
+        msg.arrayShortsReq = new short[]{};
+        msg.arrayIntsReq = new int[]{};
+        msg.arrayLongsReq = new long[]{};
+        msg.arrayEmployees = new Employee[] { createEmployee("Bob", 123), createEmployee("Alice", 456) };
+
+        return messages;
+    }
+
+    private static Employee createEmployee(String name, long employeeNumber) {
+        Employee employee = new Employee();
+        employee.name = name;
+        employee.employeeNumber = employeeNumber;
+        return employee;
+    }
 }
