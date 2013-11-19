@@ -1,7 +1,7 @@
 // Gradle configurations for this module
 ext {
     msgcodec = [
-      'version' : "git describe".execute().text.trim().replaceFirst(/-([0-9]+-g.*)$/, '+$1'),
+      'version' : "git describe".execute().text.trim().replaceFirst(/-([0-9]+-g.*)$/, '+sha$1'),
          'vcs' :  [
             'rootDevelopment' : 'git@gitrepo.cinnober.com:clearing/msgcodec.git',
             'rootCompiled' : 'default',
