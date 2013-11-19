@@ -289,7 +289,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     /**
      * Replace instances of Reference that points to another TypeDef, with the target.
      *
-     * <p>If <code>pFull</code> is true, then instances of DynamicReference and
+     * <p>If <code>full</code> is true, then instances of DynamicReference and
      * Sequence are resolved further, as follows:
      * <ul>
      * <li>DynamicReference is replaced (if needed) with a direct reference to a group,
