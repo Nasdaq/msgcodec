@@ -452,7 +452,7 @@ abstract class JsonValueHandler<T> {
             Object array = Array.newInstance(componentType, list.size());
             int i=0;
             for (Object value : list) {
-                Array.set(array, i, value);
+                Array.set(array, i++, value);
             }
 
             return array;
