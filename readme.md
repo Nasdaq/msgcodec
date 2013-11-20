@@ -79,6 +79,18 @@ The code is divided into the following projects:
 - msgcodec-javadoc: Javadoc doclet for extracting javadoc comments from messages.
 - msgcodec-examples: Examples of how to use msgcodec.
 
+## Versions ##
+
+Versions are stored as annotated tags in git. Semantic versioning (http://semver.org) are used, using the major.minor.patch syntax.
+
+To create a new version, e.g. 1.2.3:
+
+    git tag -a 1.2.3 -m "New release"
+    git push --tags
+    gradle clean build uploadArchives
+
+If changes are made after version 1.2.3 then the version number will look like '1.2.3+8-g6542423', until a new annotated tag is created.
+
 ## Undocumented ##
 How are tests run?
 Continuous integration?
