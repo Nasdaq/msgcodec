@@ -21,11 +21,29 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-/** A codec that can encode and decode messages to and from streams.
+/** 
+ * A codec that can encode and decode messages to and from streams.
+ * 
+ * <p>NOTE: A stream codec implementation is NOT thread-safe, unless the documentation says so.</p>
  * 
  * @author mikael.brannstrom
+ * @see StreamCodecFactory
  */
 public interface StreamCodec {
+    /**
+     * Write the group to the specified stream.
+     * 
+     * @param group the group to encode, not null.
+     * @param out the stream to write to, not null.
+     * @throws IOException if the underlying stream throws an exception, or if the value could not be encoded.
+     */
     public void encode(Object group, OutputStream out) throws IOException;
+    /**
+     * Read a group from the specified stream.
+     * 
+     * @param in the stream to read from, not null.
+     * @return the decoded value, not null.
+     * @throws IOException if the underlying stream throws an exception, or if the value could not be decoded.
+     */
     public Object decode(InputStream in) throws IOException;
 }

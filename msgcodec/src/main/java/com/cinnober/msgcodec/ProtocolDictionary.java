@@ -45,6 +45,7 @@ import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
  *
  */
 public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
+    private final Object UID = new Object();
     private final Map<String, NamedType> typesByName;
 
     private final Map<String, GroupDef> groupsByName;
@@ -430,6 +431,15 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return new ProtocolDictionary(newSortedGroups, typesByName.values(), annotations, binding);
     }
 
+    /**
+     * Returns a unique identifier for this protocol dictionary instance.
+     * It is guaranteed that the UID object of two protocol dictionaries are equal
+     * iff the protocol dictionaries are the same instance.
+     * @return the UID, not null.
+     */
+    public Object getUID() {
+        return UID;
+    }
 
     /**
      * Returns a human readable string representation of this protocol dictionary.

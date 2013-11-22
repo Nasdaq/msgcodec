@@ -61,7 +61,7 @@ public class BlinkCodec implements StreamCodec {
      * dynamic group that is currently being encoded.
      * The stack is only non-empty while encoding a message.
      */
-    private final Stack<Preamble> preambleStack = new Stack<Preamble>();
+    private final Stack<Preamble> preambleStack = new Stack<>();
     /** The internal buffer used for temporary storage of encoded dynamic groups.
      * This is needed in order to know how large an encoded dynamic group is, which
      * is written in the preamble.
@@ -96,7 +96,7 @@ public class BlinkCodec implements StreamCodec {
         }
         groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
         groupInstructionsByGroupType = new HashMap<>(dictionary.getGroups().size() * 2);
-        groupInstructionsById = new HashMap<Integer, StaticGroupInstruction>(dictionary.getGroups().size() * 2);
+        groupInstructionsById = new HashMap<>(dictionary.getGroups().size() * 2);
         // first store place holders for group instructions,
         // since they might be needed when creating field instructions
         for (GroupDef groupDef : dictionary.getGroups()) {

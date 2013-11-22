@@ -43,10 +43,10 @@ public class ConcurrentBufferPool implements Pool<byte[]> {
      * @param initialPoolSize the initial number of buffers that are pre-allocated.
      */
     public ConcurrentBufferPool(int bufferSize, int poolCapacity, int initialPoolSize) {
-        this.pool = new ArrayBlockingQueue<byte[]>(poolCapacity);
+        this.pool = new ArrayBlockingQueue<>(poolCapacity);
         this.bufferSize = bufferSize;
         for (int i=0; i<initialPoolSize; i++) {
-            release(newInstance());
+            pool.offer(newInstance());
         }
     }
     
@@ -54,6 +54,7 @@ public class ConcurrentBufferPool implements Pool<byte[]> {
         return new byte[bufferSize];
     }
     
+    @Override
     public byte[] get() {
          byte[] buf = pool.poll();
          if (buf == null) {
@@ -62,6 +63,7 @@ public class ConcurrentBufferPool implements Pool<byte[]> {
              return buf;
          }
     }
+    @Override
     public void release(byte[] buf) {
         pool.offer(buf);
     }
