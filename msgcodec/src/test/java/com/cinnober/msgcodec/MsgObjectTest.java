@@ -101,6 +101,11 @@ public class MsgObjectTest {
                 new ArrayMsg(new String[]{"a", "b"}, new int[]{1, 2}, new Basic[]{new Basic(123, "Hello"), new Basic(123, "Hello")}));
     }
 
+    @Test
+    public void testNumbersToString() {
+        assertEquals("Numbers [f32=0.0, f64=0.0]", new Numbers(0,0).toString());
+    }
+
     public static class FieldOrder extends MsgObject {
         @Id(1)
         public int i1;
@@ -128,6 +133,21 @@ public class MsgObjectTest {
         public Basic(int int32, String string) {
             this.int32 = int32;
             this.string = string;
+        }
+    }
+
+    public static class Numbers extends MsgObject {
+        @Id(1)
+        public float f32;
+        @Id(2)
+        public double f64;
+
+        public Numbers() {
+        }
+
+        public Numbers(float f32, double f64) {
+            this.f32 = f32;
+            this.f64 = f64;
         }
     }
 
