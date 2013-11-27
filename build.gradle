@@ -1,7 +1,22 @@
 apply plugin: 'cbuilder-module'
 
+buildscript {
+     repositories {
+        maven {
+            url uri("http://nexus.cinnober.com/nexus/content/repositories/buildtest_snapshots/")
+        }
+        maven {
+            url uri("http://nexus.cinnober.com/nexus/content/repositories/buildtest_releases/")
+        }
+    }
+   dependencies {
+        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '0.1.0-SNAPSHOT'
+    }
+}
+
 subprojects {
   apply plugin: 'cbuilder'
+  apply plugin: 'semver-git'
 //	repositories {
 //		mavenLocal()
 //	}
