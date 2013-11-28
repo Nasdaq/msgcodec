@@ -1,9 +1,0 @@
-/*
- * Copyright (c) 2013 Cinnober Financial Technology AB, Stockholm,
- * Sweden. All rights reserved.
- */
-buildscript {
-  apply from: 'cBuilderConfiguration.gradle'
-}
-
-apply plugin: 'cbuilder-multiproject-builder'

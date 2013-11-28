@@ -1,0 +1,8 @@
+include 'msgcodec'
+include 'msgcodec-blink'
+include 'msgcodec-json'
+include 'msgcodec-xml'
+include 'msgcodec-tap'
+include 'msgcodec-javadoc'
+include 'msgcodec-test'
+include 'msgcodec-examples'

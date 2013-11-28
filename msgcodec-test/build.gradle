@@ -1,7 +1,6 @@
-apply plugin: 'cbuilder'
 description = ''
 
 dependencies {
-  compile project(':msgcodec:msgcodec')
+  compile project(':msgcodec')
   compile group: 'junit', name: 'junit', version:'4.11'
 }

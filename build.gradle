@@ -1,7 +1,10 @@
-apply plugin: 'cbuilder-module'
+apply plugin: 'maven'
 
 buildscript {
-     repositories {
+    repositories {
+        maven {
+            url uri("http://nexus.cinnober.com/nexus/content/groups/public/")
+        }
         maven {
             url uri("http://nexus.cinnober.com/nexus/content/repositories/buildtest_snapshots/")
         }
@@ -9,26 +12,19 @@ buildscript {
             url uri("http://nexus.cinnober.com/nexus/content/repositories/buildtest_releases/")
         }
     }
-   dependencies {
+    dependencies {
         classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '0.1.0-SNAPSHOT'
+        classpath group: 'com.cinnober.gradle', name: 'cinnober-java', version: '0.1.0-SNAPSHOT'
     }
 }
 
 subprojects {
-  apply plugin: 'cbuilder'
-  apply plugin: 'semver-git'
-//	repositories {
-//		mavenLocal()
-//	}
-
-  it.tasks.withType(JavaCompile){
-    it.sourceCompatibility = "1.7"
-    it.targetCompatibility = "1.7"
-  }
+    apply plugin: 'semver-git'
+    apply plugin: 'cinnober-java'
   
-  dependencies {
-    testCompile group: 'junit', name: 'junit', version:'4.11'
-  }
+    sourceCompatibility = "1.7"
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version:'4.11'
+    }
 }
-
-

@@ -1,7 +1,6 @@
-apply plugin: 'cbuilder'
 description = ''
 
 dependencies {
-  compile project(':msgcodec:msgcodec')
+  compile project(':msgcodec')
   compile group: 'com.oracle.java', name: 'tools', version:'1.7.0-EXT'
 }

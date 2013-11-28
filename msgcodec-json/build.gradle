@@ -1,8 +1,7 @@
-apply plugin: 'cbuilder'
 description = ''
 
 dependencies {
-  compile project(':msgcodec:msgcodec')
+  compile project(':msgcodec')
   compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.2.0'
-  testCompile project(':msgcodec:msgcodec-test')
+  testCompile project(':msgcodec-test')
 }
