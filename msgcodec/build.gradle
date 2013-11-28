@@ -1,11 +1,1 @@
 description = ''
-
-
-task showRepos << {
-    println "All repos:"
-    println repositories.collect { it.url }
-
-    println "Upload archives:"
-    println uploadArchives.repositories.collect { it.repository.collect { it.url } }
-
-}
