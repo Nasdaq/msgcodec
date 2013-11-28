@@ -21,7 +21,8 @@ buildscript {
 subprojects {
     apply plugin: 'semver-git'
     apply plugin: 'cinnober-java'
-  
+
+    group = 'com.cinnober.msgcodec'
     sourceCompatibility = "1.7"
 
     dependencies {

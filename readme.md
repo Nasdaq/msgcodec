@@ -38,25 +38,29 @@ You will need to include the `msgcodec-{version}.jar` and `msgcodec-{format}-{ve
 In a gradle project one would include the libs in dependencies section of your `build.gradle` file (replace `{version}` with the appropriate current release). Example for a project that uses the TAP encoding format:
 
     dependencies {
-      compile group: 'com.cinnober', name: 'msgcodec', version:'{version}'
-      compile group: 'com.cinnober', name: 'msgcodec-tap', version:'{version}'
+      compile group: 'com.cinnober.msgcodec', name: 'msgcodec', version:'{version}'
+      compile group: 'com.cinnober.msgcodec', name: 'msgcodec-tap', version:'{version}'
     }
 
-## Building msgcodec ##
-PENDING: maybe we can remove the "Development" prefix below?
+## Build ##
 
 First clone a copy of the repo:
->git clone git@gitrepo.cinnober.com:platform/msgcodec.git Developmentmsgcodec
+>git clone git@gitrepo.cinnober.com:platform/msgcodec.git
 
-Bootstrap dependencies (cBuilder) and build:
->cd Developmentmsgcodec
->cd Build && gradle getDependentModules && cd -
+Then build:
+>cd msgcodec
 >gradle build
+
+### Eclipse ###
 
 If you want to edit java files from within eclipse, run
 >gradle eclipse
 
 and then from within eclipse File -> Import... -> General -> Existing projects into workspace -> Next.. Browse.. browse to where you cloned repo -> Ok.. -> Select All -> Import.
+
+### Netbeans ###
+
+Install the [Netbeans Gradle Plugin](http://plugins.netbeans.org/plugin/44510/gradle-support) and just open the project (the cloned repo).
 
 ## Documentation ##
 See the javadoc of `msgcodec`. To build the javadoc run:
@@ -79,19 +83,17 @@ The code is divided into the following projects:
 - msgcodec-javadoc: Javadoc doclet for extracting javadoc comments from messages.
 - msgcodec-examples: Examples of how to use msgcodec.
 
-## Versions ##
+## Release ##
 
-Versions are stored as annotated tags in git. Semantic versioning (http://semver.org) are used, using the major.minor.patch syntax.
+Versions are stored as annotated tags in git. [Semantic versioning](http://semver.org) is used.
 
-To create a new version, e.g. 1.2.3:
+To create a new release, e.g. 1.2.3:
 
     git tag -a 1.2.3 -m "New release"
     git push --tags
+
+Then jenkins will to the following:
+
     gradle clean build uploadArchives
 
-If changes are made after version 1.2.3 then the version number will look like '1.2.3+8-g6542423', until a new annotated tag is created.
-
-## Undocumented ##
-How are tests run?
-Continuous integration?
-Stable release?
+If changes are made after version 1.2.3 then the version number be '1.3.0-SNAPSHOT' (default a minor change).
