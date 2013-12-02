@@ -20,7 +20,6 @@ package com.cinnober.msgcodec.tap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
@@ -35,6 +34,7 @@ import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
+import java.util.List;
 
 /**
  * The TAP codec can serialize and deserialize Java objects according to the internal Cinnober TAP message format,
@@ -163,8 +163,8 @@ public class TapCodec implements StreamCodec {
                     createFieldInstruction(dictionary, null, ((TypeDef.Sequence) type).getComponentType());
             if (field.getJavaClass().isArray()) {
                 return new FieldInstruction.ArraySequence(field, elementInstruction);
-            } else if (Collection.class.isAssignableFrom(field.getJavaClass())) {
-                return new FieldInstruction.CollectionSequence(field, elementInstruction);
+            } else if (List.class.equals(field.getJavaClass())) {
+                return new FieldInstruction.ListSequence(field, elementInstruction);
             } else {
                 throw new RuntimeException("Unhandled sequence type: " + field.getJavaClass().getName());
             }

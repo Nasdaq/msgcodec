@@ -40,6 +40,7 @@ import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import java.util.List;
 
 /**
  * @author Mikael Brannstrom
@@ -401,13 +402,13 @@ abstract class JsonValueHandler<T> {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    static class CollectionSequenceHandler extends JsonValueHandler<Collection> {
+    static class ListSequenceHandler extends JsonValueHandler<List> {
         private final JsonValueHandler componentHandler;
-        public CollectionSequenceHandler(JsonValueHandler componentHandler) {
+        public ListSequenceHandler(JsonValueHandler componentHandler) {
             this.componentHandler = componentHandler;
         }
         @Override
-        void writeValue(Collection list, JsonGenerator g) throws IOException {
+        void writeValue(List list, JsonGenerator g) throws IOException {
             g.writeStartArray();
             for (Object value : list) {
                 componentHandler.writeValue(value, g);
@@ -415,8 +416,8 @@ abstract class JsonValueHandler<T> {
             g.writeEndArray();
         }
         @Override
-        Collection readValue(JsonParser p) throws IOException {
-            Collection list = new ArrayList();
+        List readValue(JsonParser p) throws IOException {
+            List list = new ArrayList();
             // start array already consumed
             while (p.nextToken() != JsonToken.END_ARRAY) {
                 list.add(componentHandler.readValue(p));

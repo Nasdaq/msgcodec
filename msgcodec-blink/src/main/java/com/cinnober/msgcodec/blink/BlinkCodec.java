@@ -20,7 +20,6 @@ package com.cinnober.msgcodec.blink;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,6 +34,7 @@ import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.Pool;
+import java.util.List;
 
 /**
  * The Blink codec can serialize and deserialize Java objects according to
@@ -140,11 +140,11 @@ public class BlinkCodec implements StreamCodec {
                 } else {
                     return new FieldInstruction.ArraySequenceNull(field, elementInstruction);
                 }
-            } else if (Collection.class.isAssignableFrom(field.getJavaClass())) {
+            } else if (List.class.equals(field.getJavaClass())) {
                 if (required) {
-                    return new FieldInstruction.CollectionSequence(field, elementInstruction);
+                    return new FieldInstruction.ListSequence(field, elementInstruction);
                 } else {
-                    return new FieldInstruction.CollectionSequenceNull(field, elementInstruction);
+                    return new FieldInstruction.ListSequenceNull(field, elementInstruction);
                 }
             } else {
                 throw new RuntimeException("Unhandled sequence type: " + field.getJavaClass().getName());

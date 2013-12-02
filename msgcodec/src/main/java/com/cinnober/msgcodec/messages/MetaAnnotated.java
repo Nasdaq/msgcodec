@@ -18,7 +18,6 @@
 package com.cinnober.msgcodec.messages;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,6 +26,7 @@ import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Sequence;
+import java.util.List;
 
 /**
  * Base class for annotated messages.
@@ -40,7 +40,7 @@ public class MetaAnnotated extends MsgObject {
      */
     @Id(100)
     @Sequence(MetaAnnotation.class)
-    public Collection<MetaAnnotation> annotations;
+    public List<MetaAnnotation> annotations;
 
     public void setAnnotations(Map<String, String> annotations) {
         if (annotations == null) {

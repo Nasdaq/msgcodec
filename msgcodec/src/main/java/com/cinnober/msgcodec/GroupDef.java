@@ -18,7 +18,6 @@
 package com.cinnober.msgcodec;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -216,7 +215,7 @@ public class GroupDef implements Annotatable<GroupDef> {
     }
 
     public MetaGroupDef toMessage() {
-        Collection<MetaFieldDef> msgFields = new ArrayList<>(fields.size());
+        List<MetaFieldDef> msgFields = new ArrayList<>(fields.size());
         for (FieldDef field : fields) {
             msgFields.add(field.toMessage());
         }

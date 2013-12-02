@@ -17,7 +17,6 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
-import java.util.Collection;
 
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Dynamic;
@@ -26,6 +25,7 @@ import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.Unsigned;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,16 +56,16 @@ public class SequencesMessage extends MsgObject {
 
 
     @Sequence(Integer.class)
-    public Collection<Integer> collectionInts;
+    public List<Integer> listInts;
 
     @Unsigned @Sequence(Integer.class)
-    public Collection<Integer> collectionUInts;
+    public List<Integer> listUInts;
 
     @Sequence(Person.class) @Dynamic
-    public Collection<Person> collectionPeople;
+    public List<Person> listPeople;
 
     @Sequence(Employee.class)
-    public Collection<Employee> collectionEmployees;
+    public List<Employee> listEmployees;
 
     public Employee[] arrayEmployees;
 

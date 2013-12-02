@@ -18,7 +18,6 @@
 package com.cinnober.msgcodec.messages;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
@@ -160,11 +159,11 @@ public class MetaTypeDef extends MetaAnnotated {
         @Required
         @com.cinnober.msgcodec.anot.Sequence(MetaSymbol.class)
         @Id(1)
-        public Collection<MetaSymbol> symbols;
+        public List<MetaSymbol> symbols;
 
         public MetaEnum() {}
 
-        public MetaEnum(Collection<MetaSymbol> symbols) {
+        public MetaEnum(List<MetaSymbol> symbols) {
             this.symbols = symbols;
         }
 

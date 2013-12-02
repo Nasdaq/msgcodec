@@ -32,10 +32,10 @@ import com.cinnober.msgcodec.anot.Unsigned;
 import java.lang.reflect.AnnotatedElement;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -109,8 +109,8 @@ public class MsgObject {
             MsgObjectValueHandler componentHandler = getNoSequenceValueHandler(field, componentType);
             if (type.isArray()) {
                 return new ArraySequenceHandler(componentHandler);
-            } else if (type.getClass().equals(Collection.class)) {
-                return new CollectionSequenceHandler(componentHandler);
+            } else if (type.getClass().equals(List.class)) {
+                return new ListSequenceHandler(componentHandler);
             } else {
                 return SIMPLE;
             }

@@ -132,7 +132,7 @@ public class JsonCodec implements StreamCodec {
                         createValueHandler(dictionary, ((Sequence)type).getComponentType(), componentJavaClass, null),
                         componentJavaClass);
             } else { // collection
-                return new JsonValueHandler.CollectionSequenceHandler(
+                return new JsonValueHandler.ListSequenceHandler(
                         createValueHandler(dictionary, ((Sequence)type).getComponentType(), componentJavaClass, null));
             }
         case REFERENCE:

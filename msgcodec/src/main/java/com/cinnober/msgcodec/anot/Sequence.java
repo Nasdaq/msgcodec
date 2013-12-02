@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 
 /**
  * Specifies that the field is of a sequence type, and what the element type is.
- * This is required for sequences of type {@link java.util.Collection}.
+ * This is required for sequences of type {@link java.util.List}.
  * Arrays are sequences by default, except for byte[] which is treated as a binary by default.
  *
  * @author mikael.brannstrom

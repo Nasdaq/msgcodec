@@ -43,7 +43,7 @@ import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ArraySequenceValueField;
-import com.cinnober.msgcodec.xml.XmlElementHandler.CollectionSequenceValueField;
+import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.DynamicGroupField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.DynamicGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ElementValueField;
@@ -180,8 +180,8 @@ public class XmlCodec implements StreamCodec {
                             field.getJavaClass().getComponentType());
                     putElement(elementFields, fieldInstr);
                 } else {
-                    CollectionSequenceValueField fieldInstr =
-                            new CollectionSequenceValueField(nsName, field, valueInstr);
+                    ListSequenceValueField fieldInstr =
+                            new ListSequenceValueField(nsName, field, valueInstr);
                     putElement(elementFields, fieldInstr);
                 }
             } else {

@@ -536,9 +536,9 @@ public class ProtocolDictionaryBuilder {
             Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groups) {
         // sequence
         if (sequenceAnot != null || (type.isArray() && !type.equals(byte[].class))) {
-            if (!Collection.class.isAssignableFrom(type) && !type.isArray()) {
+            if (!List.class.equals(type) && !type.isArray()) {
                 throw new IllegalArgumentException(
-                        "Illegal @Sequence. Field type must be Collection or array.");
+                        "Illegal @Sequence. Field type must be List or array.");
             }
             if (type.isArray() && sequenceAnot != null && !type.getComponentType().equals(sequenceAnot.value())) {
                 throw new IllegalArgumentException(

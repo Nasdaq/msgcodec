@@ -18,7 +18,6 @@
 package com.cinnober.msgcodec.messages;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import com.cinnober.msgcodec.FieldDef;
@@ -60,13 +59,12 @@ public class MetaGroupDef extends MetaAnnotated {
     @Required
     @Sequence(MetaFieldDef.class)
     @Id(4)
-    public Collection<MetaFieldDef> fields;
+    public List<MetaFieldDef> fields;
 
     public MetaGroupDef() {}
 
     public MetaGroupDef(String name, Integer id, String superGroup,
-            Collection<MetaFieldDef> fields) {
-        super();
+            List<MetaFieldDef> fields) {
         this.name = name;
         this.id = id;
         this.superGroup = superGroup;

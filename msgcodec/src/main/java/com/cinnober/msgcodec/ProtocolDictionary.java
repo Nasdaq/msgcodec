@@ -32,6 +32,7 @@ import com.cinnober.msgcodec.TypeDef.Ref;
 import com.cinnober.msgcodec.messages.MetaGroupDef;
 import com.cinnober.msgcodec.messages.MetaNamedType;
 import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
+import java.util.List;
 
 /**
  * The protocol dictionary defines the messages of a protocol.
@@ -463,12 +464,12 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     }
 
     public MetaProtocolDictionary toMessage() {
-        Collection<MetaGroupDef> msgGroups = new ArrayList<>(sortedGroups.size());
+        List<MetaGroupDef> msgGroups = new ArrayList<>(sortedGroups.size());
         for (GroupDef group : sortedGroups) {
             msgGroups.add(group.toMessage());
         }
 
-        Collection<MetaNamedType> msgTypes = new ArrayList<>(typesByName.size());
+        List<MetaNamedType> msgTypes = new ArrayList<>(typesByName.size());
         for (NamedType namedType : typesByName.values()) {
             msgTypes.add(namedType.toMessage());
         }

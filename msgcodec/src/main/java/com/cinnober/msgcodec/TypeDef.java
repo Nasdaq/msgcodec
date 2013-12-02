@@ -142,7 +142,7 @@ import com.cinnober.msgcodec.messages.MetaTypeDef;
  * <tr>
  * <td>{@link Type#SEQUENCE SEQUENCE}</td>
  * <td>Sequence. A sequence of sequence is not allowed.</td>
- * <td>java.util.Collection or array of the component type.</td>
+ * <td>java.util.List or array of the component type.</td>
  * </tr>
  * </table>
  *
@@ -232,7 +232,7 @@ public abstract class TypeDef {
          * @see TypeDef.DynamicReference
          */
         DYNAMIC_REFERENCE,
-        /** Sequence. A sequence of sequence is not allowed. Java type: java.util.Collection or array.
+        /** Sequence. A sequence of sequence is not allowed. Java type: java.util.List or array.
          * @see TypeDef.Sequence
          */
         SEQUENCE,
@@ -486,7 +486,7 @@ public abstract class TypeDef {
 
         @Override
         public Class<?> getDefaultJavaType() {
-            return Collection.class;
+            return List.class;
         }
 
         @Override

@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +30,7 @@ import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Time;
+import java.util.List;
 
 /**
  * A field instruction can encode or decode a field in a group.
@@ -783,17 +783,17 @@ abstract class FieldInstruction<V> {
 
     // --- SEQUENCE ---
     @SuppressWarnings("rawtypes")
-    static class CollectionSequence extends FieldInstruction<Collection> {
+    static class ListSequence extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
         private final int maxLength;
-        public CollectionSequence(FieldDef field, FieldInstruction elementInstruction) {
+        public ListSequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
             maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Collection value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(List value, BlinkOutputStream out) throws IOException {
             require(value);
             int length = value.size();
             validateMaxLength(length, maxLength);
@@ -805,7 +805,7 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public Collection decodeValue(BlinkInputStream in) throws IOException {
+        public List decodeValue(BlinkInputStream in) throws IOException {
             int size = in.readUInt32();
             if (size < 0) {
                 throw new IOException("Sequence size overflow: " + size);
@@ -819,17 +819,17 @@ abstract class FieldInstruction<V> {
         }
     }
     @SuppressWarnings("rawtypes")
-    static class CollectionSequenceNull extends FieldInstruction<Collection> {
+    static class ListSequenceNull extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
         private final int maxLength;
-        public CollectionSequenceNull(FieldDef field, FieldInstruction elementInstruction) {
+        public ListSequenceNull(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
             maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Collection value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(List value, BlinkOutputStream out) throws IOException {
             if (value == null) {
                 out.writeUInt32Null(null);
             } else {
@@ -843,7 +843,7 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public Collection decodeValue(BlinkInputStream in) throws IOException {
+        public List decodeValue(BlinkInputStream in) throws IOException {
             Integer sizeObj = in.readUInt32Null();
             if (sizeObj == null) {
                 return null;

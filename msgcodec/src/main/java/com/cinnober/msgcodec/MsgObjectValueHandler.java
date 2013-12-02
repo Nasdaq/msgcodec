@@ -32,6 +32,7 @@ import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.util.ByteBuffers;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -196,13 +197,13 @@ abstract class MsgObjectValueHandler<T> {
         }
     }
     @SuppressWarnings({"rawtypes", "unchecked"})
-    static class CollectionSequenceHandler extends MsgObjectValueHandler<Collection> {
+    static class ListSequenceHandler extends MsgObjectValueHandler<List> {
         private final MsgObjectValueHandler componentHandler;
-        public CollectionSequenceHandler(MsgObjectValueHandler componentHandler) {
+        public ListSequenceHandler(MsgObjectValueHandler componentHandler) {
             this.componentHandler = componentHandler;
         }
         @Override
-        void appendToString(Collection value, StringBuilder appendTo) {
+        void appendToString(List value, StringBuilder appendTo) {
             appendTo.append("[");
             boolean comma = false;
             for (Object item : value) {

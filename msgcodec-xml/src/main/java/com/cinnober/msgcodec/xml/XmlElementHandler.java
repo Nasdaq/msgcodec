@@ -21,13 +21,13 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Map;
 
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
+import java.util.List;
 
 /**
  * @author mikael.brannstrom
@@ -428,7 +428,7 @@ public class XmlElementHandler {
 
     }
 
-    static class CollectionSequenceValueField extends FieldHandler {
+    static class ListSequenceValueField extends FieldHandler {
         protected final ValueHandler valueHandler;
 
         /**
@@ -436,7 +436,7 @@ public class XmlElementHandler {
          * @param accessor
          * @param valueHandler
          */
-        public CollectionSequenceValueField(NsName nsName, FieldDef field,
+        public ListSequenceValueField(NsName nsName, FieldDef field,
                 ValueHandler valueHandler) {
             super(nsName, field);
             this.valueHandler = valueHandler;
@@ -461,7 +461,7 @@ public class XmlElementHandler {
         @Override
         public void endChildElement(XmlContext ctx, XmlElementHandler element) {
             Object item = ctx.popValue();
-            Collection list = (Collection) ctx.peekValue();
+            List list = (List) ctx.peekValue();
             list.add(item);
         }
 
@@ -474,7 +474,7 @@ public class XmlElementHandler {
             }
             appendTo.append('<');
             appendElementName(appendTo, name);
-            Collection list = (Collection)value;
+            List list = (List)value;
             if (list.isEmpty()) {
                 appendTo.println("/>");
             } else {
@@ -489,7 +489,7 @@ public class XmlElementHandler {
         }
     }
 
-    static class ArraySequenceValueField extends CollectionSequenceValueField {
+    static class ArraySequenceValueField extends ListSequenceValueField {
 
         private final Class<?> componentType;
         /**
@@ -506,8 +506,8 @@ public class XmlElementHandler {
         @SuppressWarnings("rawtypes")
         @Override
         public void endElement(XmlContext ctx, String text) {
-            // convert from collection to array
-            Collection list = (Collection) ctx.popValue();
+            // convert from list to array
+            List list = (List) ctx.popValue();
             Object array = Array.newInstance(componentType, list.size());
             int i=0;
             for (Object value : list) {

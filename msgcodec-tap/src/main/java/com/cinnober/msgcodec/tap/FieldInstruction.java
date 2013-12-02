@@ -28,6 +28,7 @@ import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
+import java.util.List;
 
 /**
  * A field instruction can encode or decode a field in a group.
@@ -357,15 +358,15 @@ abstract class FieldInstruction<V> {
 
     // --- SEQUENCE ---
     @SuppressWarnings("rawtypes")
-    static class CollectionSequence extends FieldInstruction<Collection> {
+    static class ListSequence extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
-        public CollectionSequence(FieldDef field, FieldInstruction elementInstruction) {
+        public ListSequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Collection value, TapOutputStream out) throws IOException {
+        public void encodeValue(List value, TapOutputStream out) throws IOException {
             if (value == null) {
                 // Note: no distinction between empty list and null
                 out.writeVarInt(0);
@@ -378,7 +379,7 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public Collection decodeValue(TapInputStream in) throws IOException {
+        public List decodeValue(TapInputStream in) throws IOException {
             int size = in.readVarInt();
             if (size == 0) {
                 if (field.isRequired()) {
