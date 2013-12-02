@@ -17,6 +17,8 @@
  */
 package com.cinnober.msgcodec.xml;
 
+import java.util.Objects;
+
 /**
  * @author mikael.brannstrom
  *
@@ -25,21 +27,23 @@ public class NsName {
     private final String namespace;
     private final String name;
     /**
-     * @param namespace
-     * @param name
+     * Create a new namespaced name.
+     * @param namespace the namespace, or null for no namespace
+     * @param name the name, not null.
      */
     public NsName(String namespace, String name) {
         this.namespace = namespace;
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
     }
     /**
-     * @return the namespace
+     * Returns the namespace.
+     * @return the namespace, or null of no namespace.
      */
     public String getNamespace() {
         return namespace;
     }
     /**
-     * @return the name
+     * @return the name, not null.
      */
     public String getName() {
         return name;

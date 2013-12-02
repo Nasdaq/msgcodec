@@ -34,6 +34,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface Enumeration {
-    /** The enumeration type. */
+    /**
+     * The enumeration type.
+     * @return the enumeration type.
+     */
     Class<? extends Enum<?>> value();
 }

@@ -35,6 +35,7 @@ import com.cinnober.msgcodec.messages.MetaTypeDef;
  * <p>The following data types are supported. Some types are parametrizable, such as sequence, enum and reference.
  *
  * <table>
+ * <caption>Data types</caption>
  * <tr style="text-align: left">
  * <th>{@link Type Type}</th><th>Description</th><th>Java type</th>
  * </tr>
@@ -571,7 +572,11 @@ public abstract class TypeDef {
             this.refType = refType;
         }
 
-        /** Return the named type or group, or null for any group (dynamic references only). */
+        /** 
+         * Returns the referenced type name.
+         *
+         * @return the named type or group, or null for any group (dynamic references only).
+         */
         public java.lang.String getRefType() {
             return refType;
         }

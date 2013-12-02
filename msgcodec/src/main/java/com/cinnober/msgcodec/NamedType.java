@@ -35,10 +35,12 @@ public class NamedType implements Annotatable<NamedType> {
     private final String name;
     private final TypeDef type;
     private final Map<String, String> annotations;
+    
     /**
-     * @param name
-     * @param type
-     * @param annotations
+     * Create a new named type.
+     * @param name the name, not null
+     * @param type the type, not null
+     * @param annotations the annotations, or null for no annotations.
      */
     public NamedType(String name, TypeDef type, Map<String, String> annotations) {
         this.name = Objects.requireNonNull(name);
@@ -51,14 +53,16 @@ public class NamedType implements Annotatable<NamedType> {
     }
 
     /**
-     * @return the name
+     * Returns the name.
+     * @return the name, not null.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * @return the type
+     * Returns the type.
+     * @return the type, not null.
      */
     public TypeDef getType() {
         return type;

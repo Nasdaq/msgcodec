@@ -37,7 +37,7 @@ public class FieldBinding {
      * @param javaClass the java class of the field, not null.
      * @param componentJavaClass the java class of the component if sequence, or null.
      */
-    public <T> FieldBinding(Accessor<?, ?> accessor, Class<?> javaClass,
+    public FieldBinding(Accessor<?, ?> accessor, Class<?> javaClass,
         Class<?> componentJavaClass) {
         this.accessor = Objects.requireNonNull(accessor);
         this.javaClass = javaClass;

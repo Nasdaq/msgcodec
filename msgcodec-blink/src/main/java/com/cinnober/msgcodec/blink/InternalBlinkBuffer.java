@@ -35,7 +35,7 @@ class InternalBlinkBuffer extends OutputStream {
     private final Pool<byte[]> bufferPool;
 
     /** All buffers currently in use. */
-    private List<byte[]> buffers = new ArrayList<byte[]>();
+    private final List<byte[]> buffers = new ArrayList<>();
     /** The current (last) buffer. */
     private byte[] currentBuffer;
     /** The next byte to write in currentBuffer. */

@@ -23,55 +23,30 @@ import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 
 /**
- * @author mikael.brannstrom
+ * A key-value annotation.
  *
+ * @author mikael.brannstrom
  */
 @Name("Annotation")
 public class MetaAnnotation extends MsgObject {
+    /**
+     * The annotation name.
+     */
     @Required
     @Id(1)
-    private String name;
+    public String name;
+    /**
+     * The annotation value.
+     */
     @Required
     @Id(2)
-    private String value;
+    public String value;
 
     public MetaAnnotation() {
     }
 
-    /**
-     * @param name
-     * @param value
-     */
     public MetaAnnotation(String name, String value) {
         this.name = name;
         this.value = value;
     }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-    /**
-     * @return the value
-     */
-    public String getValue() {
-        return value;
-    }
-    /**
-     * @param value the value to set
-     */
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-
-
 }

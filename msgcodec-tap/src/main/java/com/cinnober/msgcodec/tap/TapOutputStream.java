@@ -95,6 +95,7 @@ public class TapOutputStream extends FilterOutputStream {
      * @param size the number of bytes written in the range [1, 10].
      * @throws IOException if the underlying stream throws an exception
      */
+    @SuppressWarnings("fallthrough")
     private void writeVarLong(long value, int size) throws IOException {
         switch (size) {
         case 10:

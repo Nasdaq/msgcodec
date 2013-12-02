@@ -29,89 +29,47 @@ import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
 
 /**
+ * A group definition.
+ *
  * @author mikael.brannstrom
  *
  */
 @Name("GroupDef")
 @Id(16001)
 public class MetaGroupDef extends MetaAnnotated {
+    /**
+     * The group name.
+     */
     @Required
     @Id(1)
-    private String name;
+    public String name;
+    /**
+     * The numeric group identifier.
+     */
     @Id(2)
-    private Integer id;
+    public Integer id;
+    /**
+     * The name of the super group, or null if there is no super group.
+     */
     @Id(3)
-    private String superGroup;
+    public String superGroup;
+    /**
+     * The declared fields of this group.
+     * Inherited fields are not included here.
+     */
     @Required
     @Sequence(MetaFieldDef.class)
     @Id(4)
-    private Collection<MetaFieldDef> fields;
+    public Collection<MetaFieldDef> fields;
 
     public MetaGroupDef() {}
 
-    /**
-     * @param name
-     * @param id
-     * @param superGroup
-     * @param fields
-     */
     public MetaGroupDef(String name, Integer id, String superGroup,
             Collection<MetaFieldDef> fields) {
         super();
         this.name = name;
         this.id = id;
         this.superGroup = superGroup;
-        this.fields = fields;
-    }
-
-
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-    /**
-     * @return the id
-     */
-    public Integer getId() {
-        return id;
-    }
-    /**
-     * @param id the id to set
-     */
-    public void setId(Integer id) {
-        this.id = id;
-    }
-    /**
-     * @return the superGroup
-     */
-    public String getSuperGroup() {
-        return superGroup;
-    }
-    /**
-     * @param superGroup the superGroup to set
-     */
-    public void setSuperGroup(String superGroup) {
-        this.superGroup = superGroup;
-    }
-    /**
-     * @return the fields
-     */
-    public Collection<MetaFieldDef> getFields() {
-        return fields;
-    }
-    /**
-     * @param fields the fields to set
-     */
-    public void setFields(Collection<MetaFieldDef> fields) {
         this.fields = fields;
     }
 

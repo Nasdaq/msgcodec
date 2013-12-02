@@ -33,6 +33,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface Sequence {
-    /** The element type. */
+    /**
+     * The element type.
+     * @return the element type.
+     */
     Class<?> value();
 }

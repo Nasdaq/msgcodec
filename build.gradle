@@ -19,6 +19,7 @@ buildscript {
 }
 
 subprojects {
+    ext.nextVersion = 'major'
     apply plugin: 'semver-git'
     apply plugin: 'cinnober-java'
 

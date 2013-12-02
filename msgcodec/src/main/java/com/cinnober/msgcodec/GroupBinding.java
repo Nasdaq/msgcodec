@@ -35,7 +35,7 @@ public class GroupBinding {
      * @param factory the group factory, not null.
      * @param groupType the group key, not null.
      */
-    public <T> GroupBinding(Factory<?> factory, Object groupType) {
+    public GroupBinding(Factory<?> factory, Object groupType) {
         this.factory = Objects.requireNonNull(factory);
         this.groupType = Objects.requireNonNull(groupType);
     }

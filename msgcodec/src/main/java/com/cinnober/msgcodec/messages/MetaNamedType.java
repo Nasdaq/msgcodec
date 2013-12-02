@@ -23,52 +23,30 @@ import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 
 /**
- * @author mikael.brannstrom
+ * Named type.
  *
+ * @author mikael.brannstrom
  */
 @Name("NamedType")
 @Id(16002)
 public class MetaNamedType extends MetaAnnotated {
+    /**
+     * The name.
+     */
     @Required
-    private String name;
+    public String name;
+    /**
+     * The type.
+     */
     @Required @Dynamic
-    private MetaTypeDef type;
+    public MetaTypeDef type;
+
     public MetaNamedType() {
     }
 
-    /**
-     * @param name
-     * @param type
-     */
     public MetaNamedType(String name, MetaTypeDef type) {
         this.name = name;
         this.type = type;
     }
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-    /**
-     * @return the type
-     */
-    public MetaTypeDef getType() {
-        return type;
-    }
-    /**
-     * @param type the type to set
-     */
-    public void setType(MetaTypeDef type) {
-        this.type = type;
-    }
-
 
 }

@@ -62,31 +62,18 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Ref") @Id(16003)
     public static class MetaRef extends MetaTypeDef {
+        /**
+         * The name of the referenced type.
+         */
         @Required
         @Id(1)
-        private String type;
+        public String type;
         public MetaRef() {}
 
-        /**
-         * @param type
-         */
         public MetaRef(String type) {
             this.type = type;
         }
 
-        /**
-         * @return the type
-         */
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * @param type the type to set
-         */
-        public void setType(String type) {
-            this.type = type;
-        }
         @Override
         public TypeDef toTypeDef() {
             return new TypeDef.Reference(type);
@@ -95,30 +82,17 @@ public class MetaTypeDef extends MetaAnnotated {
     }
     @Name("DynRef") @Id(16004)
     public static class MetaDynRef extends MetaTypeDef {
+        /**
+         * The name of the referenced type.
+         */
         @Id(1)
-        private String type;
+        public String type;
         public MetaDynRef() {}
 
-        /**
-         * @param type
-         */
         public MetaDynRef(String type) {
             this.type = type;
         }
 
-        /**
-         * @return the type
-         */
-        public String getType() {
-            return type;
-        }
-
-        /**
-         * @param type the type to set
-         */
-        public void setType(String type) {
-            this.type = type;
-        }
         @Override
         public TypeDef toTypeDef() {
             return new TypeDef.DynamicReference(type);
@@ -126,32 +100,18 @@ public class MetaTypeDef extends MetaAnnotated {
     }
     @Name("Sequence") @Id(16005)
     public static class MetaSequence extends MetaTypeDef {
+        /**
+         * The type of the elements in the sequence.
+         */
         @Required
         @Id(1)
-        private MetaTypeDef type;
+        public MetaTypeDef type;
         public MetaSequence() {}
 
-        /**
-         * @param type
-         */
         public MetaSequence(MetaTypeDef type) {
             this.type = type;
         }
 
-
-        /**
-         * @return the type
-         */
-        public MetaTypeDef getType() {
-            return type;
-        }
-
-        /**
-         * @param type the type to set
-         */
-        public void setType(MetaTypeDef type) {
-            this.type = type;
-        }
         @Override
         public TypeDef toTypeDef() {
             return new TypeDef.Sequence(type.toTypeDef());
@@ -160,65 +120,32 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Time") @Id(16006)
     public static class MetaTime extends MetaTypeDef {
+        /**
+         * The time unit.
+         */
         @Required
         @Id(1)
-        private TimeUnit unit;
+        public TimeUnit unit;
+        /**
+         * The epoch from which time is counted from.
+         */
         @Required
         @Id(2)
-        private Epoch epoch;
+        public Epoch epoch;
+        /**
+         * The name of the time zone, or absent for unspecified time zone.
+         */
         @Id(3)
-        private String timeZone;
+        public String timeZone;
 
         public MetaTime() {}
 
-        /**
-         * @param unit
-         * @param epoch
-         * @param timeZone
-         */
         public MetaTime(TimeUnit unit, Epoch epoch, String timeZone) {
             this.unit = unit;
             this.epoch = epoch;
             this.timeZone = timeZone;
         }
 
-
-        /**
-         * @return the unit
-         */
-        public TimeUnit getUnit() {
-            return unit;
-        }
-        /**
-         * @param unit the unit to set
-         */
-        public void setUnit(TimeUnit unit) {
-            this.unit = unit;
-        }
-        /**
-         * @return the epoch
-         */
-        public Epoch getEpoch() {
-            return epoch;
-        }
-        /**
-         * @param epoch the epoch to set
-         */
-        public void setEpoch(Epoch epoch) {
-            this.epoch = epoch;
-        }
-        /**
-         * @return the timeZone
-         */
-        public String getTimeZone() {
-            return timeZone;
-        }
-        /**
-         * @param timeZone the timeZone to set
-         */
-        public void setTimeZone(String timeZone) {
-            this.timeZone = timeZone;
-        }
         @Override
         public TypeDef toTypeDef() {
             return new TypeDef.Time(unit, epoch, timeZone != null ? TimeZone.getTimeZone(timeZone) : null);
@@ -227,32 +154,20 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Enum") @Id(16007)
     public static class MetaEnum extends MetaTypeDef {
+        /**
+         * The symbols in the enumeration.
+         */
         @Required
         @com.cinnober.msgcodec.anot.Sequence(MetaSymbol.class)
         @Id(1)
-        private Collection<MetaSymbol> symbols;
+        public Collection<MetaSymbol> symbols;
 
         public MetaEnum() {}
 
-        /**
-         * @param symbols
-         */
         public MetaEnum(Collection<MetaSymbol> symbols) {
             this.symbols = symbols;
         }
 
-        /**
-         * @return the symbols
-         */
-        public Collection<MetaSymbol> getSymbols() {
-            return symbols;
-        }
-        /**
-         * @param symbols the symbols to set
-         */
-        public void setSymbols(Collection<MetaSymbol> symbols) {
-            this.symbols = symbols;
-        }
         @Override
         public TypeDef toTypeDef() {
             List<Symbol> enumSymbols = new ArrayList<>(symbols.size());
@@ -352,45 +267,22 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("Symbol")
     public static class MetaSymbol extends MetaAnnotated {
+        /**
+         * The name of the enum symbol.
+         */
         @Required
         @Id(1)
-        private String name;
+        public String name;
+        /**
+         * Numeric identifier of the enum symbol.
+         */
         @Id(2)
-        private int id;
+        public int id;
 
         public MetaSymbol() {}
 
-        /**
-         * @param name
-         * @param id
-         */
         public MetaSymbol(String name, int id) {
             this.name = name;
-            this.id = id;
-        }
-
-        /**
-         * @return the name
-         */
-        public String getName() {
-            return name;
-        }
-        /**
-         * @param name the name to set
-         */
-        public void setName(String name) {
-            this.name = name;
-        }
-        /**
-         * @return the id
-         */
-        public int getId() {
-            return id;
-        }
-        /**
-         * @param id the id to set
-         */
-        public void setId(int id) {
             this.id = id;
         }
 

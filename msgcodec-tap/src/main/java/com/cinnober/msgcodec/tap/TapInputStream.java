@@ -60,24 +60,28 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a byte value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte readByte() throws IOException {
         return (byte) read();
     }
     /** Read a variable-length short (16-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public short readVarShort() throws IOException {
         return (short) readVarLong();
     }
     /** Read a variable-length integer (32-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public int readVarInt() throws IOException {
         return (int) readVarLong();
     }
     /** Read a variable-length long (64-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public long readVarLong() throws IOException {
         long value = 0;
@@ -94,6 +98,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a short (16-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public short readShort() throws IOException {
         return (short) (read() << 8 | read());
@@ -101,6 +106,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read an integer (32-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public int readInt() throws IOException {
         return read() << 24 | read() << 16 | read() << 8 | read();
@@ -108,6 +114,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a long (64-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public long readLong() throws IOException {
         return (long) read() << 57 |
@@ -122,6 +129,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a float (32-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public float readFloat() throws IOException {
         return Float.intBitsToFloat(readInt());
@@ -129,6 +137,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a double (64-bit) value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public double readDouble() throws IOException {
         return Double.longBitsToDouble(readLong());
@@ -136,6 +145,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a boolean value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public boolean readBoolean() throws IOException {
         return read() != 0;
@@ -143,6 +153,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a ISO-LATIN-1 char.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public char readCharLatin1() throws IOException {
         return (char) read();
@@ -151,6 +162,7 @@ public class TapInputStream extends LimitInputStream  {
     /** Read a "model" length.
      * @param model the first model byte.
      * @return the length
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public int readModelLength(int model) throws IOException {
         if ((model & MODEL_LENGTH_NON_COMPACT) == 0) {
@@ -171,6 +183,7 @@ public class TapInputStream extends LimitInputStream  {
     /** Read a "model" length.
      * @param descriptor true if the descriptor bit is expected (and required). False if it is not expected.
      * @return the length, or -1 for null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public int readModelLength(boolean descriptor) throws IOException {
         int model = read();
@@ -186,6 +199,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a binary value.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte[] readBinary() throws IOException {
         int size = readModelLength(false);
@@ -202,6 +216,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a UTF-8 string.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public String readStringUTF8() throws IOException {
         byte[] bytes = readBinary();
@@ -214,6 +229,7 @@ public class TapInputStream extends LimitInputStream  {
 
     /** Read a ISO-LATIN-1 string.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public String readStringLatin1() throws IOException {
         byte[] bytes = readBinary();

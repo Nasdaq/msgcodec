@@ -43,7 +43,10 @@ public class LimitInputStream extends InputStream {
         this.in = in;
     }
 
-    /** Returns the number of bytes remaining to the limit. */
+    /**
+     * Returns the number of bytes remaining to the limit.
+     * @return the limit.
+     */
     public int limit() {
         return limit;
     }
@@ -92,8 +95,8 @@ public class LimitInputStream extends InputStream {
     /** Read bytes from the underlying input stream.
      *
      * @param buf the buffer into which the data is read
-     * @param offset
-     * @param length
+     * @param offset the start offset in the buffer
+     * @param length the number of bytes to read
      *
      * @return the number of bytes read, always length.
      * @throws EOFException if there is no more data.

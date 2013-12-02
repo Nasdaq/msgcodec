@@ -24,35 +24,38 @@ import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 
 /**
- * @author mikael.brannstrom
+ * A field definition.
  *
+ * @author mikael.brannstrom
  */
 @Name("FieldDef")
 public class MetaFieldDef extends MetaAnnotated {
+    /**
+     * The field name.
+     */
     @Required
     @Id(1)
-    private String name;
+    public String name;
+    /**
+     * The numeric field identifier.
+     */
     @Id(2)
-    private Integer id;
+    public Integer id;
+    /**
+     * True if the field is required, otherwise false.
+     */
     @Id(3)
-    private boolean required;
+    public boolean required;
+    /**
+     * The type of the field.
+     */
     @Required @Dynamic
     @Id(4)
-    private MetaTypeDef type;
+    public MetaTypeDef type;
 
-    /**
-     *
-     */
     public MetaFieldDef() {
     }
 
-
-    /**
-     * @param name
-     * @param id
-     * @param required
-     * @param type
-     */
     public MetaFieldDef(String name, Integer id, boolean required,
             MetaTypeDef type) {
         super();
@@ -62,55 +65,6 @@ public class MetaFieldDef extends MetaAnnotated {
         this.type = type;
     }
 
-
-    /**
-     * @return the name
-     */
-    public String getName() {
-        return name;
-    }
-    /**
-     * @param name the name to set
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-    /**
-     * @return the id
-     */
-    public Integer getId() {
-        return id;
-    }
-    /**
-     * @param id the id to set
-     */
-    public void setId(Integer id) {
-        this.id = id;
-    }
-    /**
-     * @return the required
-     */
-    public boolean isRequired() {
-        return required;
-    }
-    /**
-     * @param required the required to set
-     */
-    public void setRequired(boolean required) {
-        this.required = required;
-    }
-    /**
-     * @return the type
-     */
-    public MetaTypeDef getType() {
-        return type;
-    }
-    /**
-     * @param type the type to set
-     */
-    public void setType(MetaTypeDef type) {
-        this.type = type;
-    }
 
     public FieldDef toFieldDef() {
         return new FieldDef(name, id != null ? id.intValue() : -1, required, type.toTypeDef(), toAnnotationsMap(),

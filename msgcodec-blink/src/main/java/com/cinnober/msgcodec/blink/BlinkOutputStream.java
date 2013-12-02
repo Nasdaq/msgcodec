@@ -451,7 +451,7 @@ public class BlinkOutputStream extends FilterOutputStream {
             out.write(((int)value & 0x3f) | 0x80);
             out.write((int)(value >> 6) & 0xff);
         } else {
-            out.write(((int)(size-1) & 0x3f) | 0xc0);
+            out.write(((size-1) & 0x3f) | 0xc0);
             switch (size) {
                 case 3:
                     out.write((int)value & 0xff);
@@ -509,6 +509,7 @@ public class BlinkOutputStream extends FilterOutputStream {
     }
 
     /** Returns the size in bytes of a signed variable-length coded value.
+     * @param value the value
      * @return the number of bytes, always in the range [1, 9].
      */
     public static final int sizeOfSignedVLC(long value) {
@@ -551,6 +552,7 @@ public class BlinkOutputStream extends FilterOutputStream {
     }
 
     /** Returns the size in bytes of an unsigned variable-length coded value.
+     * @param value the value
      * @return the number of bytes, always in the range [1, 9].
      */
     public static final int sizeOfUnsignedVLC(long value) {

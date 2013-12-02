@@ -33,6 +33,9 @@ import com.cinnober.msgcodec.Annotatable;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Annotate {
-    /** Annotations are specified as key=value pairs. */
+    /**
+     * Annotations are specified as "key=value" strings.
+     * @return the annotations as "key=value" strings.
+     */
     String[] value();
 }

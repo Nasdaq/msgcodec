@@ -56,24 +56,28 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a signed 8-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte readInt8() throws IOException {
         return (byte) readSignedVLC();
     }
     /** Read a signed 16-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public short readInt16() throws IOException {
         return (short) readSignedVLC();
     }
     /** Read a signed 32-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public int readInt32() throws IOException {
         return (int) readSignedVLC();
     }
     /** Read a signed 64-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public long readInt64() throws IOException {
         return readSignedVLC();
@@ -81,24 +85,28 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read an unsigned 8-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte readUInt8() throws IOException {
         return (byte) readUnsignedVLC();
     }
     /** Read an unsigned 16-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public short readUInt16() throws IOException {
         return (short) readUnsignedVLC();
     }
     /** Read an unsigned 32-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public int readUInt32() throws IOException {
         return (int) readUnsignedVLC();
     }
     /** Read an unsigned 64-bit integer.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public long readUInt64() throws IOException {
         return readUnsignedVLC();
@@ -106,6 +114,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a nullable signed 8-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Byte readInt8Null() throws IOException {
         int b1 = read();
@@ -117,6 +126,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable signed 16-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Short readInt16Null() throws IOException {
         int b1 = read();
@@ -128,6 +138,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable signed 32-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Integer readInt32Null() throws IOException {
         int b1 = read();
@@ -139,6 +150,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable signed 64-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Long readInt64Null() throws IOException {
         return readSignedVLCNull();
@@ -146,6 +158,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a nullable unsigned 8-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Byte readUInt8Null() throws IOException {
         int b1 = read();
@@ -157,6 +170,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable unsigned 16-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Short readUInt16Null() throws IOException {
         int b1 = read();
@@ -168,6 +182,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable unsigned 32-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Integer readUInt32Null() throws IOException {
         int b1 = read();
@@ -179,6 +194,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable unsigned 64-bit integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Long readUInt64Null() throws IOException {
         return readUnsignedVLCNull();
@@ -186,12 +202,14 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a signed big integer.
      * @return the value, not null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigInteger readBigInt() throws IOException {
         return readSignedBigVLC();
     }
     /** Read a nullable signed big integer.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigInteger readBigIntNull() throws IOException {
         return readSignedBigVLCNull();
@@ -204,6 +222,7 @@ public class BlinkInputStream extends LimitInputStream  {
      *
      * @return the value
      * @see #readFloat64()
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public float readFloat32() throws IOException {
         return (float) readFloat64();
@@ -216,6 +235,7 @@ public class BlinkInputStream extends LimitInputStream  {
      *
      * @return the value, or null.
      * @see #readFloat64()
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Float readFloat32Null() throws IOException {
         Double value = readFloat64Null();
@@ -228,6 +248,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a 64-bit floating point number.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public double readFloat64() throws IOException {
         long value = readUInt64();
@@ -235,6 +256,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable 64-bit floating point number.
      * @return the value, or null
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Double readFloat64Null() throws IOException {
         Long value = readUInt64Null();
@@ -247,6 +269,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a decimal number.
      * @return the value, not null
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigDecimal readDecimal() throws IOException {
         int exp = readInt8();
@@ -255,6 +278,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable decimal number.
      * @return the value, or null
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigDecimal readDecimalNull() throws IOException {
         Byte exp = readInt8Null();
@@ -268,6 +292,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a big decimal number.
      * @return the value, not null
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigDecimal readBigDecimal() throws IOException {
         int exp = readInt32();
@@ -276,6 +301,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a nullable big decimal number.
      * @return the value, or null
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigDecimal readBigDecimalNull() throws IOException {
         Integer exp = readInt32Null();
@@ -289,12 +315,14 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a boolean value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public boolean readBoolean() throws IOException {
         return readUInt8() != 0;
     }
     /** Read a nullable boolean value.
      * @return the value, or null
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Boolean readBooleanNull() throws IOException {
         int b = read();
@@ -307,12 +335,14 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a unicode string.
      * @return the value, not null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public String readStringUTF8() throws IOException {
         return readStringUTF8(-1);
     }
     /** Read a nullable unicode string.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public String readStringUTF8Null() throws IOException {
         return readStringUTF8Null(-1);
@@ -320,6 +350,7 @@ public class BlinkInputStream extends LimitInputStream  {
     /** Read a unicode string.
      * @param maxLength the maximum string length (characters) that is allowed, or -1 for no limit.
      * @return the value, not null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public String readStringUTF8(int maxLength) throws IOException {
         final int maxBinaryLength = maxLength < 0 ? -1 : maxLength * UTF8_MAX_CHARS_PER_BYTE;
@@ -333,6 +364,7 @@ public class BlinkInputStream extends LimitInputStream  {
     /** Read a nullable unicode string.
      * @param maxLength the maximum string length (characters) that is allowed, or -1 for no limit.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public String readStringUTF8Null(int maxLength) throws IOException {
         final int maxBinaryLength = maxLength < 0 ? -1 : maxLength * UTF8_MAX_CHARS_PER_BYTE;
@@ -349,12 +381,14 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a binary value.
      * @return the value, not null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte[] readBinary() throws IOException {
         return readBinary(-1);
     }
     /** Read a nullable binary value.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte[] readBinaryNull() throws IOException {
         return readBinaryNull(-1);
@@ -362,6 +396,7 @@ public class BlinkInputStream extends LimitInputStream  {
     /** Read a binary value.
      * @param maxLength the maximum binary length (bytes) that is allowed, or -1 for no limit.
      * @return the value, not null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte[] readBinary(int maxLength) throws IOException {
         int size = readUInt32();
@@ -382,6 +417,7 @@ public class BlinkInputStream extends LimitInputStream  {
     /** Read a nullable binary value.
      * @param maxLength the maximum binary length (bytes) that is allowed, or -1 for no limit.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public byte[] readBinaryNull(int maxLength) throws IOException {
         Integer sizeObj = readUInt32Null();
@@ -405,6 +441,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a nullable signed variable-length code value.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Long readSignedVLCNull() throws IOException {
         int b1 = read();
@@ -416,6 +453,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a signed variable-length code value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public long readSignedVLC() throws IOException {
         return readSignedVLC(read());
@@ -425,7 +463,7 @@ public class BlinkInputStream extends LimitInputStream  {
      *
      * @param b1 the first byte read.
      * @return the parsed value.
-     * @throws IOException
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     private long readSignedVLC(int b1) throws IOException {
         if ((0x80 & b1) == 0) {
@@ -466,6 +504,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a nullable unsigned big variable-length code value.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public BigInteger readSignedBigVLC() throws IOException {
     	BigInteger value = readSignedBigVLCNull();
@@ -477,6 +516,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a nullable unsigned big variable-length code value.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
    public BigInteger readSignedBigVLCNull() throws IOException {
 	   int b1 = read();
@@ -514,6 +554,7 @@ public class BlinkInputStream extends LimitInputStream  {
 
     /** Read a nullable unsigned variable-length code value.
      * @return the value, or null.
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public Long readUnsignedVLCNull() throws IOException {
         int b1 = read();
@@ -525,6 +566,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /** Read a signed variable-length code value.
      * @return the value
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     public long readUnsignedVLC() throws IOException {
         return readUnsignedVLC(read());
@@ -535,6 +577,7 @@ public class BlinkInputStream extends LimitInputStream  {
      * @param b1 the first byte read.
      * @return the parsed value.
      * @throws IOException
+     * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */
     private long readUnsignedVLC(int b1) throws IOException {
         if ((0x80 & b1) == 0) {

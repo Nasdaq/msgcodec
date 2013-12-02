@@ -111,6 +111,7 @@ public class EnumSymbols<E extends Enum<E>> {
     /** Create a mapping from Java enumeration to the corresponding symbols.
      * The annotations {@link Id} and {@link Name} are scanned for and applied.
      *
+     * @param <E> the enum type
      * @param enumClass the Java enumeration class.
      * @return the map, not null.
      */
@@ -148,7 +149,7 @@ public class EnumSymbols<E extends Enum<E>> {
     }
 
     private static <K, V> Map<V, K> inverse(Map<K, V> map) {
-        Map<V, K> inverse = new HashMap<V, K>(map.size() * 2);
+        Map<V, K> inverse = new HashMap<>(map.size() * 2);
         for (Map.Entry<K, V> entry : map.entrySet()) {
             inverse.put(entry.getValue(), entry.getKey());
         }

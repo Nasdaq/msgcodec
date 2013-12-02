@@ -53,7 +53,8 @@ public class GroupDef implements Annotatable<GroupDef> {
     private final GroupBinding binding;
     private Boolean bound;
 
-    /** Create a group definition.
+    /**
+     * Create a group definition.
      *
      * @param name the group name, not null.
      * @param id the group id, or -1 if unspecified.
@@ -62,7 +63,7 @@ public class GroupDef implements Annotatable<GroupDef> {
      * @param annotations the annotations, or null
      * @param binding the group binding, or null
      */
-    public <T> GroupDef(String name, int id, String superGroup,
+    public GroupDef(String name, int id, String superGroup,
             List<FieldDef> fields, Map<String, String> annotations,
             GroupBinding binding) {
         this.name = Objects.requireNonNull(name);
@@ -77,56 +78,8 @@ public class GroupDef implements Annotatable<GroupDef> {
         this.binding = binding;
     }
 
-    /** Create a group definition.
-     *
-     * @param name the group name, not null.
-     * @param id the group id, or -1 if unspecified.
-     * @param superGroup the name of the super group, or null if none.
-     * @param javaClass the Java class of this group, not null.
-     * @param factory the group factory, not null.
-     * @param fields the fields declared in this group, not null.
-     * @param annotations the annotations, or null
-     */
-    @Deprecated
-    public <T> GroupDef(String name, int id, String superGroup,
-            Class<?> javaClass, Factory<?> factory,
-            List<FieldDef> fields, Map<String, String> annotations) {
-        this(name, id, superGroup, fields, annotations, new GroupBinding(factory, javaClass));
-    }
-
-    /** Create a group definition.
-     *
-     * @param name the group name, not null.
-     * @param id the group id.
-     * @param superGroup the name of the super group, or null if none.
-     * @param fields the fields declared in this group, not null.
-     * @param factory the group factory, not null.
-     * @param javaClass the Java class of this group, not null.
-     */
-    @Deprecated
-    public <T> GroupDef(String name, int id, String superGroup,
-        List<FieldDef> fields, Factory<T> factory,
-        Class<T> javaClass) {
-        this(name, id, superGroup, javaClass, factory, fields, null);
-    }
-
-    /** Create a group definition.
-     *
-     * @param name the group name, not null.
-     * @param id the group id.
-     * @param superGroup the name of the super group, or null if none.
-     * @param javaClass the Java class of this group, not null.
-     * @param factory the group factory, not null.
-     * @param fields the fields declared in this group, not null.
-     */
-    @Deprecated
-    public <T> GroupDef(String name, int id, String superGroup,
-            Class<T> javaClass, Factory<T> factory,
-            FieldDef ... fields) {
-        this(name, id, superGroup, Arrays.asList(fields), factory, javaClass);
-    }
-
-    /** Returns the group name.
+    /**
+     * Returns the group name.
      *
      * @return the name, not null.
      */
@@ -272,7 +225,8 @@ public class GroupDef implements Annotatable<GroupDef> {
         return message;
     }
 
-    /** Replace all annotations in this object with the specified annotations.
+    /**
+     * Replace all annotations in this object with the specified annotations.
      *
      * @param annotations the annotations.
      * @return a new copy of this object, with the specified annotations set.
@@ -297,7 +251,8 @@ public class GroupDef implements Annotatable<GroupDef> {
         return new GroupDef(name, id, superGroup, newFields, newAnnotations, binding);
     }
 
-    /** Returns the annotation value for the specified annotation name.
+    /**
+     * Returns the annotation value for the specified annotation name.
      *
      * @param name the annotation name, not null.
      * @return the annotation value, or null if not found.
@@ -307,7 +262,8 @@ public class GroupDef implements Annotatable<GroupDef> {
         return annotations.get(name);
     }
 
-    /** Get all annotations as an un-modifiable map.
+    /**
+     * Get all annotations as an un-modifiable map.
      *
      * @return a map of annotation name-value pairs, not null.
      */
@@ -317,9 +273,9 @@ public class GroupDef implements Annotatable<GroupDef> {
     }
 
     /**
-     * Gets field with given name
-     * @param fieldName
-     * @return the requested field, or null if this group has no field with given name
+     * Returns declared field with specified name.
+     * @param fieldName the field name, not null.
+     * @return the requested field, or null if this group has no field with specified name.
      */
     public FieldDef getField(String fieldName) {
         for (FieldDef f : fields) {

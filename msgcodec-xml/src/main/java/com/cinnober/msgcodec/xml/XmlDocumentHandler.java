@@ -31,7 +31,7 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.DynamicGroupValue;
  * @author mikael.brannstrom
  *
  */
-public class XmlDocumentHandler extends DefaultHandler {
+class XmlDocumentHandler extends DefaultHandler {
 
     private final Stack<XmlElementHandler> elementHandlerStack = new Stack<>();
     private final DynamicGroupValue rootElementHandler;
@@ -39,7 +39,9 @@ public class XmlDocumentHandler extends DefaultHandler {
     private final XmlContext context = new XmlContext();
 
     /**
-     *
+     * Create a new XML Document handler.
+     * 
+     * @param codec the codec, not null.
      */
     public XmlDocumentHandler(XmlCodec codec) {
         rootElementHandler = new DynamicGroupValue(codec);

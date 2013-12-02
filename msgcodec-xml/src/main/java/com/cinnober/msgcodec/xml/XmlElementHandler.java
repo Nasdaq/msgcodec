@@ -38,14 +38,14 @@ public class XmlElementHandler {
     private final NsName nsName;
 
     /**
-     * @param nsName
+     * @param nsName the name, or null.
      */
     public XmlElementHandler(NsName nsName) {
         this.nsName = nsName;
     }
 
     /**
-     * @return the nsName
+     * @return the nsName, or null if none.
      */
     public NsName getNsName() {
         return nsName;
@@ -75,9 +75,8 @@ public class XmlElementHandler {
         protected Accessor accessor;
 
         /**
-         * @param nsName
-         * @param value
-         * @param accessor
+         * @param nsName the name, not null.
+         * @param field the field, not null.
          */
         public FieldHandler(NsName nsName, FieldDef field) {
             super(nsName);
@@ -100,7 +99,7 @@ public class XmlElementHandler {
     }
     static abstract class ValueHandler extends XmlElementHandler {
         /**
-         * @param nsName
+         * @param nsName the name, or null.
          */
         public ValueHandler(NsName nsName) {
             super(nsName);
@@ -110,7 +109,7 @@ public class XmlElementHandler {
     static class StringItemValue extends ValueHandler {
 
         /**
-         * @param nsName
+         * @param nsName the name, or null.
          */
         public StringItemValue(NsName nsName) {
             super(nsName);
@@ -140,10 +139,8 @@ public class XmlElementHandler {
         private SimpleField inlineField;
 
         /**
-         * @param nsName
-         * @param factory
-         * @param attributeFields
-         * @param elementFields
+         * @param nsName the name, not null.
+         * @param groupDef the group, not null.
          */
         public StaticGroupValue(NsName nsName, GroupDef groupDef) {
             super(nsName);
@@ -262,8 +259,7 @@ public class XmlElementHandler {
 
         private final XmlCodec codec;
         /**
-         * @param nsName
-         * @param valueHandler
+         * @param codec the codec, not null.
          */
         public DynamicGroupValue(XmlCodec codec) {
             super(null);
@@ -394,7 +390,7 @@ public class XmlElementHandler {
     }
 
     static class ElementValueField extends FieldHandler {
-        private ValueHandler valueHandler;
+        private final ValueHandler valueHandler;
 
         /**
          * @param nsName
@@ -549,9 +545,8 @@ public class XmlElementHandler {
         protected ValueHandler valueHandler;
 
         /**
-         * @param nsName
-         * @param accessor
-         * @param valueHandler
+         * @param nsName the name, or null
+         * @param valueHandler the value handler, not null.
          */
         public InlineElementValueField(NsName nsName, FieldDef field,
                 ValueHandler valueHandler) {
@@ -592,8 +587,8 @@ public class XmlElementHandler {
         protected ValueHandler valueHandler;
 
         /**
-         * @param nsName
-         * @param valueHandler
+         * @param nsName the name, or null.
+         * @param valueHandler the value handler, not null.
          */
         public InlineElementValue(NsName nsName, ValueHandler valueHandler) {
             super(nsName);

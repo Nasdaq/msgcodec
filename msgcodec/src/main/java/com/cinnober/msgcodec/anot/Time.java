@@ -39,10 +39,19 @@ import com.cinnober.msgcodec.Epoch;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
 public @interface Time {
-    /** The granularity of the time. */
+    /** 
+     * The granularity of the time.
+     * @return the granularity of the time.
+     */
     TimeUnit unit() default TimeUnit.MILLISECONDS;
-    /** The epoch defining zero time. */
+    /** 
+     * The epoch defining zero time.
+     * @return the epoch defining zero time.
+     */
     Epoch epoch() default Epoch.UNIX;
-    /** The time zone, or the empty string for local/unspecified time zone. */
+    /** 
+     * The time zone, or the empty string for local/unspecified time zone.
+     * @return the time zone, or the empty string for local/unspecified time zone.
+     */
     String timeZone() default "UTC";
 }

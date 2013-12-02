@@ -30,27 +30,30 @@ import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
 
 /**
- * @author mikael.brannstrom
+ * Message for a protocol dictionary.
  *
+ * @author mikael.brannstrom
  */
 @Name("ProtocolDictionary")
 @Id(16000)
 public class MetaProtocolDictionary extends MetaAnnotated {
+    /**
+     * The groups in the dictionary.
+     */
     @Required
     @Sequence(MetaGroupDef.class)
     @Id(1)
     public Collection<MetaGroupDef> groups;
 
+    /**
+     * The named types in the dictionary.
+     */
     @Sequence(MetaNamedType.class)
     @Id(2)
     public Collection<MetaNamedType> namedTypes;
 
     public MetaProtocolDictionary() {}
 
-    /**
-     * @param groups
-     * @param namedTypes
-     */
     public MetaProtocolDictionary(Collection<MetaGroupDef> groups,
             Collection<MetaNamedType> namedTypes) {
         this.groups = groups;
@@ -58,39 +61,13 @@ public class MetaProtocolDictionary extends MetaAnnotated {
     }
 
 
-    /**
-     * @return the groups
-     */
-    public Collection<MetaGroupDef> getGroups() {
-        return groups;
-    }
-    /**
-     * @param groups the groups to set
-     */
-    public void setGroups(Collection<MetaGroupDef> groups) {
-        this.groups = groups;
-    }
-
-    /**
-     * @return the namedTypes
-     */
-    public Collection<MetaNamedType> getNamedTypes() {
-        return namedTypes;
-    }
-    /**
-     * @param namedTypes the namedTypes to set
-     */
-    public void setNamedTypes(Collection<MetaNamedType> namedTypes) {
-        this.namedTypes = namedTypes;
-    }
-
     public Collection<NamedType> toNamedTypes() {
         if (namedTypes == null) {
             return Collections.emptyList();
         }
         Collection<NamedType> list = new ArrayList<>(namedTypes.size());
         for (MetaNamedType namedType : namedTypes) {
-            list.add(new NamedType(namedType.getName(), namedType.getType().toTypeDef(), namedType.toAnnotationsMap()));
+            list.add(new NamedType(namedType.name, namedType.type.toTypeDef(), namedType.toAnnotationsMap()));
         }
         return list;
     }

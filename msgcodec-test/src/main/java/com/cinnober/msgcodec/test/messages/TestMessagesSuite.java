@@ -41,7 +41,7 @@ import org.junit.Assert;
  * <p>Usage (assuming your codec is called Foo):
  * <pre>
  * public class FooTestMessagesSuiteImpl extends TestMessagesSuite {
- *     public FooTestMessagesSuiteImpl(Class<?> rootClass) {
+ *     public FooTestMessagesSuiteImpl(Class&lt;?&gt; rootClass) {
  *         super(rootClass, createCodec());
  *     }
  *     private static StreamCodec createCodec() {
@@ -49,7 +49,7 @@ import org.junit.Assert;
  *     }
  * }
  *
- * {@literal}RunWith(FooTestMessagesSuiteImpl.class)
+ * {@literal @}RunWith(FooTestMessagesSuiteImpl.class)
  * public class FooTestMessagesSuite {}
  * </pre>
  *
@@ -58,10 +58,6 @@ import org.junit.Assert;
  */
 public abstract class TestMessagesSuite extends Suite {
 
-    /**
-     * @throws InitializationError
-     *
-     */
     protected TestMessagesSuite(Class<?> rootClass, StreamCodec codec) throws InitializationError {
         super(rootClass, createRunners(codec));
     }

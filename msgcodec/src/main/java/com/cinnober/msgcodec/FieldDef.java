@@ -56,7 +56,7 @@ public class FieldDef implements Annotatable<FieldDef> {
      * @param annotations the annotations of the field, or null
      * @param binding the field binding, or null of unbound
      */
-    public <T> FieldDef(String name, int id, boolean required, TypeDef type, Map<String, String> annotations,
+    public FieldDef(String name, int id, boolean required, TypeDef type, Map<String, String> annotations,
             FieldBinding binding) {
         this.name = Objects.requireNonNull(name);
         this.id = id;
@@ -68,41 +68,6 @@ public class FieldDef implements Annotatable<FieldDef> {
             this.annotations = Collections.unmodifiableMap(new LinkedHashMap<>(annotations));
         }
         this.binding = binding;
-    }
-
-    /**
-     * Create a new field definition.
-     *
-     * @param name the field name, not null.
-     * @param id the field id, or -1 if unspecified.
-     * @param required true if the field is required, false if optional.
-     * @param type the type definition of the field, not null.
-     * @param javaClass the java class of the field, not null.
-     * @param componentJavaClass the java class of the component if sequence, or null.
-     * @param accessor the accessor of the field, not null.
-     * @param annotations the annotations of the field, or null
-     */
-    @Deprecated
-    public <T> FieldDef(String name, int id, boolean required, TypeDef type,
-        Class<?> javaClass, Class<?> componentJavaClass,
-        Accessor<?, ?> accessor, Map<String, String> annotations) {
-        this(name, id, required, type, annotations, new FieldBinding(accessor, javaClass, componentJavaClass));
-    }
-    /**
-     * Create a new field definition.
-     *
-     * @param name the field name, not null.
-     * @param id the field id, or -1 if unspecified.
-     * @param required true if the field is required, false if optional.
-     * @param type the type definition of the field, not null.
-     * @param accessor the accessor of the field, not null.
-     * @param javaClass the java class of the field, not null.
-     * @param componentJavaClass the java class of the component if sequence, or null.
-     */
-    @Deprecated
-    public <T> FieldDef(String name, int id, boolean required, TypeDef type,
-        Accessor<?, T> accessor, Class<T> javaClass, Class<?> componentJavaClass) {
-        this(name, id, required, type, javaClass, componentJavaClass, accessor, null);
     }
 
     /** Returns the field name.

@@ -174,7 +174,11 @@ public class Annotations {
         return str.toString();
     }
 
-    /** Escape an annotation value. */
+    /**
+     * Escape an annotation value.
+     * @param str the string to escape, not null
+     * @return the escaped string, not null
+     */
     public static String escape(String str) {
     	StringBuilder sb = new StringBuilder((int) (str.length() * 1.2));
     	int length = str.length();

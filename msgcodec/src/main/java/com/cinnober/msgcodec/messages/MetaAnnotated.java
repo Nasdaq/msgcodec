@@ -29,27 +29,18 @@ import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Sequence;
 
 /**
- * @author mikael.brannstrom
+ * Base class for annotated messages.
  *
+ * @author mikael.brannstrom
  */
 @Name("Annotated")
 public class MetaAnnotated extends MsgObject {
+    /**
+     * Annotations. The same annotation name must not occur twice.
+     */
     @Id(100)
     @Sequence(MetaAnnotation.class)
-    private Collection<MetaAnnotation> annotations;
-
-    /**
-     * @return the annotations
-     */
-    public Collection<MetaAnnotation> getAnnotations() {
-        return annotations;
-    }
-    /**
-     * @param annotations the annotations to set
-     */
-    public void setAnnotations(Collection<MetaAnnotation> annotations) {
-        this.annotations = annotations;
-    }
+    public Collection<MetaAnnotation> annotations;
 
     public void setAnnotations(Map<String, String> annotations) {
         if (annotations == null) {
@@ -68,7 +59,7 @@ public class MetaAnnotated extends MsgObject {
         }
         Map<String, String> map = new LinkedHashMap<>(annotations.size() * 2);
         for (MetaAnnotation annotation : annotations) {
-            map.put(annotation.getName(), annotation.getValue());
+            map.put(annotation.name, annotation.value);
         }
         return map;
     }
