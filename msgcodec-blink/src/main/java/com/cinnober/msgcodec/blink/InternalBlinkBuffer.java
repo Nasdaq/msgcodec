@@ -138,6 +138,7 @@ class InternalBlinkBuffer extends OutputStream {
                     return;
                 }
             }
+            bufferStart = bufferEnd;
         }
         throw new IOException("Internal error. start=" + start + ", end=" + end +
                 ", bufferStart=" + bufferStart + ", bufferEnd=" + bufferEnd);
