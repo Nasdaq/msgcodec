@@ -48,13 +48,13 @@ In a gradle project one would include the libs in dependencies section of your `
 
 The code is divided into the following projects:
 
-- msgcodec: contains annotations etc required for defining messages and protocols
-- msgcodec-json: JSON codec
-- msgcodec-xml: XML codec
-- msgcodec-blink: Blink (compact format) codec
-- msgcodec-tap: TAP codec
-- msgcodec-javadoc: Javadoc doclet for extracting javadoc comments from messages.
-- msgcodec-examples: Examples of how to use msgcodec.
+- `msgcodec`: contains annotations etc required for defining messages and protocols
+- `msgcodec-json`: JSON codec
+- `msgcodec-xml`: XML codec
+- `msgcodec-blink`: Blink (compact format) codec
+- `msgcodec-tap`: TAP codec
+- `msgcodec-javadoc`: Javadoc doclet for extracting javadoc comments from messages.
+- `msgcodec-examples`: Examples of how to use msgcodec.
 
 ## Build ##
 
@@ -65,14 +65,14 @@ Then build:
 >cd msgcodec
 >gradle build
 
-### Eclipse ###
+### Eclipse IDE ###
 
 If you want to edit java files from within eclipse, run
 >gradle eclipse
 
 and then from within eclipse File -> Import... -> General -> Existing projects into workspace -> Next.. Browse.. browse to where you cloned repo -> Ok.. -> Select All -> Import.
 
-### Netbeans ###
+### Netbeans IDE ###
 
 Install the [Netbeans Gradle Plugin](http://plugins.netbeans.org/plugin/44510/gradle-support) and just open the project (the cloned repo).
 
