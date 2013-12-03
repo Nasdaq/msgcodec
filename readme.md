@@ -56,6 +56,7 @@ The code is divided into the following projects:
 - `msgcodec-javadoc`: Javadoc doclet for extracting javadoc comments from messages.
 - `msgcodec-examples`: Examples of how to use msgcodec.
 
+
 ## Build ##
 
 First clone a copy of the repo:
