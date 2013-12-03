@@ -29,18 +29,32 @@ We can generate a Blink message like this:
     Hello decoded = (Hello) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
     System.out.println(decoded.greeting.equals(msg.greeting) + " = true");
 
-Note that the same dictionary can be used with another encoder to produce for example TAP messages. See javadoc and tests for more examples.
+Note that the same dictionary can be used with another encoder to produce for example TAP messages. See javadoc and examples for more information.
 
+### Artifacts  ###
 
-## Download ##
-You will need to include the `msgcodec-{version}.jar` and `msgcodec-{format}-{version}.jar` in your application's runtime. If your application uses several encoding formats add several `msgcodec-{format}-{version}.jars`.
+To use msgcodec you will need to include the artifacts in the group=`com.cinnober.msgcodec`; `msgcodec` and `msgcodec-{format}` in your application's runtime. Format is one of `xml`, `json`, `blink` or `tap`.
+
+The versions of the artifacts follows [semantic versioning](http://semver.org), which means that a minor version upgrade is always backwards compatible.
 
 In a gradle project one would include the libs in dependencies section of your `build.gradle` file (replace `{version}` with the appropriate current release). Example for a project that uses the TAP encoding format:
 
     dependencies {
-      compile group: 'com.cinnober.msgcodec', name: 'msgcodec', version:'{version}'
-      compile group: 'com.cinnober.msgcodec', name: 'msgcodec-tap', version:'{version}'
+        compile group: 'com.cinnober.msgcodec', name: 'msgcodec', version: '{version}'
+        compile group: 'com.cinnober.msgcodec', name: 'msgcodec-tap', version: '{version}'
     }
+
+## Project Structure ##
+
+The code is divided into the following projects:
+
+- msgcodec: contains annotations etc required for defining messages and protocols
+- msgcodec-json: JSON codec
+- msgcodec-xml: XML codec
+- msgcodec-blink: Blink (compact format) codec
+- msgcodec-tap: TAP codec
+- msgcodec-javadoc: Javadoc doclet for extracting javadoc comments from messages.
+- msgcodec-examples: Examples of how to use msgcodec.
 
 ## Build ##
 
@@ -62,28 +76,17 @@ and then from within eclipse File -> Import... -> General -> Existing projects i
 
 Install the [Netbeans Gradle Plugin](http://plugins.netbeans.org/plugin/44510/gradle-support) and just open the project (the cloned repo).
 
-## Documentation ##
+### Documentation ###
 See the javadoc of `msgcodec`. To build the javadoc run:
 >gradle javadoc
 
 The result ends up in msgcodec/build/docs/javadoc/.
 
-## Examples ##
+### Examples ###
 
 See msgcodec-examples for example usage of msgcodec.
 
-## Structure ##
-
-The code is divided into the following projects:
-- msgcodec: contains annotations etc required for defining messages and protocols
-- msgcodec-json: JSON codec
-- msgcodec-xml: XML codec
-- msgcodec-blink: Blink (compact format) codec
-- msgcodec-tap: TAP codec
-- msgcodec-javadoc: Javadoc doclet for extracting javadoc comments from messages.
-- msgcodec-examples: Examples of how to use msgcodec.
-
-## Release ##
+### Release ###
 
 Versions are stored as annotated tags in git. [Semantic versioning](http://semver.org) is used.
 
