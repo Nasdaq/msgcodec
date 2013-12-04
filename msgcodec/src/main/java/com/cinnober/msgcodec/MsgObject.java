@@ -261,6 +261,7 @@ public class MsgObject {
                 long.class, Long.class,
                 float.class, Float.class,
                 double.class, Double.class,
+                boolean.class, Boolean.class,
                 BigInteger.class,
                 BigDecimal.class,
                 String.class));
