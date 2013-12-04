@@ -34,6 +34,7 @@ import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.Pool;
+import com.cinnober.msgcodec.util.TempOutputStream;
 import java.util.List;
 
 /**
@@ -66,7 +67,7 @@ public class BlinkCodec implements StreamCodec {
      * This is needed in order to know how large an encoded dynamic group is, which
      * is written in the preamble.
      */
-    private final InternalBlinkBuffer internalBuffer;
+    private final TempOutputStream internalBuffer;
     /** Blink output stream wrapped around the {@link #internalBuffer}. */
     private final BlinkOutputStream internalStream;
 
@@ -88,7 +89,7 @@ public class BlinkCodec implements StreamCodec {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
         if (bufferPool != null) {
-            this.internalBuffer = new InternalBlinkBuffer(bufferPool);
+            this.internalBuffer = new TempOutputStream(bufferPool);
             this.internalStream = new BlinkOutputStream(internalBuffer);
         } else {
             this.internalBuffer = null;
@@ -261,6 +262,8 @@ public class BlinkCodec implements StreamCodec {
                     } else {
                         return new FieldInstruction.IntEnumerationNull(field);
                     }
+                } else {
+                    throw new RuntimeException("Unhandled ENUM java type: " + field.getJavaClass());
                 }
             case TIME:
                 if (field.getJavaClass().equals(Date.class)) {

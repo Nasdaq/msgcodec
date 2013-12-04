@@ -34,6 +34,7 @@ import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
+import com.cinnober.msgcodec.util.TempOutputStream;
 import java.util.List;
 
 /**
@@ -87,12 +88,12 @@ public class TapCodec implements StreamCodec {
      * dynamic group that is currently being encoded.
      * The stack is only non-empty while encoding a message.
      */
-    private final Stack<Preamble> preambleStack = new Stack<Preamble>();
+    private final Stack<Preamble> preambleStack = new Stack<>();
     /** The internal buffer used for temporary storage of encoded dynamic groups.
      * This is needed in order to know how large an encoded dynamic group is, which
      * is written in the preamble.
      */
-    private final InternalTapBuffer internalBuffer;
+    private final TempOutputStream internalBuffer;
     /** Blink output stream wrapped around the {@link #internalBuffer}. */
     private final TapOutputStream internalStream;
 
@@ -114,7 +115,7 @@ public class TapCodec implements StreamCodec {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
         if (bufferPool != null) {
-            this.internalBuffer = new InternalTapBuffer(bufferPool);
+            this.internalBuffer = new TempOutputStream(bufferPool);
             this.internalStream = new TapOutputStream(internalBuffer);
         } else {
             this.internalBuffer = null;
@@ -123,7 +124,7 @@ public class TapCodec implements StreamCodec {
 
         groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
         groupInstructionsByGroupType = new HashMap<>(dictionary.getGroups().size() * 2);
-        groupInstructionsByName = new HashMap<String, StaticGroupInstruction>(dictionary.getGroups().size() * 2);
+        groupInstructionsByName = new HashMap<>(dictionary.getGroups().size() * 2);
         // first store place holders for group instructions,
         // since they might be needed when creating field instructions
         for (GroupDef groupDef : dictionary.getGroups()) {
@@ -240,6 +241,8 @@ public class TapCodec implements StreamCodec {
                     } else {
                         return optional(new FieldInstruction.IntEnumeration(field));
                     }
+                } else {
+                    throw new RuntimeException("Unhandled ENUM java class: " + field.getJavaClass());
                 }
             // TODO: case TIME:
             case REFERENCE: // static group
@@ -453,7 +456,7 @@ public class TapCodec implements StreamCodec {
     }
 
     private class Preamble {
-        private boolean descriptor;
+        private final boolean descriptor;
         /** Linked list stuff. */
         private Preamble firstChild;
         /** Linked list stuff. */
