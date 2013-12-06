@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.tap;
 
+import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -320,7 +321,7 @@ public class TapCodec implements StreamCodec {
     private void readAssert(TapInputStream in, int expected) throws IOException {
         int b = in.read();
         if (b != expected) {
-            throw new IOException("Expected " + expected + " read " + b);
+            throw new DecodeException("Expected " + expected + " read " + b);
         }
     }
 
@@ -331,7 +332,7 @@ public class TapCodec implements StreamCodec {
      */
     void writeDynamicGroup(Object value, TapOutputStream out) throws IOException {
         if (internalBuffer == null) {
-            throw new IOException("Encoding is disabled!");
+            throw new UnsupportedOperationException("Encoding is disabled!");
         }
 
         if (value == null) {
@@ -342,7 +343,8 @@ public class TapCodec implements StreamCodec {
         Object groupType = groupTypeAccessor.getGroupType(value);
         StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupType);
         if (groupInstruction == null) {
-            throw new IOException("Cannot encode group. Java class not found in protocol dictionary: " + value.getClass().getName());
+            throw new IllegalArgumentException("Cannot encode group. Java class not found in protocol dictionary: " +
+                    value.getClass().getName());
         }
         Preamble preamble = new Preamble(true);
         if (!preambleStack.isEmpty()) {
@@ -362,7 +364,7 @@ public class TapCodec implements StreamCodec {
     void writeStaticGroup(Object value, TapOutputStream out, StaticGroupInstruction groupInstruction)
             throws IOException {
         if (internalBuffer == null) {
-            throw new IOException("Encoding is disabled!");
+            throw new UnsupportedOperationException("Encoding is disabled!");
         }
 
         if (value == null) {
@@ -398,12 +400,12 @@ public class TapCodec implements StreamCodec {
         int versionMismatchModel = in.read();
         if (versionMismatchModel != 0) {
             // PENDING: maybe just parse away this block?
-            throw new IOException("Expected zero TAP version mismatch descriptor, got: " + versionMismatchModel);
+            throw new DecodeException("Expected zero TAP version mismatch descriptor, got: " + versionMismatchModel);
         }
         String groupClassId = readGroupClassId(in);
         StaticGroupInstruction groupInstruction = groupInstructionsByName.get(groupClassId);
         if (groupInstruction == null) {
-            throw new IOException("Unknown TAP message class id: " + groupClassId);
+            throw new DecodeException("Unknown TAP message class id: " + groupClassId);
         }
         Object group = groupInstruction.decodeGroup(in);
         in.skip(in.limit());
@@ -440,7 +442,7 @@ public class TapCodec implements StreamCodec {
         if (limit >= 0) {
             if (size > limit) {
                 // there is already a limit that is smaller than this message size
-                throw new IOException("Group size preamble (" + size +
+                throw new DecodeException("Group size preamble (" + size +
                         ") goes beyond current stream limit (" + limit + ").");
             } else {
                 limit -= size;

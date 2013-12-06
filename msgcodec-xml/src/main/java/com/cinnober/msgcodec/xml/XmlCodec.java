@@ -348,7 +348,7 @@ public class XmlCodec implements StreamCodec {
         Object groupType = groupTypeAccessor.getGroupType(group);
         StaticGroupValue groupInstr = staticGroupsByGroupType.get(groupType);
         if (groupInstr == null) {
-            throw new IOException("Unknown Java class: " + group.getClass());
+            throw new IllegalArgumentException("Unknown Java class: " + group.getClass());
         }
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, UTF8));
         groupInstr.writeElementValue(group, groupInstr.getNsName(), writer);

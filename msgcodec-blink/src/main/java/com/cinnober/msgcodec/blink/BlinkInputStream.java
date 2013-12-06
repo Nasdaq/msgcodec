@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -357,7 +358,7 @@ public class BlinkInputStream extends LimitInputStream  {
         byte[] bytes = readBinary(maxBinaryLength);
         String value = new String(bytes, UTF8); // TODO: use a cache?
         if (maxLength >= 0 && value.length() > maxLength) {
-            throw new IOException("String length (" + value.length() + ") exceeds limit (" + maxLength + ")");
+            throw new DecodeException("String length (" + value.length() + ") exceeds limit (" + maxLength + ")");
         }
         return value;
     }
@@ -374,7 +375,7 @@ public class BlinkInputStream extends LimitInputStream  {
         } else {
             String value = new String(bytes, UTF8); // TODO: use a cache?
             if (maxLength >= 0 && value.length() > maxLength) {
-                throw new IOException("String length (" + value.length() + ") exceeds limit (" + maxLength + ")");
+                throw new DecodeException("String length (" + value.length() + ") exceeds limit (" + maxLength + ")");
             }
             return value;
         }
@@ -401,13 +402,13 @@ public class BlinkInputStream extends LimitInputStream  {
     public byte[] readBinary(int maxLength) throws IOException {
         int size = readUInt32();
         if (size < 0) {
-            throw new IOException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
+            throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
         }
         if (size > maxLength && maxLength >= 0) {
-            throw new IOException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
+            throw new DecodeException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
         }
         if (size > maxBinarySize && maxBinarySize >= 0) {
-            throw new IOException("Binary size (" + size + ") exceeds limit (" + maxBinarySize + ")");
+            throw new DecodeException("Binary size (" + size + ") exceeds limit (" + maxBinarySize + ")");
         }
         byte[] value = new byte[size];
         read(value);
@@ -426,13 +427,13 @@ public class BlinkInputStream extends LimitInputStream  {
         }
         int size = sizeObj.intValue();
         if (size < 0) {
-            throw new IOException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
+            throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
         }
         if (size > maxLength && maxLength >= 0) {
-            throw new IOException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
+            throw new DecodeException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
         }
         if (size > maxBinarySize && maxBinarySize >= 0) {
-            throw new IOException("Binary size (" + size + ") exceeds limit (" + maxBinarySize + ")");
+            throw new DecodeException("Binary size (" + size + ") exceeds limit (" + maxBinarySize + ")");
         }
         byte[] value = new byte[size];
         read(value);
@@ -488,7 +489,7 @@ public class BlinkInputStream extends LimitInputStream  {
         } else {
             int size = 0x3f & b1;
             if (size == 0) {
-                throw new IOException("Found null (0xc0) while parsing a non-nullable VLC integer");
+                throw new DecodeException("Found null (0xc0) while parsing a non-nullable VLC integer");
             }
             long value = 0;
             for (int i=0; i<size; i++) {
@@ -509,7 +510,7 @@ public class BlinkInputStream extends LimitInputStream  {
     public BigInteger readSignedBigVLC() throws IOException {
     	BigInteger value = readSignedBigVLCNull();
     	if (value == null) {
-    		throw new IOException("Found null (0xc0) while parsing a non-nullable VLC integer");
+            throw new DecodeException("Found null (0xc0) while parsing a non-nullable VLC integer");
     	}
     	return value;
     }
@@ -546,7 +547,7 @@ public class BlinkInputStream extends LimitInputStream  {
            }
            byte [] bytes = new byte[size];
            for (int i = bytes.length - 1; i >= 0; i--) {
-        	   bytes[i] = (byte) read();
+                bytes[i] = (byte) read();
            }
            return new BigInteger(bytes);
        }
@@ -591,7 +592,7 @@ public class BlinkInputStream extends LimitInputStream  {
         } else {
             int size = 0x3f & b1;
             if (size == 0) {
-                throw new IOException("Found null (0xc0) while parsing a non-nullable VLC integer");
+                throw new DecodeException("Found null (0xc0) while parsing a non-nullable VLC integer");
             }
             long value = 0;
             for (int i=0; i<size; i++) {

@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
@@ -89,7 +90,7 @@ abstract class FieldInstruction<V> {
      */
     protected void require(Object value) throws IOException {
         if (value == null) {
-            throw new IOException("Field value is required, cannot encode: " + field.toString());
+            throw new IllegalArgumentException("Field value is required, cannot encode: " + field.toString());
         }
     }
 
@@ -326,7 +327,7 @@ abstract class FieldInstruction<V> {
             require(value);
             TypeDef.Symbol symbol = enumSymbols.getSymbol(value);
             if (symbol == null) {
-                throw new IOException("Value is not a valid enumeration symbol: " + value);
+                throw new IllegalArgumentException("Value is not a valid enumeration symbol: " + value);
             }
             out.writeVarInt(symbol.getId());
         }
@@ -335,7 +336,7 @@ abstract class FieldInstruction<V> {
             int enumValue = in.readVarInt();
             Enum en = enumSymbols.getEnum(enumValue);
             if (en == null) {
-                throw new IOException("Illegal or unknown enum value: " + enumValue);
+                throw new DecodeException("Illegal or unknown enum value: " + enumValue);
             }
             return en;
         }
@@ -389,7 +390,7 @@ abstract class FieldInstruction<V> {
                 }
             }
             if (size < 0) {
-                throw new IOException("Sequence size overflow: " + size);
+                throw new DecodeException("Sequence size overflow: " + size);
             }
             // TODO: sanity check for size to avoid OutOfMemoryError
             ArrayList value = new ArrayList(size);
@@ -433,7 +434,7 @@ abstract class FieldInstruction<V> {
                 }
             }
             if (size < 0) {
-                throw new IOException("Sequence size overflow: " + size);
+                throw new DecodeException("Sequence size overflow: " + size);
             }
             // TODO: sanity check for size to avoid OutOfMemoryError
             Object value = Array.newInstance(componentType, size);

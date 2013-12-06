@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Factory;
@@ -357,7 +358,7 @@ abstract class JsonValueHandler<T> {
         void writeValue(E value, JsonGenerator g) throws IOException {
             Symbol symbol = enumSymbols.getSymbol(value);
             if (symbol == null) {
-                throw new IOException("Not a valid enum: " + value);
+                throw new IllegalArgumentException("Not a valid enum: " + value);
             }
             g.writeString(symbol.getName());
         }
@@ -366,7 +367,7 @@ abstract class JsonValueHandler<T> {
             String str = p.getText();
             E value = enumSymbols.getEnum(str);
             if (value == null) {
-                throw new IOException("Not a valid symbol: " + str);
+                throw new DecodeException("Not a valid symbol: " + str);
             }
             return value;
         }
@@ -386,7 +387,7 @@ abstract class JsonValueHandler<T> {
         void writeValue(Integer value, JsonGenerator g) throws IOException {
             String name = nameById.get(value);
             if (name == null) {
-                throw new IOException("Not a valid enum: " + value);
+                throw new IllegalArgumentException("Not a valid enum: " + value);
             }
             g.writeString(name);
         }
@@ -395,7 +396,7 @@ abstract class JsonValueHandler<T> {
             String str = p.getText();
             Integer value = idByName.get(str);
             if (value == null) {
-                throw new IOException("Not a valid symbol: " + str);
+                throw new DecodeException("Not a valid symbol: " + str);
             }
             return value;
         }
@@ -529,7 +530,7 @@ abstract class JsonValueHandler<T> {
                 if (p.nextToken() != JsonToken.VALUE_NULL) {
                     FieldHandler fieldHandler = fields.get(fieldName);
                     if (fieldHandler == null) {
-                        throw new IOException("Unknown field: " + fieldName);
+                        throw new DecodeException("Unknown field: " + fieldName);
                     }
                     fieldHandler.readValue(group, p);
                 }
@@ -553,7 +554,7 @@ abstract class JsonValueHandler<T> {
         void writeValue(Object value, JsonGenerator g) throws IOException {
             StaticGroupHandler groupHandler = jsonCodec.lookupGroupByValue(value);
             if (groupHandler == null) {
-                throw new IOException("Cannot encode group (unknown type)");
+                throw new IllegalArgumentException("Cannot encode group (unknown type)");
             }
             groupHandler.writeValue(value, g, true);
         }
@@ -561,13 +562,13 @@ abstract class JsonValueHandler<T> {
         @Override
         Object readValue(JsonParser p) throws IOException {
             if (p.nextToken() != JsonToken.FIELD_NAME || !p.getText().equals(TYPE_FIELD)) {
-                throw new IOException("Expected field " + TYPE_FIELD);
+                throw new DecodeException("Expected field " + TYPE_FIELD);
             }
             p.nextToken(); // field value
             String groupName = p.getText();
             StaticGroupHandler groupHandler = jsonCodec.lookupGroupByName(groupName);
             if (groupHandler == null) {
-                throw new IOException("Unknown type: " + groupName);
+                throw new DecodeException("Unknown type: " + groupName);
             }
             return groupHandler.readValue(p);
         }

@@ -25,6 +25,10 @@ import java.io.OutputStream;
  * A codec that can encode and decode messages to and from streams.
  * 
  * <p>NOTE: A stream codec implementation is NOT thread-safe, unless the documentation says so.</p>
+ *
+ * <p>Codec implementations may support encoding and decoding null values. Trying to encode a null
+ * value with an implementation that does not support it, will cause an unchecked exception to be thrown,
+ * typically a NullPointerException.</p>
  * 
  * @author mikael.brannstrom
  * @see StreamCodecFactory
@@ -33,17 +37,20 @@ public interface StreamCodec {
     /**
      * Write the group to the specified stream.
      * 
-     * @param group the group to encode, not null.
+     * @param group the group to encode.
      * @param out the stream to write to, not null.
-     * @throws IOException if the underlying stream throws an exception, or if the value could not be encoded.
+     * @throws IOException if the underlying stream throws an exception.
+     * @throws IllegalArgumentException if the group is not correct or complete, e.g. a required field is missing.
+     * Partial data may have been written to the output stream.
      */
-    public void encode(Object group, OutputStream out) throws IOException;
+    public void encode(Object group, OutputStream out) throws IOException, IllegalArgumentException;
     /**
      * Read a group from the specified stream.
      * 
      * @param in the stream to read from, not null.
-     * @return the decoded value, not null.
-     * @throws IOException if the underlying stream throws an exception, or if the value could not be decoded.
+     * @return the decoded value.
+     * @throws IOException if the underlying stream throws an exception.
+     * @throws DecodeException if the value could not be decoded.
      */
-    public Object decode(InputStream in) throws IOException;
+    public Object decode(InputStream in) throws IOException, DecodeException;
 }

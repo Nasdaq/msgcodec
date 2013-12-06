@@ -51,7 +51,8 @@ class StaticGroupInstruction {
     public void encodeGroupId(BlinkOutputStream out) throws IOException {
         int id = groupDef.getId();
         if (id == -1) {
-            throw new IOException("Missing group id, cannot encode as dynamic group: " + groupDef.getName());
+            throw new IllegalArgumentException("Missing group id, cannot encode as dynamic group: " +
+                    groupDef.getName());
         }
         out.writeUInt32(id);
     }

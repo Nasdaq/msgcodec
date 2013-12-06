@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.tap;
 
+import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -176,7 +177,7 @@ public class TapInputStream extends LimitInputStream  {
             case MODEL_LENGTH_INT:
                 return readInt() - 5;
             default:
-                throw new IOException("Illegal length model: " + model);
+                throw new DecodeException("Illegal length model: " + model);
             }
         }
     }
@@ -191,7 +192,7 @@ public class TapInputStream extends LimitInputStream  {
             return -1; // null
         }
         if (descriptor != ((model & MODEL_DESCRIPTOR) != 0)) {
-            throw new IOException("Expected model descriptor bit to be " + (descriptor ? 1 : 0) +
+            throw new DecodeException("Expected model descriptor bit to be " + (descriptor ? 1 : 0) +
                     ", found model " +model);
         }
         return readModelLength(model);
@@ -207,7 +208,7 @@ public class TapInputStream extends LimitInputStream  {
             return null;
         }
         if (size > maxBinarySize && maxBinarySize != 0) {
-            throw new IOException("Binary size (" + size + ") exceeds limit (" + maxBinarySize + ")");
+            throw new DecodeException("Binary size (" + size + ") exceeds limit (" + maxBinarySize + ")");
         }
         byte[] value = new byte[size];
         read(value);

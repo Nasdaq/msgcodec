@@ -412,7 +412,7 @@ public class BlinkOutputStream extends FilterOutputStream {
     	} else {
     		byte[] bytes = value.toByteArray();
     		if (bytes.length <= 2 || bytes.length > 0x3f) {
-    			throw new IOException("BigInteger is too large. " + bytes.length + " bytes");
+    			throw new IllegalArgumentException("BigInteger is too large. " + bytes.length + " bytes");
     		}
             out.write((bytes.length & 0x3f) | 0xc0);
             for (int i = bytes.length - 1; i >= 0; i--) {
@@ -503,7 +503,7 @@ public class BlinkOutputStream extends FilterOutputStream {
                     out.write((int)(value >> 56) & 0xff);
                     break;
                 default:
-                    throw new IOException("Illegal size: " + size);
+                    throw new IllegalArgumentException("Illegal size: " + size);
             }
         }
     }

@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +41,8 @@ import java.util.List;
 /**
  * The Blink codec can serialize and deserialize Java objects according to
  * the Blink compact binary encoding format.
+ *
+ * Null values are supported in encode and decode.
  *
  * <p>The Blink Codec understands the annotation named "maxLength" for strings, binaries and sequences.
  * If present, this limit will be used as the maximum number of chars, bytes and elements for
@@ -323,10 +326,10 @@ public class BlinkCodec implements StreamCodec {
     }
 
     public void encode(Object group, BlinkOutputStream out) throws IOException {
-        writeDynamicGroup(group, out);
+        writeDynamicGroupNull(group, out);
     }
     public Object decode(BlinkInputStream in) throws IOException {
-        return readDynamicGroup(in);
+        return readDynamicGroupNull(in);
     }
 
     /**
@@ -336,7 +339,7 @@ public class BlinkCodec implements StreamCodec {
      */
     void writeDynamicGroup(Object value, BlinkOutputStream out) throws IOException {
         if (internalBuffer == null) {
-            throw new IOException("Encoding is disabled!");
+            throw new UnsupportedOperationException("Encoding is disabled!");
         }
         writeDynamicGroup(value, out, false);
     }
@@ -356,7 +359,8 @@ public class BlinkCodec implements StreamCodec {
         Object groupType = groupTypeAccessor.getGroupType(value);
         StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupType);
         if (groupInstruction == null) {
-            throw new IOException("Cannot encode group. Group type not found in protocol dictionary: " + groupType);
+            throw new IllegalArgumentException("Cannot encode group. Group type not found in protocol dictionary: " +
+                    groupType);
         }
         Preamble preamble = new Preamble(nullable);
         if (!preambleStack.isEmpty()) {
@@ -401,7 +405,7 @@ public class BlinkCodec implements StreamCodec {
         if (limit >= 0) {
             if (size > limit) {
                 // there is already a limit that is smaller than this message size
-                throw new IOException("Dynamic group size preamble (" + size +
+                throw new DecodeException("Dynamic group size preamble (" + size +
                         ") goes beyond current stream limit (" + limit + ").");
             } else {
                 limit -= size;
@@ -411,7 +415,7 @@ public class BlinkCodec implements StreamCodec {
         int groupId = in.readUInt32();
         StaticGroupInstruction groupInstruction = groupInstructionsById.get(groupId);
         if (groupInstruction == null) {
-            throw new IOException("Unknown group id: " + groupId); // PENDING: typed exception?
+            throw new DecodeException("Unknown group id: " + groupId);
         }
 
         Object group = groupInstruction.decodeGroup(in);

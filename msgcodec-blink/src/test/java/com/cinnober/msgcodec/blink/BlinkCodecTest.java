@@ -27,6 +27,7 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.Annotations;
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
@@ -105,7 +106,7 @@ public class BlinkCodecTest {
         try {
             codec5.encode(msg, bout5); // should fail
             fail("Expected exception");
-        } catch(IOException e) {}
+        } catch(IllegalArgumentException e) {}
 
         // decode, unlimit
         codec.decode(new ByteArrayInputStream(bout.toByteArray()));
@@ -115,7 +116,7 @@ public class BlinkCodecTest {
         try {
             codec5.decode(new ByteArrayInputStream(bout.toByteArray()));
             fail("Expected exception");
-        } catch(IOException e) {}
+        } catch(DecodeException e) {}
     }
 
     @Test

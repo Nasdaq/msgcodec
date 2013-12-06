@@ -25,6 +25,7 @@ import java.util.List;
 import com.cinnober.msgcodec.util.Pool;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /**
  * Reusable output stream where temporary encoded data can be stored.
@@ -111,7 +112,7 @@ public class TempOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(int b) {
         if (currentBuffer == null || currentPosition == currentBuffer.length) {
             allocate();
         }
@@ -119,12 +120,12 @@ public class TempOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte[] buf) throws IOException {
+    public void write(byte[] buf) {
         write(buf, 0, buf.length);
     }
 
     @Override
-    public void write(byte[] buf, int offset, int length) throws IOException {
+    public void write(byte[] buf, int offset, int length) {
         if (currentBuffer == null) {
             allocate();
         }
@@ -270,5 +271,4 @@ public class TempOutputStream extends OutputStream {
         throw new Error("Internal error. start=" + start + ", end=" + end +
                 ", bufferStart=" + bufferStart + ", bufferEnd=" + bufferEnd);
     }
-
 }

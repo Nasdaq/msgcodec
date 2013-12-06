@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2013 Cinnober Financial Technology AB, Stockholm,
  * Sweden. All rights reserved.
  *

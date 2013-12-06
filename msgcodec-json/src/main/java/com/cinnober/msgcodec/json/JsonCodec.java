@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.json;
 
+import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -43,11 +44,14 @@ import com.fasterxml.jackson.core.JsonToken;
 /**
  * TODO: required fields are currently not checked.
  *
+ * Null values are supported in encode and decode.
+ *
  * @author mikael.brannstrom
  *
  */
 public class JsonCodec implements StreamCodec {
 
+    private static final byte[] NULL_BYTES = new byte[] { 'n', 'u', 'l', 'l' };
     private final GroupTypeAccessor groupTypeAccessor;
     private final Map<String, StaticGroupHandler> staticGroupsByName;
     private final Map<Object, StaticGroupHandler> staticGroupsByGroupType;
@@ -164,26 +168,33 @@ public class JsonCodec implements StreamCodec {
 
     @Override
     public void encode(Object group, OutputStream out) throws IOException {
-        JsonFactory f = new JsonFactory();
-        JsonGenerator g = f.createGenerator(out);
-        dynamicGroupHandler.writeValue(group, g);
-        g.flush();
+        if (group == null) {
+            out.write(NULL_BYTES);
+        } else {
+            JsonFactory f = new JsonFactory();
+            JsonGenerator g = f.createGenerator(out);
+            dynamicGroupHandler.writeValue(group, g);
+            g.flush();
+        }
     }
 
     @Override
     public Object decode(InputStream in) throws IOException {
         JsonFactory f = new JsonFactory();
         JsonParser p = f.createParser(in);
-        if (p.nextToken() != JsonToken.START_OBJECT) {
-            throw new IOException("Expected {");
+        JsonToken token = p.nextToken();
+        if (token == JsonToken.VALUE_NULL) {
+            return null;
+        } else if (token != JsonToken.START_OBJECT) {
+            throw new DecodeException("Expected {");
         }
         return dynamicGroupHandler.readValue(p);
     }
 
-    public StaticGroupHandler lookupGroupByName(String name) {
+    StaticGroupHandler lookupGroupByName(String name) {
         return staticGroupsByName.get(name);
     }
-    public StaticGroupHandler lookupGroupByValue(Object group) {
+    StaticGroupHandler lookupGroupByValue(Object group) {
         return staticGroupsByGroupType.get(groupTypeAccessor.getGroupType(group));
     }
 

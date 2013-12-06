@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.FieldDef;
@@ -87,11 +88,11 @@ abstract class FieldInstruction<V> {
     /** Check if the value is null and throw an IOException in that case.
      *
      * @param value the value to be checked
-     * @throws IOException if the value is null
+     * @throws IllegalArgumentException if the value is null
      */
-    protected void require(Object value) throws IOException {
+    protected void require(Object value) throws IllegalArgumentException {
         if (value == null) {
-            throw new IOException("Field value is required, cannot encode: " + field.toString());
+            throw new IllegalArgumentException("Field value is required, cannot encode: " + field.toString());
         }
     }
 
@@ -600,19 +601,22 @@ abstract class FieldInstruction<V> {
             return -1;
         }
     }
-    private static void validateMaxLength(String value, int maxLength) throws IOException {
+    private static void validateMaxLength(String value, int maxLength) throws IllegalArgumentException {
         if (value != null && maxLength >= 0 && value.length() > maxLength) {
-            throw new IOException("String length (" + value.length() + ") exceeds max length (" + maxLength + ")");
+            throw new IllegalArgumentException("String length (" + value.length() + ") exceeds max length (" +
+                    maxLength + ")");
         }
     }
-    private static void validateMaxLength(byte[] value, int maxLength) throws IOException {
+    private static void validateMaxLength(byte[] value, int maxLength) throws IllegalArgumentException {
         if (value != null && maxLength >= 0 && value.length > maxLength) {
-            throw new IOException("Binary length (" + value.length + ") exceeds max length (" + maxLength + ")");
+            throw new IllegalArgumentException("Binary length (" + value.length + ") exceeds max length (" +
+                    maxLength + ")");
         }
     }
-    private static void validateMaxLength(int length, int maxLength) throws IOException {
+    private static void validateMaxLength(int length, int maxLength) throws IllegalArgumentException {
         if (maxLength >= 0 && length > maxLength) {
-            throw new IOException("Sequence length (" + length + ") exceeds max length (" + maxLength + ")");
+            throw new IllegalArgumentException("Sequence length (" + length + ") exceeds max length (" +
+                    maxLength + ")");
         }
     }
     static class StringUTF8 extends FieldInstruction<String> {
@@ -700,7 +704,7 @@ abstract class FieldInstruction<V> {
             require(value);
             TypeDef.Symbol symbol = enumSymbols.getSymbol(value);
             if (symbol == null) {
-                throw new IOException("Value is not a valid enumeration symbol: " + value);
+                throw new IllegalArgumentException("Value is not a valid enumeration symbol: " + value);
             }
             out.writeInt32Null(symbol.getId());
         }
@@ -709,7 +713,7 @@ abstract class FieldInstruction<V> {
             int enumValue = in.readInt32();
             Enum en = enumSymbols.getEnum(enumValue);
             if (en == null) {
-                throw new IOException("Illegal or unknown enum value: " + enumValue);
+                throw new DecodeException("Illegal or unknown enum value: " + enumValue);
             }
             return en;
         }
@@ -731,7 +735,7 @@ abstract class FieldInstruction<V> {
             } else {
                 TypeDef.Symbol symbol = enumSymbols.getSymbol(value);
                 if (symbol == null) {
-                    throw new IOException("Value is not a valid enumeration symbol: " + value);
+                    throw new IllegalArgumentException("Value is not a valid enumeration symbol: " + value);
                 }
                 out.writeInt32Null(symbol.getId());
             }
@@ -745,7 +749,7 @@ abstract class FieldInstruction<V> {
             int enumValue = enumValueObj.intValue();
             Enum en = enumSymbols.getEnum(enumValue);
             if (en == null) {
-                throw new IOException("Illegal or unknown enum value: " + enumValue);
+                throw new DecodeException("Illegal or unknown enum value: " + enumValue);
             }
             return en;
         }
@@ -808,7 +812,7 @@ abstract class FieldInstruction<V> {
         public List decodeValue(BlinkInputStream in) throws IOException {
             int size = in.readUInt32();
             if (size < 0) {
-                throw new IOException("Sequence size overflow: " + size);
+                throw new DecodeException("Sequence size overflow: " + size);
             }
             validateMaxLength(size, maxLength);
             ArrayList value = new ArrayList(size);
@@ -850,7 +854,7 @@ abstract class FieldInstruction<V> {
             } else {
                 int size = sizeObj.intValue();
                 if (size < 0) {
-                    throw new IOException("Sequence size overflow: " + size);
+                    throw new DecodeException("Sequence size overflow: " + size);
                 }
                 validateMaxLength(size, maxLength);
                 ArrayList value = new ArrayList(size);
@@ -887,7 +891,7 @@ abstract class FieldInstruction<V> {
         public Object decodeValue(BlinkInputStream in) throws IOException {
             int size = in.readUInt32();
             if (size < 0) {
-                throw new IOException("Sequence size overflow: " + size);
+                throw new DecodeException("Sequence size overflow: " + size);
             }
             validateMaxLength(size, maxLength);
             Object value = Array.newInstance(componentType, size);
@@ -930,7 +934,7 @@ abstract class FieldInstruction<V> {
             } else {
                 int size = sizeObj.intValue();
                 if (size < 0) {
-                    throw new IOException("Sequence size overflow: " + size);
+                    throw new DecodeException("Sequence size overflow: " + size);
                 }
                 validateMaxLength(size, maxLength);
                 Object value = Array.newInstance(componentType, size);
