@@ -20,12 +20,9 @@ package com.cinnober.msgcodec.util;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.List;
 
-import com.cinnober.msgcodec.util.Pool;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 
 /**
  * Reusable output stream where temporary encoded data can be stored.
