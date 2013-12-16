@@ -50,7 +50,7 @@ public interface StreamCodec {
      * @param in the stream to read from, not null.
      * @return the decoded value.
      * @throws IOException if the underlying stream throws an exception.
-     * @throws DecodeException if the value could not be decoded.
+     * @throws DecodeException if the value could not be decoded, or if a required field is missing.
      */
     public Object decode(InputStream in) throws IOException, DecodeException;
 }
