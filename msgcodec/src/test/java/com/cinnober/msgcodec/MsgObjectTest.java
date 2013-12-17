@@ -18,6 +18,7 @@
 
 package com.cinnober.msgcodec;
 
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Unsigned;
 import org.junit.Test;
@@ -106,6 +107,19 @@ public class MsgObjectTest {
         assertEquals("Numbers [f32=0.0, f64=0.0]", new Numbers(0,0).toString());
     }
 
+    @Test
+    public void testDynamicGroupToString() {
+        assertEquals("FooBar [fooOrBar=Foo [x=1]]", new FooBar(new Foo(1)).toString());
+        assertEquals("FooBar [fooOrBar=Bar [x=1, y=2]]", new FooBar(new Bar(1, 2)).toString());
+    }
+
+    @Test
+    public void testDynamicGroupEquals() {
+        assertEquals(new FooBar(new Foo(1)), new FooBar(new Foo(1)));
+        assertEquals(new FooBar(new Bar(1, 2)), new FooBar(new Bar(1, 2)));
+        assertNotEquals(new FooBar(new Bar(1, 2)), new FooBar(new Bar(1, 3)));
+    }
+
     public static class FieldOrder extends MsgObject {
         @Id(1)
         public int i1;
@@ -166,6 +180,44 @@ public class MsgObjectTest {
             this.strings = strings;
             this.ints = ints;
             this.basics = basics;
+        }
+    }
+
+    public static class FooBar extends MsgObject {
+        @Id(1)
+        @Dynamic
+        public Foo fooOrBar;
+
+        public FooBar() {
+        }
+        public FooBar(Foo fooOrBar) {
+            this.fooOrBar = fooOrBar;
+        }
+    }
+
+    public static class Foo extends MsgObject {
+        @Id(1)
+        public int x;
+
+        public Foo() {
+        }
+
+        public Foo(int x) {
+            this.x = x;
+        }
+
+    }
+
+    public static class Bar extends Foo {
+        @Id(2)
+        public int y;
+
+        public Bar() {
+        }
+
+        public Bar(int x, int y) {
+            super(x);
+            this.y = y;
         }
     }
 

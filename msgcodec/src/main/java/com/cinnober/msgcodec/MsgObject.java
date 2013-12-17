@@ -145,7 +145,7 @@ public class MsgObject {
             return SIMPLE;
         }
 
-        return getGroupValueHandler(type);
+        return GROUP; //getGroupValueHandler(type);
     }
 
     /**

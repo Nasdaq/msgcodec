@@ -46,11 +46,28 @@ abstract class MsgObjectValueHandler<T> {
     static final UInt32Handler UINT32 = new UInt32Handler();
     static final UInt64Handler UINT64 = new UInt64Handler();
     static final BinaryHandler BINARY = new BinaryHandler();
+    static final RefGroupHandler GROUP = new RefGroupHandler();
 
+    /**
+     * Append the specified value to the string builder.
+     * @param value the value, not null.
+     * @param appendTo the string builder to append to, not null.
+     */
     abstract void appendToString(T value, StringBuilder appendTo);
+    /**
+     * Check if two values are equal.
+     * @param value1 value1, or null
+     * @param value2 value2, or null
+     * @return true if equals, otherwise false.
+     */
     boolean equals(T value1, T value2) {
         return Objects.equals(value1, value2);
     }
+    /**
+     * Calculate the hash code for the specified value.
+     * @param value the value, or null.
+     * @return the hash code
+     */
     int hashCode(T value) {
         return Objects.hashCode(value);
     }
@@ -212,7 +229,11 @@ abstract class MsgObjectValueHandler<T> {
                 } else {
                     comma = true;
                 }
-                componentHandler.appendToString(item, appendTo);
+                if (item != null) {
+                    componentHandler.appendToString(item, appendTo);
+                } else {
+                    appendTo.append("null");
+                }
             }
             appendTo.append("]");
         }
@@ -235,7 +256,11 @@ abstract class MsgObjectValueHandler<T> {
                     comma = true;
                 }
                 Object item = Array.get(value, i);
-                componentHandler.appendToString(item, appendTo);
+                if (item != null) {
+                    componentHandler.appendToString(item, appendTo);
+                } else {
+                    appendTo.append("null");
+                }
             }
             appendTo.append("]");
         }
@@ -402,4 +427,12 @@ abstract class MsgObjectValueHandler<T> {
             return Arrays.asList(fields);
         }
     }
+
+    static class RefGroupHandler extends MsgObjectValueHandler<Object> {
+        @Override
+        void appendToString(Object value, StringBuilder appendTo) {
+            appendTo.append(value.toString());
+        }
+    }
+
 }
