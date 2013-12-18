@@ -24,6 +24,10 @@ package com.cinnober.msgcodec;
  * @author mikael.brannstrom
  */
 public abstract class GroupTypeAccessor {
+
+    public static final JavaClass JAVA_CLASS = new JavaClass();
+    public static final GroupName GROUP_NAME = new GroupName();
+
     /** Returns the group type of the specified group value.
      *
      * @param groupValue the group value, not null.
@@ -31,12 +35,17 @@ public abstract class GroupTypeAccessor {
      */
     public abstract Object getGroupType(Object groupValue);
 
-    /** A group type accessor that uses the java class as a group type.
+    /**
+     * A group type accessor that uses the java class as a group type.
      * Useful when each groups have been bound to a separate java class.
+     * @see #JAVA_CLASS
      */
     public static class JavaClass extends GroupTypeAccessor {
+        private JavaClass() {}
+
         /**
          * Returns <code>groupValue.getClass()</code>.
+         * @return <code>groupValue.getClass()</code>.
          */
         @Override
         public Object getGroupType(Object groupValue) {
@@ -44,13 +53,17 @@ public abstract class GroupTypeAccessor {
         }
     }
 
-    /** A group type accessor that uses the group name as group type.
+    /**
+     * A group type accessor that uses the group name as group type.
      * This accessor only works with instances of {@link Group} objects
      * for group values.
      *
      * @author mikael.brannstrom
+     * @see #GROUP_NAME
      */
     public static class GroupName extends GroupTypeAccessor {
+        private GroupName() {}
+
         @Override
         public Object getGroupType(Object groupValue) {
             return ((Group) groupValue).getGroupName();

@@ -318,6 +318,12 @@ public abstract class TypeDef {
         public boolean equals(Object obj) {
             return obj == this; // private constructor, no need to check more
         }
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
+
     }
 
     // --- parameterized ---
@@ -445,6 +451,12 @@ public abstract class TypeDef {
                 Objects.equals(epoch, other.epoch) &&
                 Objects.equals(timeZone, other.timeZone);
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(unit, epoch, timeZone);
+        }
+
     }
 
     // --- parameterized ---
@@ -461,10 +473,7 @@ public abstract class TypeDef {
 
         public Sequence(TypeDef componentType) {
             super(Type.SEQUENCE);
-            if (componentType == null) {
-                throw new NullPointerException("componentType");
-            }
-            this.componentType = componentType;
+            this.componentType = Objects.requireNonNull(componentType, "componentType");
         }
 
         /** Returns the type of the elements in this sequence.
@@ -505,6 +514,11 @@ public abstract class TypeDef {
             return Objects.equals(componentType, other.componentType);
         }
 
+        @Override
+        public int hashCode() {
+            return componentType.hashCode();
+        }
+
     }
 
     /** Enumeration type.
@@ -514,10 +528,7 @@ public abstract class TypeDef {
         private final List<Symbol> symbols;
         public Enum(Collection<Symbol> symbols) {
             super(Type.ENUM);
-            if (symbols == null) {
-                throw new NullPointerException("symbols");
-            }
-            this.symbols = Collections.unmodifiableList(new ArrayList<Symbol>(symbols));
+            this.symbols = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(symbols, "symbols")));
         }
         /** Returns the symbols of this enumeration.
          *
@@ -555,12 +566,18 @@ public abstract class TypeDef {
             if (obj == this) {
                 return true;
             }
-            if (obj == null || !obj.getClass().equals(Sequence.class)) {
+            if (obj == null || !obj.getClass().equals(Enum.class)) {
                 return false;
             }
             Enum other = (Enum) obj;
             return Objects.equals(symbols, other.symbols);
         }
+
+        @Override
+        public int hashCode() {
+            return symbols.hashCode();
+        }
+
     }
 
     /** Reference type. */
@@ -598,6 +615,11 @@ public abstract class TypeDef {
             }
             Ref other = (Ref) obj;
             return Objects.equals(refType, other.refType);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(refType);
         }
     }
 

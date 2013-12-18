@@ -103,6 +103,25 @@ public class NamedType implements Annotatable<NamedType> {
         return str.toString();
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, type, annotations);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final NamedType other = (NamedType) obj;
+        return Objects.equals(this.name, other.name) &&
+                Objects.equals(this.type, other.type) &&
+                Objects.equals(this.annotations, other.annotations);
+    }
+
     public MetaNamedType toMessage() {
         MetaNamedType message = new MetaNamedType(name, type.toMessage());
         message.setAnnotations(annotations);

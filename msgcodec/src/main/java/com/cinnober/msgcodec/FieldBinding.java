@@ -83,4 +83,12 @@ public class FieldBinding {
             Objects.equals(componentJavaClass, other.componentJavaClass);
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 79 * hash + Objects.hashCode(this.accessor);
+        hash = 79 * hash + Objects.hashCode(this.javaClass);
+        hash = 79 * hash + Objects.hashCode(this.componentJavaClass);
+        return hash;
+    }
 }

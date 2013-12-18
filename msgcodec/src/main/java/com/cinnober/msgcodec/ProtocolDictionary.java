@@ -26,13 +26,13 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Set;
 
 import com.cinnober.msgcodec.TypeDef.Ref;
 import com.cinnober.msgcodec.messages.MetaGroupDef;
 import com.cinnober.msgcodec.messages.MetaNamedType;
 import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * The protocol dictionary defines the messages of a protocol.
@@ -56,7 +56,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     private final Map<String, String> annotations;
 
     private final ProtocolDictionaryBinding binding;
-    private Boolean bound;
+    private BindingStatus bindingStatus;
 
     /**
      * Creates a protocol dictionary.
@@ -179,9 +179,9 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
 
 
         // sort groups with increasing super class count, i.e. groups with no superclass comes first
-        ArrayList<GroupDef> sortedGroupsTemp = new ArrayList<GroupDef>(groups);
+        ArrayList<GroupDef> sortedGroupsTemp = new ArrayList<>(groups);
         Collections.sort(sortedGroupsTemp, new GroupDefComparator());
-        sortedGroups = Collections.unmodifiableCollection(sortedGroupsTemp);
+        sortedGroups = Collections.unmodifiableList(sortedGroupsTemp);
     }
 
     private void checkTypeReferenceAndCycles(TypeDef.Ref type, int cycleCounter) {
@@ -245,22 +245,46 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return binding;
     }
 
-    /** Returns true if this dictionary is completely bound.
-     * @return true if completely bound, otherwise false.
+    /**
+     * Returns true if this dictionary is completely bound.
+     * @return true if this dictionary is completely bound, otherwise false.
      */
     public boolean isBound() {
-        if (bound == null) {
-            boolean allBound = binding != null;
-            for (GroupDef group : sortedGroups) {
-                allBound &= group.isBound();
-            }
-            this.bound = allBound;
-        }
-        return bound;
+        return getBindingStatus() == BindingStatus.BOUND;
     }
 
-    public ProtocolDictionary bind(ProtocolDictionaryBinding binding, Collection<GroupDef> boundGroups) {
-        return new ProtocolDictionary(boundGroups, typesByName.values(), annotations, binding);
+    /**
+     * Returns true if this dictionary is completely unbound.
+     * @return true if this dictionary is completely unbound, otherwise false.
+     */
+    public boolean isUnbound() {
+        return getBindingStatus() == BindingStatus.UNBOUND;
+    }
+
+    BindingStatus getBindingStatus() {
+        if (bindingStatus == null) {
+            BindingStatus status = binding != null ? BindingStatus.BOUND : BindingStatus.UNBOUND;
+            for (GroupDef group : sortedGroups) {
+                status = status.combine(group.getBindingStatus());
+            }
+            bindingStatus = status;
+        }
+        return bindingStatus;
+    }
+
+    /**
+     * Returns the unbound version of this dictionary.
+     * @return the unbound version of this dictionary.
+     */
+    public ProtocolDictionary unbind() {
+        if (isUnbound()) {
+            return this;
+        }
+        Collection<GroupDef> unboundGroups = new ArrayList<>(sortedGroups.size());
+        for (GroupDef group : sortedGroups) {
+            unboundGroups.add(group.unbind());
+        }
+        return new ProtocolDictionary(unboundGroups, typesByName.values(), annotations, null);
     }
 
     /** Resolves the TypeDef to a GroupDef, or null if it cannot be resolved to a GroupDef.
@@ -373,7 +397,8 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return groupsById.get(id);
     }
 
-    /** Return groups that are "instanceof" the specified group.
+    /**
+     * Return groups that are "instanceof" the specified group.
      *
      * @param name the group name, or null to match all groups.
      * @return the groups that have this name or is a (direct or indirect) sub group to the super group, never null.
@@ -382,7 +407,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         if (name == null) {
             return getGroups();
         }
-        Set<String> superNames = new HashSet<String>();
+        HashSet<String> superNames = new HashSet<>();
         LinkedList<GroupDef> subGroups = new LinkedList<>();
         for (GroupDef group : sortedGroups) {
             if (group.getName().equals(name)) {
@@ -442,6 +467,26 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return UID;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || !obj.getClass().equals(ProtocolDictionary.class)) {
+            return false;
+        }
+        final ProtocolDictionary other = (ProtocolDictionary) obj;
+        return Objects.equals(this.sortedGroups, other.sortedGroups) &&
+                Objects.equals(this.typesByName, other.typesByName) &&
+                Objects.equals(this.annotations, other.annotations) &&
+                Objects.equals(this.binding, other.binding);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sortedGroups, typesByName, annotations, binding);
+    }
+
     /**
      * Returns a human readable string representation of this protocol dictionary.
      */
@@ -449,7 +494,8 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     public String toString() {
         StringBuilder str = new StringBuilder();
         for (Map.Entry<String, String> annotation : annotations.entrySet()) {
-            str.append("schema <- " + Annotations.toString(annotation.getKey(), annotation.getValue())).append("\n");
+            str.append("schema <- ").append(Annotations.toString(annotation.getKey(), annotation.getValue()));
+            str.append("\n");
         }
 
         for (NamedType namedType : typesByName.values()) {
@@ -479,10 +525,11 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return message;
     }
 
-    /** Replace all annotations in this object with the specified annotations.
+    /**
+     * Replace all annotations in this object with the specified annotations.
      *
      * @param annotations the annotations.
-     * @return a new copy of this object, with the specified annotations set.
+     * @return a new copy of this dictionary, with the specified annotations set.
      */
     @Override
     public ProtocolDictionary replaceAnnotations(Annotations annotations) {
@@ -498,6 +545,12 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return new ProtocolDictionary(newGroups, newNamedTypes, newAnnotations, binding);
     }
 
+    /**
+     * Add the specified annotations to this object.
+     *
+     * @param annotations the annotations.
+     * @return a new copy of this dictionary, with the specified annotations set.
+     */
     @Override
     public ProtocolDictionary addAnnotations(Annotations annotations) {
         Collection<GroupDef> newGroups = new ArrayList<>(sortedGroups.size());
@@ -513,7 +566,8 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return new ProtocolDictionary(newGroups, newNamedTypes, newAnnotations, binding);
     }
 
-    /** Returns the annotation value for the specified annotation name.
+    /**
+     * Returns the annotation value for the specified annotation name.
      *
      * @param name the annotation name, not null.
      * @return the annotation value, or null if not found.
@@ -523,7 +577,8 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return annotations.get(name);
     }
 
-    /** Get all annotations as an un-modifiable map.
+    /**
+     * Get all annotations as an un-modifiable map.
      *
      * @return a map of annotation name-value pairs, not null.
      */
@@ -537,6 +592,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
      * @param path path to node
      * @return the requested node, or null if the path does not exist in this protocol dictionary
      */
+    @Deprecated // remove this one? Replace with something more useful, e.g. getNode(group, field, subField, ...)
     public Object getNode(String... path) {
         if (path.length == 0){
             return this;

@@ -71,4 +71,11 @@ public class GroupBinding {
             Objects.equals(groupType, other.groupType);
     }
 
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 43 * hash + Objects.hashCode(this.groupType);
+        hash = 43 * hash + Objects.hashCode(this.factory);
+        return hash;
+    }
 }

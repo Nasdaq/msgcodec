@@ -239,6 +239,7 @@ public class ProtocolDictionaryBuilder {
                         group.getJavaClass().getName());
             }
 
+            @SuppressWarnings("unchecked")
             ConstructorFactory factory = new ConstructorFactory(constructor);
             GroupDef groupDef = new GroupDef(
                     group.getName(),
@@ -251,7 +252,7 @@ public class ProtocolDictionaryBuilder {
             groupDefs.add(groupDef);
         }
 
-        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(new GroupTypeAccessor.JavaClass());
+        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(GroupTypeAccessor.JAVA_CLASS);
         return new ProtocolDictionary(groupDefs, namedTypes.values(), binding);
     }
 
@@ -739,54 +740,6 @@ public class ProtocolDictionaryBuilder {
                 return 1 + parentCount(group.getParent());
             }
         }
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static class FieldAccessor implements Accessor {
-        private final Field field;
-        public FieldAccessor(Field field) {
-            this.field = field;
-            this.field.setAccessible(true);
-        }
-        @Override
-        public Object getValue(Object obj) {
-            try {
-                return field.get(obj);
-            } catch (IllegalArgumentException | IllegalAccessException e) {
-                throw new Error("Should not happen", e);
-            }
-        }
-        @Override
-        public void setValue(Object obj, Object value) {
-            try {
-                field.set(obj, value);
-            } catch (IllegalArgumentException | IllegalAccessException e) {
-                throw new Error("Should not happen", e);
-            }
-        }
-    }
-
-    @SuppressWarnings("rawtypes")
-    private static class ConstructorFactory implements Factory {
-        private final Constructor constructor;
-        public ConstructorFactory(Constructor constructor) {
-            this.constructor = constructor;
-            this.constructor.setAccessible(true);
-        }
-
-        @Override
-        public Object newInstance() {
-            try {
-                return constructor.newInstance();
-            } catch (InstantiationException e) {
-                throw new Error("Should not happen", e); // abstract class
-            } catch (IllegalAccessException e) {
-                throw new Error("Should not happen", e);
-            } catch (InvocationTargetException e) {
-                throw new RuntimeException("Constructor throwed exception", e);
-            }
-        }
-
     }
 
     private static class FieldDefComparator implements Comparator<FieldDef> {

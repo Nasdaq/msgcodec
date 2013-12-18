@@ -143,8 +143,8 @@ public class Group implements Map<String, Object> {
         for (GroupDef group : dictionary.getGroups()) {
             groups.add(bind(group, dictionary));
         }
-        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(new GroupTypeAccessor.GroupName());
-        return dictionary.bind(binding, groups);
+        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(GroupTypeAccessor.GROUP_NAME);
+        return new ProtocolDictionary(groups, dictionary.getNamedTypes(), dictionary.getAnnotations(), binding);
     }
 
     private static class GroupFactory implements Factory<Group> {

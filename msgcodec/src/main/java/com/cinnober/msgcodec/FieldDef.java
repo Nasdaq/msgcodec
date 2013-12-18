@@ -113,6 +113,10 @@ public class FieldDef implements Annotatable<FieldDef> {
         return binding != null;
     }
 
+    BindingStatus getBindingStatus() {
+        return binding != null ? BindingStatus.BOUND : BindingStatus.UNBOUND;
+    }
+
     /** Bind this field using the specified binding.
      *
      * @param binding the new binding, not null.
@@ -122,7 +126,8 @@ public class FieldDef implements Annotatable<FieldDef> {
         return new FieldDef(name, id, required, type, annotations, Objects.requireNonNull(binding));
     }
 
-    /** Remove any binding from this field.
+    /**
+     * Remove any binding from this field.
      *
      * @return the unbound field.
      */
@@ -240,4 +245,8 @@ public class FieldDef implements Annotatable<FieldDef> {
             Objects.equals(binding, other.binding);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, id, required, type, annotations, binding);
+    }
 }

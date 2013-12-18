@@ -25,5 +25,5 @@ package com.cinnober.msgcodec;
  * @param <T> the type of object to create.
  */
 public interface Factory<T> {
-    public T newInstance();
+    T newInstance();
 }

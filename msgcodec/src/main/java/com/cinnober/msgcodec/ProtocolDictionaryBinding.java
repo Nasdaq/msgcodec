@@ -29,7 +29,8 @@ import java.util.Objects;
 public class ProtocolDictionaryBinding {
     private final GroupTypeAccessor groupTypeAccessor;
 
-    /** Create a protocol dictionary binding.
+    /**
+     * Create a protocol dictionary binding.
      *
      * @param groupTypeAccessor the group type accessor, not null
      */
@@ -53,5 +54,10 @@ public class ProtocolDictionaryBinding {
         }
         ProtocolDictionaryBinding other = (ProtocolDictionaryBinding) obj;
         return groupTypeAccessor.equals(other.groupTypeAccessor);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.groupTypeAccessor);
     }
 }

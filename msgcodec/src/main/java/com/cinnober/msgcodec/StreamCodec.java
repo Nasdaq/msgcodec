@@ -43,7 +43,7 @@ public interface StreamCodec {
      * @throws IllegalArgumentException if the group is not correct or complete, e.g. a required field is missing.
      * Partial data may have been written to the output stream.
      */
-    public void encode(Object group, OutputStream out) throws IOException, IllegalArgumentException;
+    void encode(Object group, OutputStream out) throws IOException, IllegalArgumentException;
     /**
      * Read a group from the specified stream.
      * 
@@ -52,5 +52,5 @@ public interface StreamCodec {
      * @throws IOException if the underlying stream throws an exception.
      * @throws DecodeException if the value could not be decoded, or if a required field is missing.
      */
-    public Object decode(InputStream in) throws IOException, DecodeException;
+    Object decode(InputStream in) throws IOException, DecodeException;
 }

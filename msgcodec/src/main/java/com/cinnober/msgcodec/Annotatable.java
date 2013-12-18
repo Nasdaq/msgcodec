@@ -23,34 +23,39 @@ import java.util.Map;
  * An (immutable) object that can be annotated with string name-value pairs.
  *
  * @author mikael.brannstrom
+ * @param <T> the type of the annotatable class, used as return type.
  *
  */
 public interface Annotatable<T> {
-    /** Replace all annotations in this object with the specified annotations.
+    /**
+     * Replace all annotations in this object with the specified annotations.
      *
      * @param annotations the annotations.
      * @return a new copy of this object, with the specified annotations set.
      */
-    public T replaceAnnotations(Annotations annotations);
+    T replaceAnnotations(Annotations annotations);
 
-    /** Add the specified annotations to this object.
+    /**
+     * Add the specified annotations to this object.
      * Any duplicate annotations will be replaced.
      *
      * @param annotations the annotations.
      * @return a new copy of this object, with the specified annotations added.
      */
-    public T addAnnotations(Annotations annotations);
+    T addAnnotations(Annotations annotations);
 
-    /** Returns the annotation value for the specified annotation name.
+    /**
+     * Returns the annotation value for the specified annotation name.
      *
      * @param name the annotation name, not null.
      * @return the annotation value, or null if not found.
      */
-    public String getAnnotation(String name);
+    String getAnnotation(String name);
 
-    /** Get all annotations as an un-modifiable map.
+    /**
+     * Get all annotations as an un-modifiable map.
      *
      * @return a map of annotation name-value pairs, not null.
      */
-    public Map<String, String> getAnnotations();
+    Map<String, String> getAnnotations();
 }

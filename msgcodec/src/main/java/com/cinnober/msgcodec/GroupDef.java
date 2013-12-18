@@ -50,7 +50,7 @@ public class GroupDef implements Annotatable<GroupDef> {
     private final List<FieldDef> fields;
     private final Map<String, String> annotations;
     private final GroupBinding binding;
-    private Boolean bound;
+    private BindingStatus bindingStatus;
 
     /**
      * Create a group definition.
@@ -109,18 +109,31 @@ public class GroupDef implements Annotatable<GroupDef> {
         return binding;
     }
 
-    /** Returns true if this group is completely bound.
-     * @return true if completely bound, otherwise false.
+    /**
+     * Returns true if this group is completely bound.
+     * @return true if this group is completely bound, otherwise false.
      */
     public boolean isBound() {
-        if (bound == null) {
-            boolean allBound = binding != null;
+        return getBindingStatus() == BindingStatus.BOUND;
+    }
+
+    /**
+     * Returns true if this group is completely unbound.
+     * @return true if this group is completely unbound, otherwise false.
+     */
+    public boolean isUnbound() {
+        return getBindingStatus() == BindingStatus.UNBOUND;
+    }
+
+    BindingStatus getBindingStatus() {
+        if (bindingStatus == null) {
+            BindingStatus status = binding != null ? BindingStatus.BOUND : BindingStatus.UNBOUND;
             for (FieldDef field : fields) {
-                allBound &= field.isBound();
+                status = status.combine(field.getBindingStatus());
             }
-            this.bound = allBound;
+            bindingStatus = status;
         }
-        return bound;
+        return bindingStatus;
     }
 
     /** Bind this group using the specified binding.
@@ -141,11 +154,15 @@ public class GroupDef implements Annotatable<GroupDef> {
         return new GroupDef(name, id, superGroup, newFields, annotations, Objects.requireNonNull(groupBinding));
     }
 
-    /** Remove any binding from this group.
-    *
-    * @return the unbound group.
-    */
+    /**
+     * Remove any binding from this group.
+     *
+     * @return the unbound group.
+     */
     public GroupDef unbind() {
+        if (isUnbound()) {
+            return this;
+        }
         List<FieldDef> newFields = new ArrayList<>(fields.size());
         for (FieldDef field : fields) {
             newFields.add(field.unbind());
@@ -153,7 +170,8 @@ public class GroupDef implements Annotatable<GroupDef> {
         return new GroupDef(name, id, superGroup, newFields, annotations, null);
     }
 
-    /** Returns the group type of this group.
+    /**
+     * Returns the group type of this group.
      *
      * @return the group type, not null.
      */
@@ -161,7 +179,8 @@ public class GroupDef implements Annotatable<GroupDef> {
         return binding != null ? binding.getGroupType() : null;
     }
 
-    /** Returns the group factory.
+    /**
+     * Returns the group factory.
      *
      * @return the factory, not null.
      */
@@ -301,4 +320,10 @@ public class GroupDef implements Annotatable<GroupDef> {
             Objects.equals(annotations, other.annotations) &&
             Objects.equals(binding, other.binding);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, superGroup, fields, annotations, binding);
+    }
+
 }
