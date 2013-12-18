@@ -56,7 +56,7 @@ public class AnnotatedProtocolDictionaryTest {
     }
 
     private FieldDef getClientOrderId(ProtocolDictionary dictionary) {
-        return (FieldDef) dictionary.getNode(executionReportGroupName, clientOrderIdFieldName);
+        return dictionary.getGroup(executionReportGroupName).getField(clientOrderIdFieldName);
     }
 
 }

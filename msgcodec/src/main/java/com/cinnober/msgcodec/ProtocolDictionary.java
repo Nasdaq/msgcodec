@@ -326,7 +326,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
      * @param type the type to be resolved
      * @param full true if targets of DymanicReference and Sequence should be resolved (recursively)
      * @return the resolved type. If a Reference is returned, then it is guaranteed that it points to a
-     * GroupDef. If <code>pFull</code> is true, then DynamicReference will point <em>directly</em> to a GroupDef,
+     * GroupDef. If <code>full</code> is true, then DynamicReference will point <em>directly</em> to a GroupDef,
      * and Sequence will have a type which is fully resolved.
      * @see #resolveToGroup(TypeDef)
      */
@@ -585,37 +585,6 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     @Override
     public Map<String, String> getAnnotations() {
         return annotations;
-    }
-
-    /**
-     * Gets node in the protocol dictionary. A node can be a group, field, type or the dictionary it self
-     * @param path path to node
-     * @return the requested node, or null if the path does not exist in this protocol dictionary
-     */
-    @Deprecated // remove this one? Replace with something more useful, e.g. getNode(group, field, subField, ...)
-    public Object getNode(String... path) {
-        if (path.length == 0){
-            return this;
-        } else if (path.length == 1) {
-            NamedType typeDef = typesByName.get(path[0]);
-            if (typeDef != null){
-                return typeDef;
-            }
-            GroupDef groupDef = groupsByName.get(path[0]);
-            if (groupDef != null){
-                return groupDef;
-            }
-        } else if (path.length == 2) {
-            GroupDef groupDef = groupsByName.get(path[0]);
-            if (groupDef != null){
-                FieldDef fieldDef = groupDef.getField(path[1]);
-                if (fieldDef != null) {
-                    return fieldDef;
-                }
-            }
-        }
-
-        return null; // not found
     }
 
     /** Sort GroupDefs by parentCount ascending, followed by id ascending.
