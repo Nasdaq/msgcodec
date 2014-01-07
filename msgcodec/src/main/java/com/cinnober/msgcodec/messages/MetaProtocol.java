@@ -28,7 +28,6 @@ import java.util.Collections;
  *
  */
 public class MetaProtocol {
-    private static final ProtocolDictionary protocolDictionary = createProtocolDictionary();
     private static final Collection<Class<?>> protocolMessageClasses = Collections.unmodifiableCollection(Arrays.asList(
         (Class<?>)MetaProtocolDictionary.class,
         MetaAnnotated.class,
@@ -60,6 +59,7 @@ public class MetaProtocol {
         MetaTypeDef.MetaEnum.class,
         MetaTypeDef.MetaSymbol.class
     ));
+    private static final ProtocolDictionary protocolDictionary = createProtocolDictionary();
 
 
     private MetaProtocol() { }
