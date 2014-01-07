@@ -88,7 +88,7 @@ public class MetaProtocol {
      * ProtocolDictionary dictionary = new ProtocolDictionaryBuilder(true).build(getprotocolMessageClasses());
      * </pre>
      *
-     * @return
+     * @return all protocol messages classes in the protocol.
      */
     public static Collection<Class<?>> getProtocolMessageClasses() {
         return protocolMessageClasses;
