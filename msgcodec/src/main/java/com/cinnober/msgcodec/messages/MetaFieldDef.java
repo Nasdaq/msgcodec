@@ -18,6 +18,7 @@
 package com.cinnober.msgcodec.messages;
 
 import com.cinnober.msgcodec.FieldDef;
+import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
@@ -49,6 +50,7 @@ public class MetaFieldDef extends MetaAnnotated {
     /**
      * The type of the field.
      */
+    @Annotate("xml:field=inline")
     @Required @Dynamic
     @Id(4)
     public MetaTypeDef type;

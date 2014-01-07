@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.anot.Annotate;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
@@ -102,7 +104,9 @@ public class MetaTypeDef extends MetaAnnotated {
         /**
          * The type of the elements in the sequence.
          */
+        @Annotate("xml:field=inline")
         @Required
+        @Dynamic
         @Id(1)
         public MetaTypeDef type;
         public MetaSequence() {}

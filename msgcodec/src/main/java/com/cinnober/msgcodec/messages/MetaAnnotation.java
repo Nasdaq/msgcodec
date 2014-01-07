@@ -18,6 +18,7 @@
 package com.cinnober.msgcodec.messages;
 
 import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
@@ -38,6 +39,7 @@ public class MetaAnnotation extends MsgObject {
     /**
      * The annotation value.
      */
+    @Annotate("xml:field=inline")
     @Required
     @Id(2)
     public String value;
