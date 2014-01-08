@@ -32,7 +32,7 @@ import java.io.InputStream;
  */
 public class LimitInputStream extends InputStream {
 
-    private InputStream in;
+    protected final InputStream in;
     private int limit = -1;
 
     /** Create a new limit input stream with no limit initially.
