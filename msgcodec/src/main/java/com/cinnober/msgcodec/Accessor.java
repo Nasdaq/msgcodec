@@ -20,7 +20,7 @@ package com.cinnober.msgcodec;
 /**
  * An accessor enables getting and setting of a field value in an object.
  * 
- * <p>Conceptually this is a wrapper around a getter/setter pair.
+ * <p>Conceptually this can be seen as a getter/setter pair.
  * 
  * @author mikael.brannstrom
  *
@@ -28,6 +28,17 @@ package com.cinnober.msgcodec;
  * @param <V> the field value type.
  */
 public interface Accessor<O, V> {
+    /**
+     * Returns the value for the field in the specified object.
+     * @param obj the object to get the field value from, not null.
+     * @return the field value.
+     */
     V getValue(O obj);
+
+    /**
+     * Set the value for the field in the spcecified object.
+     * @param obj the object to set the field value in, not null.
+     * @param value the field value.
+     */
     void setValue(O obj, V value);
 }
