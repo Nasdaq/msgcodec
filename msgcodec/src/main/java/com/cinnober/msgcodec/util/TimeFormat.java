@@ -47,19 +47,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class TimeFormat {
 
-    public static void main(String... args) throws Exception {
-        int i = -105;
-        i = i / 10;
-        System.out.println("i="+i);
-
-        i = 105;
-        i = i / 10;
-        System.out.println("i="+i);
-
-        TimeFormat tf = TimeFormat.getTimeFormat(TimeUnit.MILLISECONDS, Epoch.UNIX);
-        tf.format(0L);
-    }
-
     private static final Map<Integer, TimeFormat> instances = initInstances();
 
     /**
