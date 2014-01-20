@@ -24,7 +24,6 @@ import java.util.Map;
 
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.StreamCodec;
 
 /**
  * @author mikael.brannstrom

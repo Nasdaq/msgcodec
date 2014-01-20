@@ -20,7 +20,9 @@ package com.cinnober.msgcodec;
 
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
+import java.util.Date;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -118,6 +120,16 @@ public class MsgObjectTest {
         assertEquals(new FooBar(new Foo(1)), new FooBar(new Foo(1)));
         assertEquals(new FooBar(new Bar(1, 2)), new FooBar(new Bar(1, 2)));
         assertNotEquals(new FooBar(new Bar(1, 2)), new FooBar(new Bar(1, 3)));
+    }
+
+    @Test
+    public void testDateTimesToString() {
+        DateTimes msg = new DateTimes();
+        assertEquals("DateTimes [timestamp=1970-01-01 00:00:00.000, dateTimestamp=null]",
+                     msg.toString());
+        msg.dateTimestamp = new Date(0L);
+        assertEquals("DateTimes [timestamp=1970-01-01 00:00:00.000, dateTimestamp=1970-01-01 00:00:00.000]",
+                     msg.toString());
     }
 
     public static class FieldOrder extends MsgObject {
@@ -221,4 +233,12 @@ public class MsgObjectTest {
         }
     }
 
+    public static class DateTimes extends MsgObject {
+        @Id(1)
+        @Time
+        public int timestamp;
+
+        @Id(2)
+        public Date dateTimestamp;
+    }
 }

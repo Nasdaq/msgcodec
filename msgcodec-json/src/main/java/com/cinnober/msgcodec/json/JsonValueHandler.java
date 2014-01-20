@@ -38,10 +38,14 @@ import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.util.TimeFormat;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import java.text.ParseException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Mikael Brannstrom
@@ -242,10 +246,12 @@ abstract class JsonValueHandler<T> {
     static abstract class TimeHandler<T> extends JsonValueHandler<T> {
         private final Epoch epoch;
         private final TimeUnit unit;
+        private final TimeFormat timeFormat;
 
         public TimeHandler(TypeDef.Time type) {
             this.epoch = type.getEpoch();
             this.unit = type.getUnit();
+            this.timeFormat = TimeFormat.getTimeFormat(unit, epoch);
         }
 
         /** Convert the value to a long value for the specified epoch and time unit. */
@@ -256,16 +262,19 @@ abstract class JsonValueHandler<T> {
         @Override
         void writeValue(T value, JsonGenerator g) throws IOException {
             long timeValue = convertToLong(value);
-            // TODO: format long to string
-            String timeStr = "TODO-TIME:" + Long.toString(timeValue);
+            String timeStr = timeFormat.format(timeValue);
             g.writeString(timeStr);
         }
 
         @Override
         T readValue(JsonParser p) throws IOException {
-            String s = p.getText();
-            long timeValue = Long.parseLong(s.substring("TODO-TIME:".length()));
-            return convertFromLong(timeValue);
+            try {
+                String s = p.getText();
+                long timeValue = timeFormat.parse(s);
+                return convertFromLong(timeValue);
+            } catch (ParseException e) {
+                throw new DecodeException("Could not parse time", e);
+            }
         }
     }
 

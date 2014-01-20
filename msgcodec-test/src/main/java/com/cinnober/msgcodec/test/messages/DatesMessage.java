@@ -72,15 +72,11 @@ public class DatesMessage extends MsgObject {
 
         msg = new DatesMessage();
         messages.put("border1", msg);
-        msg.localTimeMillis = 24 * 3600 * 1000;
+        msg.localTimeMillis = 1;
 
         msg = new DatesMessage();
         messages.put("border2", msg);
         msg.localTimeMillis = 24 * 3600 * 1000 - 1;
-
-        msg = new DatesMessage();
-        messages.put("border3", msg);
-        msg.localTimeMillis = 24 * 3600 * 1000 + 2;
 
         msg = new DatesMessage();
         messages.put("2013-10-15 12:00:00.123456789", msg);

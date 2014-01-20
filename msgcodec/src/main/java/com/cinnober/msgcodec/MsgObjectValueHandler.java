@@ -21,18 +21,19 @@ import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.util.ByteBuffers;
+import com.cinnober.msgcodec.util.TimeFormat;
 import java.lang.reflect.Field;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -132,12 +133,17 @@ abstract class MsgObjectValueHandler<T> {
         }
     }
     static abstract class TimeHandler<T> extends MsgObjectValueHandler<T> {
-        protected final Epoch epoch;
-        protected final TimeUnit unit;
+        private final TimeFormat timeFormat;
 
         public TimeHandler(Time time) {
-            this.epoch = time != null ? time.epoch() : Epoch.UNIX;
-            this.unit = time != null ? time.unit() : TimeUnit.MILLISECONDS;
+            timeFormat = TimeFormat.getTimeFormat(unit(time), epoch(time));
+        }
+
+        protected TimeUnit unit(Time time) {
+            return time != null ? time.unit() : TimeUnit.MILLISECONDS;
+        }
+        protected Epoch epoch(Time time) {
+            return time != null ? time.epoch() : Epoch.UNIX;
         }
 
         /** Convert the value to a long value for the specified epoch and time unit. */
@@ -146,9 +152,7 @@ abstract class MsgObjectValueHandler<T> {
         @Override
         void appendToString(T value, StringBuilder appendTo) {
             long timeValue = convertToLong(value);
-            // TODO: format long to string
-            String timeStr = "TODO-TIME:" + Long.toString(timeValue);
-            appendTo.append(timeStr);
+            timeFormat.format(timeValue, appendTo);
         }
     }
 
@@ -205,8 +209,8 @@ abstract class MsgObjectValueHandler<T> {
         private final long epochOffset;
         public DateTimeHandler(Time time) {
             super(time);
-            timeUnitInMillis = getTimeInMillis(unit);
-            epochOffset = getEpochOffset(epoch);
+            timeUnitInMillis = getTimeInMillis(unit(time));
+            epochOffset = getEpochOffset(epoch(time));
         }
         @Override
         protected long convertToLong(Date value) {

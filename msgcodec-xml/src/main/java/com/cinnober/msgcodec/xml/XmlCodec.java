@@ -53,6 +53,7 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.SimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StaticGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StringItemValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
+import java.util.Date;
 
 /**
  *
@@ -185,7 +186,7 @@ public class XmlCodec implements StreamCodec {
                     putElement(elementFields, fieldInstr);
                 }
             } else {
-                XmlFormat format = getXmlFormat(type, field.getComponentJavaClass());
+                //XmlFormat format = getXmlFormat(type, field.getComponentJavaClass());
                 throw new RuntimeException("Sequence of simple type not implemented yet"); // TODO
                 // TODO: implement this (uncomment the following)
 //                if (field.getJavaClass().isArray()) {
@@ -295,10 +296,18 @@ public class XmlCodec implements StreamCodec {
             } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
                 return new XmlEnumFormat.IntEnumFormat((Enum) type);
             } else {
-                throw new RuntimeException("Unhandled enum type: " + type.getType());
+                throw new RuntimeException("Unhandled enum type: " + type);
             }
         case TIME:
-            throw new RuntimeException("Time not implemented"); // TODO
+            if (javaClass.equals(Date.class)) {
+                return new XmlTimeFormat.DateTimeFormat((TypeDef.Time) type);
+            } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
+                return new XmlTimeFormat.UInt32TimeFormat((TypeDef.Time) type);
+            } else if (javaClass.equals(long.class) || javaClass.equals(Long.class)) {
+                return new XmlTimeFormat.UInt64TimeFormat((TypeDef.Time) type);
+            } else {
+                throw new RuntimeException("Unhandled time type: " + type);
+            }
         default:
             return getSimpleXmlFormat(type.getType());
         }

@@ -2,4 +2,5 @@ description = ''
 
 dependencies {
   compile project(':msgcodec')
+  testCompile project(':msgcodec-test')
 }
