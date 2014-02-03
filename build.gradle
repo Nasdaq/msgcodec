@@ -18,9 +18,12 @@ buildscript {
     }
 }
 
-subprojects {
+allprojects { 
     ext.nextVersion = 'major'
     apply plugin: 'semver-git'
+}
+
+subprojects {
     apply plugin: 'cinnober-java'
 
     group = 'com.cinnober.msgcodec'
