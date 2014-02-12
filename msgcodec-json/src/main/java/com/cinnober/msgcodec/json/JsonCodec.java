@@ -62,7 +62,9 @@ import com.fasterxml.jackson.core.JsonToken;
  * <tr><td>static group</td><td>object.</tr></tr>
  * <tr>
  * <td>dynamic group</td>
- * <td>object, with an additional field <code>$type</code> with the group name as a string.</tr>
+ * <td>object, with an additional field <code>$type</code> with the group name as a string.
+ * Currently JSON codec expects this field to appear first in an object.
+ * <br>PENDING: relax this to a suggestion for improved performance?</tr>
  * </tr>
  * </table>
  * 
