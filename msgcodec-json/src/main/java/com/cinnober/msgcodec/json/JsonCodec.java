@@ -36,15 +36,37 @@ import com.cinnober.msgcodec.TypeDef.Sequence;
 import com.cinnober.msgcodec.json.JsonValueHandler.DynamicGroupHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.FieldHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.StaticGroupHandler;
+import com.cinnober.msgcodec.util.TimeFormat;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 /**
- * TODO: required fields are currently not checked.
- *
+ * The JSON codec can serialize and deserialize Java objects to/from JSON.
+ * 
+ * <p>JsonCodec is thread safe.
  * Null values are supported in encode and decode.
+ * 
+ * <p>The following mapping between msgcodec and JSON types applies.
+ * <table>
+ * <caption>Mapping between msgcodec and JSON data types.</caption>
+ * <tr style="text-align: left"><th>Msgcodec type</th><th>JSON type</th></tr>
+ * <tr><td>int, float and decimal</td><td>number</td></tr>
+ * <tr><td>boolean</td><td>true/false</tr></tr>
+ * <tr><td>string</td><td>string</td></tr>
+ * <tr><td>binary</td><td>string (base64)</tr></tr>
+ * <tr><td>enum</td><td>string (name)</tr></tr>
+ * <tr><td>time</td><td>string (see {@link TimeFormat})</tr></tr>
+ * <tr><td>sequence</td><td>array</tr></tr>
+ * <tr><td>static group</td><td>object.</tr></tr>
+ * <tr>
+ * <td>dynamic group</td>
+ * <td>object, with an additional field <code>$type</code> with the group name as a string.</tr>
+ * </tr>
+ * </table>
+ * 
+ * <p><b>Note:</b> required fields are currently not checked (TODO)
  *
  * @author mikael.brannstrom
  *

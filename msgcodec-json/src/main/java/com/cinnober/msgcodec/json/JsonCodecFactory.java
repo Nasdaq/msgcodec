@@ -7,10 +7,7 @@
 package com.cinnober.msgcodec.json;
 
 import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.StreamCodecFactory;
-import com.cinnober.msgcodec.util.ConcurrentBufferPool;
-import com.cinnober.msgcodec.util.Pool;
 import java.util.Objects;
 
 /**
@@ -23,7 +20,7 @@ public class JsonCodecFactory implements StreamCodecFactory {
     private final ProtocolDictionary dictionary;
 
     /**
-     * Create a Blink codec factory.
+     * Create a JSON codec factory.
      * 
      * @param dictionary the protocol dictionary to be used by all codec instances, not null.
      */
