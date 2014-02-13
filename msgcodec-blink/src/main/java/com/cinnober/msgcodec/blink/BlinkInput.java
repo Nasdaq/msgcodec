@@ -438,7 +438,7 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static boolean readBoolean(InputStream in) throws IOException {
-        return readUInt8(in) != 0;
+        return readUInt8(in) != 0;  // TODO: is it byte or VLC?
     }
     /**
      * Read a nullable boolean value.
@@ -452,7 +452,7 @@ public class BlinkInput {
         if (b == 0xc0) {
             return null;
         } else {
-            return b != 0;
+            return b != 0; // TODO: is it byte or VLC?
         }
     }
 
@@ -651,7 +651,7 @@ public class BlinkInput {
             return value;
         }
     }
-
+    
     /**
      * Read a nullable unsigned big variable-length code value.
      * @param in the input stream to read from, not null.
@@ -765,4 +765,361 @@ public class BlinkInput {
         }
     }
 
+    /**
+     * Skip a (nullable) variable-length code value.
+     * @param in the input stream to read from, not null.
+     * @return true if a non-null value was skipped, otherwise false.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static boolean skipVLC(InputStream in) throws IOException {
+        int b1 = read(in);
+        if ((0x80 & b1) == 0) {
+            // single byte
+            return true;
+        } else if ((0xc0 & b1) == 0x80) {
+            // two bytes
+            in.skip(1);
+            return true;
+        } else {
+            int size = 0x3f & b1;
+            if (size == 0) {
+                return false;
+            } else {
+                in.skip(size);
+                return true;
+            }
+        }
+    }
+    
+    /**
+     * Skip a signed 8-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt8(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    
+    /**
+     * Skip a signed 16-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt16(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a signed 32-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt32(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a signed 64-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt64(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    
+    /**
+     * Skip an unsigned 8-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt8(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    
+    /**
+     * Skip an unsigned 16-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt16(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip an unsigned 32-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt32(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip an unsigned 64-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt64(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a nullable signed 8-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt8Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    
+    /**
+     * Skip a nullable signed 16-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt16Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a nullable signed 32-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt32Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a nullable signed 64-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipInt64Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    
+    /**
+     * Skip a nullable unsigned 8-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt8Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    
+    /**
+     * Skip a nullable unsigned 16-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt16Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a nullable unsigned 32-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt32Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a nullable unsigned 64-bit integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipUInt64Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    
+    /**
+     * Skip a signed big integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBigInt(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    /**
+     * Skip a nullable signed big integer.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBigIntNull(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a 32-bit floating point number.
+     * @param in the input stream to read from, not null.
+     * @see #readFloat64(InputStream)
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipFloat32(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a nullable 32-bit floating point number.
+     * @param in the input stream to read from, not null.
+     * @see #readFloat64(InputStream)
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipFloat32Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a 64-bit floating point number.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipFloat64(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+    /**
+     * Skip a nullable 64-bit floating point number.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipFloat64Null(InputStream in) throws IOException {
+        skipVLC(in);
+    }
+
+    /**
+     * Skip a decimal number.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipDecimal(InputStream in) throws IOException {
+        skipVLC(in);
+        skipVLC(in);
+    }
+    /**
+     * Skip a nullable decimal number.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipDecimalNull(InputStream in) throws IOException {
+        if (skipVLC(in)) {
+            skipVLC(in);
+        }
+    }
+
+    /**
+     * Skip a big decimal number.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBigDecimal(InputStream in) throws IOException {
+        skipDecimal(in);
+    }
+    /**
+     * Skip a nullable big decimal number.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBigDecimalNull(InputStream in) throws IOException {
+        skipDecimalNull(in);
+    }
+
+    /**
+     * Skip a boolean value.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBoolean(InputStream in) throws IOException {
+        in.skip(1); // TODO: is it byte or VLC?
+    }
+    /**
+     * Skip a nullable boolean value.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBooleanNull(InputStream in) throws IOException {
+        in.skip(1); // TODO: is it byte or VLC?
+    }
+
+    /**
+     * Skip a unicode string.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipStringUTF8(InputStream in) throws IOException {
+        skipBinary(in);
+    }
+    /**
+     * Skip a nullable unicode string.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipStringUTF8Null(InputStream in) throws IOException {
+        skipBinaryNull(in);
+    }
+    /**
+     * Skip a binary value.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBinary(InputStream in) throws IOException {
+        int size = readUInt32(in);
+        if (size < 0) {
+            throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
+        }
+        in.skip(size);
+    }
+    /**
+     * Skip a nullable binary value.
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static void skipBinaryNull(InputStream in) throws IOException {
+        Integer sizeObj = readUInt32Null(in);
+        if (sizeObj == null) {
+            return;
+        }
+        int size = sizeObj.intValue();
+        if (size < 0) {
+            throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
+        }
+        in.skip(size);
+    }
+    
 }

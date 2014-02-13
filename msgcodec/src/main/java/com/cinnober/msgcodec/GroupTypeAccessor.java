@@ -40,7 +40,7 @@ public abstract class GroupTypeAccessor {
      * Useful when each groups have been bound to a separate java class.
      * @see #JAVA_CLASS
      */
-    public static class JavaClass extends GroupTypeAccessor {
+    public static final class JavaClass extends GroupTypeAccessor {
         private JavaClass() {}
 
         /**
@@ -61,7 +61,7 @@ public abstract class GroupTypeAccessor {
      * @author mikael.brannstrom
      * @see #GROUP_NAME
      */
-    public static class GroupName extends GroupTypeAccessor {
+    public static final class GroupName extends GroupTypeAccessor {
         private GroupName() {}
 
         @Override

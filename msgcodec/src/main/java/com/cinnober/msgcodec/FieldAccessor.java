@@ -30,7 +30,7 @@ import java.util.Objects;
  *
  * @author mikael.brannstrom
  */
-public class FieldAccessor implements Accessor<Object, Object> {
+public final class FieldAccessor implements Accessor<Object, Object> {
     private final Field field;
 
     /**

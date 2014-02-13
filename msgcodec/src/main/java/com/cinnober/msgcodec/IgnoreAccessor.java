@@ -28,7 +28,7 @@ package com.cinnober.msgcodec;
  *
  * @author mikael.brannstrom
  */
-public class IgnoreAccessor<O, V> implements Accessor<O, V> {
+public final class IgnoreAccessor<O, V> implements Accessor<O, V> {
 
     private static final IgnoreAccessor INSTANCE = new IgnoreAccessor();
 

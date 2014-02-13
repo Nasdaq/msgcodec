@@ -32,7 +32,7 @@ import java.util.Objects;
  * @author mikael.brannstrom
  * @param <T> the type of object to create.
  */
-public class ConstructorFactory<T> implements Factory<T> {
+public final class ConstructorFactory<T> implements Factory<T> {
     private final Constructor<T> constructor;
 
     /**
