@@ -28,7 +28,13 @@ class GeneratedGenericCodec extends GeneratedCodec {
     @Override
     protected void writeStaticGroupWithId(OutputStream out, Object obj) throws IOException {
         Object groupType = groupTypeAccessor.getGroupType(obj);
-        // invokedynamic writeStaticGroupWithId groupType (out, obj) -> writeStaticGroupWithId_groupname(out, Object obj)
+        int hashCode = groupType.hashCode();
+//        switch (hashCode) {
+//            case 123:
+//                if (groupType.equals("FOO")) {
+//                    writeStaticGroupFoo(out, obj);
+//                }
+//        }
     }
 
     @Override

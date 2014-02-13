@@ -32,7 +32,8 @@ abstract class GeneratedCodec {
     
     /**
      * Write a static group and its group id.
-     * Method to be generated in a sub class using <b>invoke dynamic</b> based on the group type.
+     * Method to be generated in a sub class using <b>switch</b> construct
+     * (similar what is generated for a switch on String) based on the group type.
      * 
      * @param out where to write to, not null
      * @param group the group to write, not null.

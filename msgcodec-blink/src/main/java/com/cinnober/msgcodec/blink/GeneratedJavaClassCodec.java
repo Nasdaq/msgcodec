@@ -24,26 +24,7 @@ import java.util.Map;
  */
 abstract class GeneratedJavaClassCodec extends GeneratedCodec {
 
-    static CallSite bootstrap(MethodHandles.Lookup caller, String name, MethodType type, Class groupType) throws NoSuchMethodException, IllegalAccessException {
-        if ("writeStaticGroupWithId".equals(name)) {
-            MethodHandle method = caller.findVirtual(caller.lookupClass(), "writeStaticGroupWithId", 
-                    MethodType.methodType(void.class, OutputStream.class, groupType));
-            // TODO: handle nosuchmethod
-            return new ConstantCallSite(method);
-        }
-        return null;
-    }
-    
-    
     GeneratedJavaClassCodec(BlinkCodec codec, ProtocolDictionary dict) {
         super(codec);
     }
-
-//    @Override
-//    protected void writeStaticGroupWithId(OutputStream out, Object obj) throws IOException {
-//        Class groupType = obj.getClass();
-//        // invokedynamic writeStaticGroupWithId class (out, obj) -> writeStaticGroupWithId(out, class obj)
-//    }
-    
-    
 }
