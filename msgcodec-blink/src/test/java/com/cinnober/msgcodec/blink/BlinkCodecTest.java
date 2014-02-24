@@ -70,8 +70,8 @@ public class BlinkCodecTest {
         dictionary = Group.bind(dictionary);
         StreamCodec codec = new BlinkCodec(dictionary);
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        Group hello = new Group("Hello");
-        hello.put("greeting", "Hello World");
+        Group hello = new Group(dictionary, "Hello");
+        hello.set("greeting", "Hello World");
         codec.encode(hello, bout);
         assertEquals("Encoded Hello World", expected, bout.toByteArray());
 

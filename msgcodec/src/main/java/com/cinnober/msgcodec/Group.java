@@ -18,174 +18,274 @@
 package com.cinnober.msgcodec;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.WeakHashMap;
 
 /**
  * Group is a generic group object.
- * Group implements the Map interface where field name is used as key.
  *
  * @author mikael.brannstrom
  *
  */
-public class Group implements Map<String, Object> {
-    private final String groupName;
-    private final Map<String, Object> fieldValues;
+public class Group {
+
+    private static final WeakHashMap<Object, DictionaryInfo> dictInfoByDictUID = new WeakHashMap<>();
+    private static final GroupTypeAccessorImpl GROUP_TYPE_ACCESSOR = new GroupTypeAccessorImpl();
+
+    private final GroupInfo groupInfo;
+    private final Object[] fieldValues;
 
 
-    /** Create a new group.
-     *
-     * @param groupName the group name, not null.
-     */
-    public Group(String groupName) {
-        this.groupName = Objects.requireNonNull(groupName);
-        this.fieldValues = new HashMap<>();
+    private static GroupInfo getGroupInfo(ProtocolDictionary dictionary, String groupName) {
+        DictionaryInfo dictInfo = dictInfoByDictUID.get(dictionary.getUID());
+        if (dictInfo == null) {
+            throw new IllegalArgumentException("Dictionary not bound to Group");
+        }
+        GroupInfo groupInfo = dictInfo.getGroupInfo(groupName);
+        if (groupInfo == null) {
+            throw new IllegalArgumentException("Unknown group name \"" + groupName + "\"");
+        }
+        return groupInfo;
     }
 
-    /** Returns the group name.
+    /**
+     * Create a new group.
+     *
+     * @param dictionary the dictionary bound to {@link Group}, not null.
+     * @param groupName the group name, not null.
+     */
+    public Group(ProtocolDictionary dictionary, String groupName) {
+        this(getGroupInfo(dictionary, groupName));
+    }
+
+    private Group(GroupInfo groupInfo) {
+        this.groupInfo = groupInfo;
+        this.fieldValues = new Object[groupInfo.size()];
+    }
+
+    /**
+     * Returns the group type.
+     * @return the group type (an opaque group type identifier), not null.
+     * @see GroupTypeAccessor#getGroupType(java.lang.Object)
+     * @see GroupBinding#getGroupType()
+     */
+    public Object getGroupType() {
+        return groupInfo;
+    }
+
+    /**
+     * Returns the group name.
      * @return the group name, not null.
      */
     public String getGroupName() {
-        return groupName;
+        return groupInfo.name();
     }
 
-    @Override
-    public int size() {
-        return fieldValues.size();
+    /**
+     * Returns the value for the specified field.
+     * @param fieldName the field name, not null.
+     * @return the field value (including null).
+     * @throws IllegalArgumentException if the field name does not exist.
+     */
+    public Object get(String fieldName) throws IllegalArgumentException {
+        return fieldValues[groupInfo.getFieldIndex(fieldName)];
+
     }
-    @Override
-    public boolean isEmpty() {
-        return fieldValues.isEmpty();
+    /**
+     * Set the value for the specified field.
+     * @param fieldName the field name, not null.
+     * @param value the field value (including null).
+     * @throws IllegalArgumentException if the field name does not exist.
+     */
+    public void set(String fieldName, Object value) throws IllegalArgumentException {
+        fieldValues[groupInfo.getFieldIndex(fieldName)] = value;
     }
-    @Override
-    public boolean containsKey(Object key) {
-        return fieldValues.containsKey(key);
+    private Object get(int fieldIndex) {
+        return fieldValues[fieldIndex];
     }
-    @Override
-    public boolean containsValue(Object value) {
-        return fieldValues.containsValue(value);
+    private void set(int fieldIndex, Object value) {
+        fieldValues[fieldIndex] = value;
     }
-    @Override
-    public Object get(Object key) {
-        return fieldValues.get(key);
-    }
-    @Override
-    public Object put(String key, Object value) {
-        return fieldValues.put(key, value);
-    }
-    @Override
-    public Object remove(Object key) {
-        return fieldValues.remove(key);
-    }
-    @Override
-    public void putAll(Map<? extends String, ? extends Object> m) {
-        fieldValues.putAll(m);
-    }
-    @Override
+    /**
+     * Clear all field values (set to null).
+     */
     public void clear() {
-        fieldValues.clear();
-    }
-    @Override
-    public Set<String> keySet() {
-        return fieldValues.keySet();
-    }
-    @Override
-    public Collection<Object> values() {
-        return fieldValues.values();
-    }
-    @Override
-    public Set<java.util.Map.Entry<String, Object>> entrySet() {
-        return fieldValues.entrySet();
+        for (int i=0; i<fieldValues.length; i++) {
+            fieldValues[i] = null;
+        }
     }
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder();
-        str.append(groupName).append(" [");
-        boolean first = true;
-        for (Map.Entry<String, Object> entry : fieldValues.entrySet()) {
-            if (first) {
-                first = false;
-            } else {
-                str.append(", ");
-            }
-            str.append(entry.getKey()).append("=").append(entry.getValue().toString());
-        }
-        str.append("]");
-        return str.toString();
+        return groupInfo.toString(fieldValues);
     }
 
-    private static GroupDef bind(GroupDef group, ProtocolDictionary dictionary) {
-        Map<String, FieldBinding> fieldBindings = new HashMap<>(group.getFields().size());
-        for (FieldDef field : group.getFields()) {
-            FieldNameAccessor accessor = new FieldNameAccessor(field.getName());
-            TypeDef type = dictionary.resolveToType(field.getType(), true);
-            FieldBinding binding =
-                    new FieldBinding(accessor, type.getDefaultJavaType(), type.getDefaultJavaComponentType());
-            fieldBindings.put(field.getName(), binding);
-        }
-        String groupName = group.getName();
-        GroupBinding groupBinding = new GroupBinding(new GroupFactory(groupName), groupName);
-        return group.bind(groupBinding, fieldBindings);
-    }
-
-    /** Bind the protocol dictionary to {@link Group} instances for group objects.
+    /**
+     * Bind the protocol dictionary to {@link Group} instances for group objects.
      *
-     * @param dictionary the dictionary to be bound
+     * @param dictionary the dictionary to be bound, not null.
      * @return the bound dictionary
      */
     public static ProtocolDictionary bind(ProtocolDictionary dictionary) {
+        Map<String, GroupInfo> groupInfos = new HashMap<>();
+        ArrayList<FieldIndexAccessor> fieldAccessors = new ArrayList<>();
         List<GroupDef> groups = new ArrayList<>(dictionary.getGroups().size());
         for (GroupDef group : dictionary.getGroups()) {
-            groups.add(bind(group, dictionary));
+            groups.add(bind(group, dictionary, groupInfos, fieldAccessors));
         }
-        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(GroupTypeAccessor.GROUP_NAME);
-        return new ProtocolDictionary(groups, dictionary.getNamedTypes(), dictionary.getAnnotations(), binding);
+        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(GROUP_TYPE_ACCESSOR);
+        ProtocolDictionary boundDict =
+                new ProtocolDictionary(groups, dictionary.getNamedTypes(), dictionary.getAnnotations(), binding);
+
+        DictionaryInfo dictInfo = new DictionaryInfo(groupInfos);
+        dictInfoByDictUID.put(boundDict.getUID(), dictInfo);
+        return boundDict;
     }
 
-    private static class GroupFactory implements Factory<Group> {
-        private final String groupName;
-        /**
-         * @param groupName
-         */
-        public GroupFactory(String groupName) {
-            this.groupName = groupName;
+    private static FieldIndexAccessor getAccessor(List<FieldIndexAccessor> accessors, int index) {
+        while (accessors.size() <= index) {
+            accessors.add(new FieldIndexAccessor(accessors.size()));
+        }
+        return accessors.get(index);
+    }
+
+    private static GroupDef bind(GroupDef group, ProtocolDictionary dictionary,
+            Map<String, GroupInfo> groupInfoByName, List<FieldIndexAccessor> accessors) {
+        GroupInfo superGroupInfo = group.getSuperGroup() != null ? groupInfoByName.get(group.getSuperGroup()) : null;
+        List<FieldDef> allFields = new ArrayList<>();
+        List<FieldDef> declaredFields = new ArrayList<>();
+        if (superGroupInfo != null) {
+            for (FieldDef field : superGroupInfo.fieldDefs()) {
+                allFields.add(field);
+            }
+        }
+        for (FieldDef field : group.getFields()) {
+            TypeDef type = dictionary.resolveToType(field.getType(), true);
+            FieldDef boundField = field.bind(new FieldBinding(getAccessor(accessors, allFields.size()),
+                    type.getDefaultJavaType(), type.getDefaultJavaComponentType()));
+            allFields.add(boundField);
+            declaredFields.add(boundField);
+        }
+
+        GroupInfo groupInfo = new GroupInfo(allFields.toArray(new FieldDef[allFields.size()]));
+        GroupBinding groupBinding = new GroupBinding(groupInfo, groupInfo);
+        GroupDef boundGroup = new GroupDef(group.getName(), group.getId(), group.getSuperGroup(), declaredFields,
+                group.getAnnotations(), groupBinding);
+
+        groupInfo.initGroupDef(boundGroup);
+        groupInfoByName.put(groupInfo.name(), groupInfo);
+
+        return boundGroup;
+    }
+
+
+    private static class DictionaryInfo {
+        private final Map<String, GroupInfo> groupsByName;
+
+        public DictionaryInfo(Map<String, GroupInfo> groupsByName) {
+            this.groupsByName = groupsByName;
+        }
+
+        private GroupInfo getGroupInfo(String groupName) {
+            return groupsByName.get(groupName);
+        }
+
+    }
+
+    private static class GroupInfo implements Factory<Group> {
+        private GroupDef groupDef;
+        private final FieldDef[] fieldDefs;
+        private final Map<String, Integer> fieldIndexByName;
+
+        public GroupInfo(FieldDef[] fieldDefs) {
+            this.fieldDefs = fieldDefs;
+            this.fieldIndexByName = new HashMap<>(fieldDefs.length*2);
+            int index = 0;
+            for (FieldDef field : fieldDefs) {
+                fieldIndexByName.put(field.getName(), index++);
+            }
+        }
+        GroupDef groupDef() {
+            return groupDef;
+        }
+
+        void initGroupDef(GroupDef groupDef) {
+            this.groupDef = groupDef;
+        }
+
+
+        FieldDef[] fieldDefs() {
+            return fieldDefs;
+        }
+
+        int size() {
+            return fieldDefs.length;
+        }
+        String name() {
+            return groupDef.getName();
+        }
+
+        int getFieldIndex(String fieldName) {
+            Integer index = fieldIndexByName.get(fieldName);
+            if (index == null) {
+                throw new IllegalArgumentException("No such field \"" + fieldName+"\" in group \""+name()+"\"");
+            }
+            return index.intValue();
         }
 
         @Override
         public Group newInstance() {
-            return new Group(groupName);
-        }
-
-    }
-
-    private static class FieldNameAccessor extends MapAccessor<String, Object> {
-        public FieldNameAccessor(String fieldName) {
-            super(fieldName);
-        }
-    }
-
-    private static class MapAccessor<K, V> implements Accessor<Map<K, V>, V> {
-        private final K key;
-        /**
-         * @param key
-         */
-        public MapAccessor(K key) {
-            this.key = key;
+            return new Group(this);
         }
 
         @Override
-        public V getValue(Map<K, V> obj) {
-            return obj.get(key);
+        public String toString() {
+            return name();
+        }
+        String toString(Object[] values) {
+            StringBuilder str = new StringBuilder();
+            str.append(name()).append(" [");
+            int len = fieldDefs.length;
+            boolean comma = false;
+            for (int i=0; i<len; i++) {
+                Object value = values[i];
+                if (value != null) {
+                    if (comma) {
+                        str.append(", ");
+                    } else {
+                        comma = true;
+                    }
+                    str.append(fieldDefs[i].getName()).append('=').append(value.toString());
+                }
+            }
+            str.append("]");
+            return str.toString();
+        }
+    }
+
+    private static class FieldIndexAccessor implements Accessor<Group, Object> {
+        private final int index;
+        public FieldIndexAccessor(int index) {
+            this.index = index;
         }
 
         @Override
-        public void setValue(Map<K, V> obj, V value) {
-            obj.put(key, value);
+        public Object getValue(Group obj) {
+            return obj.get(index);
+        }
+
+        @Override
+        public void setValue(Group obj, Object value) {
+            obj.set(index, value);
+        }
+    }
+
+    private static class GroupTypeAccessorImpl implements GroupTypeAccessor {
+        @Override
+        public Object getGroupType(Object groupValue) {
+            return ((Group)groupValue).getGroupType();
         }
     }
 }
