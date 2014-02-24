@@ -7,8 +7,8 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '1.0.0-SNAPSHOT'
-        classpath group: 'com.cinnober.gradle', name: 'cinnober-java', version: '1.0.0-SNAPSHOT'
+        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '1.0.0'
+        classpath group: 'com.cinnober.gradle', name: 'cinnober-java', version: '1.0.0'
     }
 }
 
