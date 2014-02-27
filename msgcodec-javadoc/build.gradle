@@ -1,6 +1,10 @@
-description = ''
+description = 'Javadoc doclet for msgcodec documentation'
+
+apply plugin: 'cinnober-java'
+sourceCompatibility = "1.7"
 
 dependencies {
-  compile project(':msgcodec')
-  compile group: 'com.oracle.java', name: 'tools', version:'1.7.0-EXT'
+    compile project(':msgcodec')
+    compile group: 'com.oracle.java', name: 'tools', version:'1.7.0-EXT'
+    testCompile group: 'junit', name: 'junit', version:'4.11'
 }

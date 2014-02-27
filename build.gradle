@@ -15,15 +15,5 @@ buildscript {
 allprojects { 
     ext.nextVersion = 'major'
     apply plugin: 'semver-git'
-}
-
-subprojects {
-    apply plugin: 'cinnober-java'
-
     group = 'com.cinnober.msgcodec'
-    sourceCompatibility = "1.7"
-
-    dependencies {
-        testCompile group: 'junit', name: 'junit', version:'4.11'
-    }
 }

@@ -1,9 +1,13 @@
-description = ''
+description = 'msgcodec examples'
+
+apply plugin: 'cinnober-java'
+sourceCompatibility = "1.7"
 
 dependencies {
-  compile project(':msgcodec')
-  compile project(':msgcodec-blink')
-  compile project(':msgcodec-json')
-  compile project(':msgcodec-xml')
-  compile project(':msgcodec-tap')
+    compile project(':msgcodec')
+    compile project(':msgcodec-blink')
+    compile project(':msgcodec-json')
+    compile project(':msgcodec-xml')
+    compile project(':msgcodec-tap')
+    testCompile group: 'junit', name: 'junit', version:'4.11'
 }
