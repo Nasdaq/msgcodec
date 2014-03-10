@@ -356,7 +356,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeSignedBigVLC(BigInteger value) throws IOException {
-        BlinkOutput.writeSignedBigVLC(out, value);
+        BlinkOutput.writeSignedVLC(out, value);
     }
 
     /**

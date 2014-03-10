@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import org.junit.Test;
 
@@ -172,6 +173,60 @@ public class BlinkStreamTest {
     private interface StreamOp<V> {
         void writeValue(V value, BlinkOutputStream out) throws IOException;
         V readValue(BlinkInputStream in) throws IOException;
+    }
+
+    @Test
+    public void testSizeOfSignedVLC() {
+        // positive values
+        assertEquals(1, BlinkOutput.sizeOfSignedVLC(0));
+        assertEquals(1, BlinkOutput.sizeOfSignedVLC((1<<6)-1)); // 63
+        assertEquals(2, BlinkOutput.sizeOfSignedVLC( 1<<6)); // 64
+        assertEquals(2, BlinkOutput.sizeOfSignedVLC((1<<13)-1));
+        assertEquals(3, BlinkOutput.sizeOfSignedVLC( 1<<13));
+        assertEquals(3, BlinkOutput.sizeOfSignedVLC((1<<15)-1));
+        assertEquals(4, BlinkOutput.sizeOfSignedVLC( 1<<15));
+        assertEquals(4, BlinkOutput.sizeOfSignedVLC((1<<23)-1));
+        assertEquals(5, BlinkOutput.sizeOfSignedVLC( 1<<23));
+        assertEquals(5, BlinkOutput.sizeOfSignedVLC((1L<<31)-1));
+        assertEquals(6, BlinkOutput.sizeOfSignedVLC( 1L<<31));
+        assertEquals(6, BlinkOutput.sizeOfSignedVLC((1L<<39)-1));
+        assertEquals(7, BlinkOutput.sizeOfSignedVLC( 1L<<39));
+        assertEquals(7, BlinkOutput.sizeOfSignedVLC((1L<<47)-1));
+        assertEquals(8, BlinkOutput.sizeOfSignedVLC( 1L<<47));
+        assertEquals(8, BlinkOutput.sizeOfSignedVLC((1L<<55)-1));
+        assertEquals(9, BlinkOutput.sizeOfSignedVLC( 1L<<55));
+        assertEquals(9, BlinkOutput.sizeOfSignedVLC((1L<<63)-1));
+
+        // negative values
+        assertEquals(1, BlinkOutput.sizeOfSignedVLC(-(1<<6))); // -64
+        assertEquals(2, BlinkOutput.sizeOfSignedVLC(-(1<<6)-1)); // -65
+        assertEquals(2, BlinkOutput.sizeOfSignedVLC(-(1<<13)));
+        assertEquals(3, BlinkOutput.sizeOfSignedVLC(-(1<<13)-1));
+        assertEquals(3, BlinkOutput.sizeOfSignedVLC(-(1<<15)));
+        assertEquals(4, BlinkOutput.sizeOfSignedVLC(-(1<<15)-1));
+        assertEquals(4, BlinkOutput.sizeOfSignedVLC(-(1<<23)));
+        assertEquals(5, BlinkOutput.sizeOfSignedVLC(-(1<<23)-1));
+        assertEquals(5, BlinkOutput.sizeOfSignedVLC(-(1L<<31)));
+        assertEquals(6, BlinkOutput.sizeOfSignedVLC(-(1L<<31)-1));
+        assertEquals(6, BlinkOutput.sizeOfSignedVLC(-(1L<<39)));
+        assertEquals(7, BlinkOutput.sizeOfSignedVLC(-(1L<<39)-1));
+        assertEquals(7, BlinkOutput.sizeOfSignedVLC(-(1L<<47)));
+        assertEquals(8, BlinkOutput.sizeOfSignedVLC(-(1L<<47)-1));
+        assertEquals(8, BlinkOutput.sizeOfSignedVLC(-(1L<<55)));
+        assertEquals(9, BlinkOutput.sizeOfSignedVLC(-(1L<<55)-1));
+        assertEquals(9, BlinkOutput.sizeOfSignedVLC(-(1L<<63)));
+
+        // big integers
+        assertEquals(1, BlinkOutput.sizeOfSignedVLC(BigInteger.ZERO));
+        assertEquals(9, BlinkOutput.sizeOfSignedVLC((BigInteger.ONE.shiftLeft(8*8-1).subtract(BigInteger.ONE))));
+        assertEquals(9, BlinkOutput.sizeOfSignedVLC((BigInteger.ONE.shiftLeft(8*8-1).negate())));
+
+        assertEquals(10, BlinkOutput.sizeOfSignedVLC(BigInteger.ONE.shiftLeft(9*8-1).subtract(BigInteger.ONE)));
+        assertEquals(11, BlinkOutput.sizeOfSignedVLC(BigInteger.ONE.shiftLeft(9*8-1)));
+        
+        assertEquals(10, BlinkOutput.sizeOfSignedVLC(BigInteger.ONE.shiftLeft(9*8-1).negate()));
+        assertEquals(11, BlinkOutput.sizeOfSignedVLC(BigInteger.ONE.shiftLeft(9*8-1).negate().subtract(
+                BigInteger.ONE)));
     }
 
 }
