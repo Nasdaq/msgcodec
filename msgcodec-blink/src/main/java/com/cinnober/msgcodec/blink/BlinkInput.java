@@ -675,38 +675,41 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static BigInteger readSignedBigVLCNull(InputStream in) throws IOException {
-	   int b1 = read(in);
-       if ((0x80 & b1) == 0) {
-           // single byte
-           if ((0x40 & b1) != 0) {
-               // negative
-               return BigInteger.valueOf((-1L << 7) | (0x7fL & b1));
-           } else {
-               // positive
-               return BigInteger.valueOf(0x7fL & b1);
-           }
-       } else if ((0xc0 & b1) == 0x80) {
-           // two bytes
-           int b2 = read(in);
-           if ((b2 & 0x80) != 0) {
-               // negative
-               return BigInteger.valueOf((-1L << 14) | (0x3fL & b1) | ((0xffL & b2) << 6));
-           } else {
-               // positive
-               return BigInteger.valueOf((0x3fL & b1) | ((0xffL & b2) << 6));
-           }
-       } else {
-           int size = 0x3f & b1;
-           if (size == 0) {
-               return null;
-           }
-           byte [] bytes = new byte[size];
-           for (int i = bytes.length - 1; i >= 0; i--) {
-                bytes[i] = (byte) read(in);
-           }
-           return new BigInteger(bytes);
-       }
-   }
+        int b1 = read(in);
+        if ((0x80 & b1) == 0) {
+            // single byte
+            if ((0x40 & b1) != 0) {
+                // negative
+                return BigInteger.valueOf((-1L << 7) | (0x7fL & b1));
+            } else {
+                // positive
+                return BigInteger.valueOf(0x7fL & b1);
+            }
+        } else if ((0xc0 & b1) == 0x80) {
+            // two bytes
+            int b2 = read(in);
+            if ((b2 & 0x80) != 0) {
+                // negative
+                return BigInteger.valueOf((-1L << 14) | (0x3fL & b1) | ((0xffL & b2) << 6));
+            } else {
+                // positive
+                return BigInteger.valueOf((0x3fL & b1) | ((0xffL & b2) << 6));
+            }
+        } else {
+            int size = 0x3f & b1;
+            if (size == 0) {
+                return null;
+            } else if (size <= 8) { // optimize: avoid allocation of byte[]
+                return BigInteger.valueOf(readSignedVLC(in, b1));
+            } else {
+                byte[] bytes = new byte[size];
+                for (int i = bytes.length - 1; i >= 0; i--) {
+                    bytes[i] = (byte) read(in);
+                }
+                return new BigInteger(bytes);
+            }
+        }
+    }
 
     /**
      * Read a nullable unsigned variable-length code value.
