@@ -26,14 +26,11 @@ import java.util.concurrent.TimeUnit;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Time;
-import com.cinnober.msgcodec.util.ByteBuffers;
+import com.cinnober.msgcodec.util.ByteArrays;
 import com.cinnober.msgcodec.util.TimeFormat;
 import java.lang.reflect.Field;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -119,7 +116,7 @@ abstract class MsgObjectValueHandler<T> {
     static class BinaryHandler extends MsgObjectValueHandler<byte[]> {
         @Override
         void appendToString(byte[] value, StringBuilder appendTo) {
-            appendTo.append(ByteBuffers.toHex(value));
+            appendTo.append(ByteArrays.toHex(value));
         }
 
         @Override

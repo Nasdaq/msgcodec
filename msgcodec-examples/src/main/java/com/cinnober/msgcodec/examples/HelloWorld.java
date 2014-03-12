@@ -26,9 +26,9 @@ import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.blink.BlinkCodec;
 import com.cinnober.msgcodec.examples.messages.Hello;
-import com.cinnober.msgcodec.examples.util.Util;
 import com.cinnober.msgcodec.json.JsonCodec;
 import com.cinnober.msgcodec.tap.TapCodec;
+import com.cinnober.msgcodec.util.ByteArrays;
 import com.cinnober.msgcodec.xml.XmlCodec;
 
 /** Basic example of message codec. Create a dictionary from java messages, encode and decode using the
@@ -73,7 +73,7 @@ public class HelloWorld {
         codec.encode(hello, out);
         System.out.println("Encode message: " + hello);
         if (hexDump) {
-            System.out.println(Util.toHex(out.toByteArray()));
+            System.out.println(ByteArrays.toHex(out.toByteArray()));
         } else {
             System.out.println(new String(out.toByteArray(), Charset.forName("UTF8")));
         }

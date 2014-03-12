@@ -18,6 +18,7 @@
 package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.DecodeException;
+import com.cinnober.msgcodec.util.InputStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -61,35 +62,10 @@ public class BlinkInput {
      * @param in the input stream to read from, not null.
      * @param buf the buffer into which the data is read
      *
-     * @return the number of bytes read, always bytes.length.
      * @throws EOFException if there is no more data.
      */
-    private static int read(InputStream in, byte[] buf) throws IOException {
-        return read(in, buf, 0, buf.length);
-    }
-
-    /**
-     * Read bytes from the specified input stream.
-     *
-     * @param in the input stream to read from, not null.
-     * @param buf the buffer into which the data is read
-     * @param offset the start offset in the buffer
-     * @param length the number of bytes to read
-     *
-     * @return the number of bytes read, always length.
-     * @throws EOFException if there is no more data.
-     */
-    private static int read(InputStream in, byte[] buf, int offset, int length) throws IOException {
-        final int totalRead = length;
-        while (length > 0) {
-            int read = in.read(buf, offset, length);
-            if (read == -1) {
-                throw new EOFException();
-            }
-            offset += read;
-            length -= read;
-        }
-        return totalRead;
+    private static void read(InputStream in, byte[] buf) throws IOException {
+        InputStreams.readFully(in, buf);
     }
 
 
@@ -794,7 +770,7 @@ public class BlinkInput {
             }
         }
     }
-    
+
     /**
      * Skip a signed 8-bit integer.
      * @param in the input stream to read from, not null.
