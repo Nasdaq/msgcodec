@@ -17,24 +17,10 @@
  */
 package com.cinnober.msgcodec;
 
-import com.cinnober.msgcodec.anot.Id;
-import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
  * @author mikael.brannstrom
  *
  */
-public class WrappedMessage<T> extends MsgObject {
-    @Id(1)
-    @Unsigned
-    public long sequenceNumber;
-
-    @Id(2)
-    @Required
-    public T wrapped;
-
-    @Id(3)
-    @Required
-    public T[] wrappedArray;
+public class WrappedWrappedFoo extends WrappedMessage<FooMessage> {
 }

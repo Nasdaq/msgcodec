@@ -54,7 +54,20 @@ public class ProtocolDictionaryBuilderTest {
     public void testWrappedFoo() {
         ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
         ProtocolDictionary dict = builder.build(WrappedFoo.class);
-        System.out.println(dict.toString());
+        final GroupDef groupDef = dict.getGroup("WrappedFoo");
+        assertEquals("FooMessage", groupDef.getField("wrapped").getType().toString());
+        assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
+    }
+
+    /** Test of generic class parameters, as well as recursive add of referred components.
+     */
+    @Test
+    public void testWrappedWrappedFoo() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.build(WrappedWrappedFoo.class);
+        final GroupDef groupDef = dict.getGroup("WrappedWrappedFoo");
+        assertEquals("FooMessage", groupDef.getField("wrapped").getType().toString());
+        assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
     }
 
     @Test
