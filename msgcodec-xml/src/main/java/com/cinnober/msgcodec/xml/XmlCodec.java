@@ -229,7 +229,7 @@ public class XmlCodec implements StreamCodec {
             if (valueInstr != null) {
                 if (field.getJavaClass().isArray()) {
                     ArraySequenceValueField fieldInstr = new ArraySequenceValueField(nsName, field, valueInstr,
-                            field.getJavaClass().getComponentType());
+                            field.getComponentJavaClass());
                     putElement(elementFields, fieldInstr);
                 } else {
                     ListSequenceValueField fieldInstr =

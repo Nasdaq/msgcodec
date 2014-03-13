@@ -282,7 +282,8 @@ public class ProtocolDictionaryBuilder {
                 if (type.isArray()) {
                     type = getComponentType(field, genericParameters);
                 } else if (sequenceAnot != null) {
-                    type = sequenceAnot.value();
+                    Class<?> listElementType = getListComponentType(field, genericParameters);
+                    type = listElementType != null ? listElementType : sequenceAnot.value();
                 }
                 scanType(type, groups, namedTypes, groupsToScan);
             }
@@ -452,8 +453,13 @@ public class ProtocolDictionaryBuilder {
                 Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
                 Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
                 SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
-                Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() :
-                        getComponentType(field, genericParameters);
+                Class<?> componentType;
+                if (sequenceAnot != null) {
+                    Class<?> listComponentType = getListComponentType(field, genericParameters);
+                    componentType = listComponentType != null ? listComponentType : sequenceAnot.value();
+                } else {
+                    componentType = getComponentType(field, genericParameters);
+                }
 
                 TypeDef typeDef = getTypeDef(type, componentType, sequenceAnot, enumAnot, timeAnot,
                         dynamicAnot, unsignedAnot, smallDecimalAnot,
@@ -514,6 +520,22 @@ public class ProtocolDictionaryBuilder {
             }
         }
         return field.getType().getComponentType();
+    }
+
+    private static Class<?> getListComponentType(Field field, Map<Type, Class<?>> genericParameters) {
+        Class<?> fieldType = field.getType();
+        if (fieldType.equals(List.class)) {
+            Type genericType = field.getGenericType();
+            if (genericType instanceof ParameterizedType) {
+                ParameterizedType paramType = (ParameterizedType) genericType;
+                Type listElementType = paramType.getActualTypeArguments()[0];
+                Class<?> type = genericParameters.get(listElementType);
+                if (type != null) {
+                    return type;
+                }
+            }
+        }
+        return null;
     }
 
     /**

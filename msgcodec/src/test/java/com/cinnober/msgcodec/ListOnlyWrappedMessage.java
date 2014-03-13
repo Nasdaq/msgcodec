@@ -27,22 +27,8 @@ import java.util.List;
  * @author mikael.brannstrom
  *
  */
-public class WrappedMessage<T> extends MsgObject {
-    @Id(1)
-    @Unsigned
-    public long sequenceNumber;
-
-    @Id(2)
-    @Required
-    public T wrapped;
-
-    @Id(3)
-    @Required
-    public T[] wrappedArray;
-
+public class ListOnlyWrappedMessage<T> extends MsgObject {
     @Id(4)
-    @Required
-    @Sequence(Object.class)
+    @Required @Sequence(Object.class)
     public List<T> wrappedList;
-
 }
