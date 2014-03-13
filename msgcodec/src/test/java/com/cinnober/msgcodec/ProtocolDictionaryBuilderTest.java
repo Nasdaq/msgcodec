@@ -73,7 +73,7 @@ public class ProtocolDictionaryBuilderTest {
     /** Test of generic class parameters, as well as recursive add of referred components.
      */
     @Test
-    public void testArrayOnlyrappedFoo() {
+    public void testArrayOnlyWrappedFoo() {
         ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
         ProtocolDictionary dict = builder.build(ArrayOnlyWrappedFoo.class);
         final GroupDef groupDef = dict.getGroup("ArrayOnlyWrappedFoo");
