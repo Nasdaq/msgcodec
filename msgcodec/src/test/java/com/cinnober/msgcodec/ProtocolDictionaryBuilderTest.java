@@ -70,6 +70,16 @@ public class ProtocolDictionaryBuilderTest {
         assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
     }
 
+    /** Test of generic class parameters, as well as recursive add of referred components.
+     */
+    @Test
+    public void testArrayOnlyrappedFoo() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.build(ArrayOnlyWrappedFoo.class);
+        final GroupDef groupDef = dict.getGroup("ArrayOnlyWrappedFoo");
+        assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
+    }
+
     @Test
     public void testFieldOrder() {
         ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();

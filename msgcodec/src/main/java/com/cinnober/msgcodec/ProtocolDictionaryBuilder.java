@@ -277,8 +277,14 @@ public class ProtocolDictionaryBuilder {
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
-                scanType(getType(field, genericParameters),
-                        field.getAnnotation(Sequence.class), groups, namedTypes, groupsToScan);
+                Class<?> type = getType(field, genericParameters);
+                final Sequence sequenceAnot = field.getAnnotation(Sequence.class);
+                if (type.isArray()) {
+                    type = getComponentType(field, genericParameters);
+                } else if (sequenceAnot != null) {
+                    type = sequenceAnot.value();
+                }
+                scanType(type, groups, namedTypes, groupsToScan);
             }
 
             updateGenericParameters(javaClass, genericParameters);
@@ -294,12 +300,11 @@ public class ProtocolDictionaryBuilder {
      * If the type is a group type, a new GroupMeta is added to groups and groupsToScan.
      *
      * @param type the type, not null
-     * @param sequenceAnot sequence annotation, or null
      * @param groups all groups, not null. Newly found groups will be added here.
      * @param namedTypes the named types, not null
      * @param groupsToScan the groups to be scanned, not null. Newly found groups will be added here.
      */
-    private void scanType(Class<?> type, Sequence sequenceAnot,
+    private void scanType(Class<?> type,
             Map<Class<?>,
             GroupMeta> groups,
             Map<String, NamedType> namedTypes,
@@ -308,20 +313,14 @@ public class ProtocolDictionaryBuilder {
             return;
         }
 
-        if (type.isArray()) {
-            scanType(type.getComponentType(), null, groups, namedTypes, groupsToScan);
-        } else if (sequenceAnot != null) {
-            scanType(sequenceAnot.value(), null, groups, namedTypes, groupsToScan);
-        } else {
-            if (type.equals(Object.class)) {
-                return; // placeholder for any type
-            }
+        if (type.equals(Object.class)) {
+            return; // placeholder for 'any' type
+        }
 
-            if (!groups.containsKey(type)) {
-                GroupMeta group = new GroupMeta(type);
-                groups.put(type, group);
-                groupsToScan.add(group);
-            }
+        if (!groups.containsKey(type)) {
+            GroupMeta group = new GroupMeta(type);
+            groups.put(type, group);
+            groupsToScan.add(group);
         }
     }
 
