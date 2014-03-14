@@ -106,6 +106,7 @@ public class ProtocolDictionaryBuilder {
                     )));
 
     private boolean strict;
+    @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Annotation>, AnnotationMapper> annotationMappers = new HashMap<>();
 
     /**
@@ -348,7 +349,7 @@ public class ProtocolDictionaryBuilder {
         group.setId(id);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Map<String, String> toAnnotationsMap(AnnotatedElement element) {
         Map<String, String> map = new HashMap<>();
         Annotate annotateAnot = element.getAnnotation(Annotate.class);

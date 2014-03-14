@@ -53,18 +53,18 @@ import com.fasterxml.jackson.core.JsonToken;
  * <caption>Mapping between msgcodec and JSON data types.</caption>
  * <tr style="text-align: left"><th>Msgcodec type</th><th>JSON type</th></tr>
  * <tr><td>int, float and decimal</td><td>number</td></tr>
- * <tr><td>boolean</td><td>true/false</tr></tr>
+ * <tr><td>boolean</td><td>true/false</td></tr>
  * <tr><td>string</td><td>string</td></tr>
- * <tr><td>binary</td><td>string (base64)</tr></tr>
- * <tr><td>enum</td><td>string (name)</tr></tr>
- * <tr><td>time</td><td>string (see {@link TimeFormat})</tr></tr>
- * <tr><td>sequence</td><td>array</tr></tr>
- * <tr><td>static group</td><td>object.</tr></tr>
+ * <tr><td>binary</td><td>string (base64)</td></tr>
+ * <tr><td>enum</td><td>string (name)</td></tr>
+ * <tr><td>time</td><td>string (see {@link TimeFormat})</td></tr>
+ * <tr><td>sequence</td><td>array</td></tr>
+ * <tr><td>static group</td><td>object.</td></tr>
  * <tr>
  * <td>dynamic group</td>
  * <td>object, with an additional field <code>$type</code> with the group name as a string.
  * Currently JSON codec expects this field to appear first in an object.
- * <br>PENDING: relax this to a suggestion for improved performance?</tr>
+ * <br>PENDING: relax this to a suggestion for improved performance?</td>
  * </tr>
  * </table>
  * 

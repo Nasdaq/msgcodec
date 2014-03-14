@@ -27,9 +27,12 @@ package com.cinnober.msgcodec;
  * and generate optimized code in that case.
  *
  * @author mikael.brannstrom
+ * @param <O> object type
+ * @param <V> field value type
  */
 public final class IgnoreAccessor<O, V> implements Accessor<O, V> {
 
+    @SuppressWarnings("rawtypes")
     private static final IgnoreAccessor INSTANCE = new IgnoreAccessor();
 
     /**

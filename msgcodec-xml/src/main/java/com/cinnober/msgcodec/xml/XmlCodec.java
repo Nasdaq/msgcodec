@@ -107,7 +107,6 @@ import java.util.Date;
  * <tr><td>sequence</td><td>TODO: To be documented.</td></tr>
  * <tr><td>group</td><td>element with group name as element name. 
  * Fields are represented as nested attributes or elements.</td></tr>
- * <tr
  * </table>
  * 
  * <p><b>Note:</b> missing fields are not checked. (TODO)
