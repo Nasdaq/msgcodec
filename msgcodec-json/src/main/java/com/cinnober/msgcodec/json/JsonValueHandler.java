@@ -36,7 +36,9 @@ import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
+import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.TypeDef;
+import com.cinnober.msgcodec.TypeDef.Sequence;
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.util.TimeFormat;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -54,23 +56,121 @@ import java.util.List;
 public abstract class JsonValueHandler<T> {
     static final String TYPE_FIELD = "$type";
 
-    public static final Int8Handler INT8 = new Int8Handler();
-    public static final Int16Handler INT16 = new Int16Handler();
-    public static final Int32Handler INT32 = new Int32Handler();
-    public static final Int64Handler INT64 = new Int64Handler();
+    public static final JsonValueHandler<Byte> INT8 = new Int8Handler();
+    public static final JsonValueHandler<Short> INT16 = new Int16Handler();
+    public static final JsonValueHandler<Integer> INT32 = new Int32Handler();
+    public static final JsonValueHandler<Long> INT64 = new Int64Handler();
 
-    public static final UInt8Handler UINT8 = new UInt8Handler();
-    public static final UInt16Handler UINT16 = new UInt16Handler();
-    public static final UInt32Handler UINT32 = new UInt32Handler();
-    public static final UInt64Handler UINT64 = new UInt64Handler();
-    public static final StringHandler STRING = new StringHandler();
-    public static final BinaryHandler BINARY = new BinaryHandler();
-    public static final BooleanHandler BOOLEAN = new BooleanHandler();
-    public static final DecimalHandler DECIMAL = new DecimalHandler();
-    public static final BigDecimalHandler BIGDECIMAL = new BigDecimalHandler();
-    public static final BigIntHandler BIGINT = new BigIntHandler();
-    public static final Float32Handler FLOAT32 = new Float32Handler();
-    public static final Float64Handler FLOAT64 = new Float64Handler();
+    public static final JsonValueHandler<Byte> UINT8 = new UInt8Handler();
+    public static final JsonValueHandler<Short> UINT16 = new UInt16Handler();
+    public static final JsonValueHandler<Integer> UINT32 = new UInt32Handler();
+    public static final JsonValueHandler<Long> UINT64 = new UInt64Handler();
+    public static final JsonValueHandler<String> STRING = new StringHandler();
+    public static final JsonValueHandler<byte[]> BINARY = new BinaryHandler();
+    public static final JsonValueHandler<Boolean> BOOLEAN = new BooleanHandler();
+    public static final JsonValueHandler<BigDecimal> DECIMAL = new DecimalHandler();
+    public static final JsonValueHandler<BigDecimal> BIGDECIMAL = new BigDecimalHandler();
+    public static final JsonValueHandler<BigInteger> BIGINT = new BigIntHandler();
+    public static final JsonValueHandler<Float> FLOAT32 = new Float32Handler();
+    public static final JsonValueHandler<Double> FLOAT64 = new Float64Handler();
+
+
+    /**
+     * Returns a the basic value handler for the specified type definition and Java class.
+     *
+     * <p><b>Note:</b> the types SEQUENCE, REFERENCE and DYNAMIC_REFERENCE are not supported.
+     *
+     * @param <T> the java type
+     * @param type the type definition, not null.
+     * @param javaClass the java class, not null.
+     * @return the json value handler, not null.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass) {
+        switch (type.getType()) {
+        case INT8:
+            checkType(javaClass, byte.class, Byte.class);
+            return (JsonValueHandler<T>) JsonValueHandler.INT8;
+        case INT16:
+            checkType(javaClass, short.class, Short.class);
+            return (JsonValueHandler<T>) JsonValueHandler.INT16;
+        case INT32:
+            checkType(javaClass, int.class, Integer.class);
+            return (JsonValueHandler<T>) JsonValueHandler.INT32;
+        case INT64:
+            checkType(javaClass, long.class, Long.class);
+            return (JsonValueHandler<T>) JsonValueHandler.INT64;
+        case UINT8:
+            checkType(javaClass, byte.class, Byte.class);
+            return (JsonValueHandler<T>) JsonValueHandler.UINT8;
+        case UINT16:
+            checkType(javaClass, short.class, Short.class);
+            return (JsonValueHandler<T>) JsonValueHandler.UINT16;
+        case UINT32:
+            checkType(javaClass, int.class, Integer.class);
+            return (JsonValueHandler<T>) JsonValueHandler.UINT32;
+        case UINT64:
+            checkType(javaClass, long.class, Long.class);
+            return (JsonValueHandler<T>) JsonValueHandler.UINT64;
+        case STRING:
+            checkType(javaClass, String.class);
+            return (JsonValueHandler<T>) JsonValueHandler.STRING;
+        case BOOLEAN:
+            checkType(javaClass, boolean.class, Boolean.class);
+            return (JsonValueHandler<T>) JsonValueHandler.BOOLEAN;
+        case BINARY:
+            checkType(javaClass, byte[].class);
+            return (JsonValueHandler<T>) JsonValueHandler.BINARY;
+        case DECIMAL:
+            checkType(javaClass, BigDecimal.class);
+            return (JsonValueHandler<T>) JsonValueHandler.DECIMAL;
+        case BIGDECIMAL:
+            checkType(javaClass, BigDecimal.class);
+            return (JsonValueHandler<T>) JsonValueHandler.BIGDECIMAL;
+        case BIGINT:
+            checkType(javaClass, BigInteger.class);
+            return (JsonValueHandler<T>) JsonValueHandler.BIGINT;
+        case FLOAT32:
+            checkType(javaClass, float.class, Float.class);
+            return (JsonValueHandler<T>) JsonValueHandler.FLOAT32;
+        case FLOAT64:
+            checkType(javaClass, double.class, Double.class);
+            return (JsonValueHandler<T>) JsonValueHandler.FLOAT64;
+        case ENUM:
+            if (javaClass.isEnum()) {
+                return new JsonValueHandler.EnumHandler((TypeDef.Enum)type, javaClass);
+            } else if(javaClass.equals(Integer.class) || javaClass.equals(int.class)) {
+                return (JsonValueHandler<T>) new JsonValueHandler.IntEnumHandler((TypeDef.Enum)type);
+            } else {
+                throw new IllegalArgumentException("Illegal enum java class: " + javaClass);
+            }
+        case TIME:
+            if (javaClass.equals(Date.class)) {
+                return (JsonValueHandler<T>) new JsonValueHandler.DateTimeHandler((TypeDef.Time)type);
+            } else if(javaClass.equals(Integer.class) || javaClass.equals(int.class)) {
+                return (JsonValueHandler<T>) new JsonValueHandler.IntTimeHandler((TypeDef.Time)type);
+            } else if(javaClass.equals(Long.class) || javaClass.equals(long.class)) {
+                return (JsonValueHandler<T>) new JsonValueHandler.LongTimeHandler((TypeDef.Time)type);
+            } else {
+                throw new IllegalArgumentException("Illegal time java class: " + javaClass);
+            }
+        case SEQUENCE:
+        case REFERENCE:
+        case DYNAMIC_REFERENCE:
+            throw new IllegalArgumentException("Illegal type: " + type);
+        default:
+            throw new RuntimeException("Unhandled type: " + type.getType());
+        }
+    }
+
+    private static <T> void checkType(Class<T> type, Class<?> ... expTypes) {
+        for (Class<?> expType : expTypes) {
+            if (type == expType) {
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Illegal type java class: " + type);
+    }
 
     /**
      * Write the value to the specified json generator.
@@ -87,7 +187,7 @@ public abstract class JsonValueHandler<T> {
      */
     public abstract T readValue(JsonParser p) throws IOException;
 
-    public static class Int8Handler extends JsonValueHandler<Byte> {
+    static class Int8Handler extends JsonValueHandler<Byte> {
         private Int8Handler() {}
         @Override
         public void writeValue(Byte value, JsonGenerator g) throws IOException {
@@ -98,7 +198,7 @@ public abstract class JsonValueHandler<T> {
             return (byte) p.getValueAsInt();
         }
     }
-    public static class Int16Handler extends JsonValueHandler<Short> {
+    static class Int16Handler extends JsonValueHandler<Short> {
         private Int16Handler() {}
         @Override
         public void writeValue(Short value, JsonGenerator g) throws IOException {
@@ -109,7 +209,7 @@ public abstract class JsonValueHandler<T> {
             return (short) p.getValueAsInt();
         }
     }
-    public static class Int32Handler extends JsonValueHandler<Integer> {
+    static class Int32Handler extends JsonValueHandler<Integer> {
         private Int32Handler() {}
         @Override
         public void writeValue(Integer value, JsonGenerator g) throws IOException {
@@ -120,7 +220,7 @@ public abstract class JsonValueHandler<T> {
             return p.getValueAsInt();
         }
     }
-    public static class Int64Handler extends JsonValueHandler<Long> {
+    static class Int64Handler extends JsonValueHandler<Long> {
         private Int64Handler() {}
         @Override
         public void writeValue(Long value, JsonGenerator g) throws IOException {
@@ -131,7 +231,7 @@ public abstract class JsonValueHandler<T> {
             return p.getValueAsLong();
         }
     }
-    public static class UInt8Handler extends JsonValueHandler<Byte> {
+    static class UInt8Handler extends JsonValueHandler<Byte> {
         private UInt8Handler() {}
         @Override
         public void writeValue(Byte value, JsonGenerator g) throws IOException {
@@ -142,7 +242,7 @@ public abstract class JsonValueHandler<T> {
             return (byte) p.getValueAsInt();
         }
     }
-    public static class UInt16Handler extends JsonValueHandler<Short> {
+    static class UInt16Handler extends JsonValueHandler<Short> {
         private UInt16Handler() {}
         @Override
         public void writeValue(Short value, JsonGenerator g) throws IOException {
@@ -153,7 +253,7 @@ public abstract class JsonValueHandler<T> {
             return (short) p.getValueAsInt();
         }
     }
-    public static class UInt32Handler extends JsonValueHandler<Integer> {
+    static class UInt32Handler extends JsonValueHandler<Integer> {
         private UInt32Handler() {}
         @Override
         public void writeValue(Integer value, JsonGenerator g) throws IOException {
@@ -164,7 +264,7 @@ public abstract class JsonValueHandler<T> {
             return (int) p.getValueAsLong();
         }
     }
-    public static class UInt64Handler extends JsonValueHandler<Long> {
+    static class UInt64Handler extends JsonValueHandler<Long> {
         private UInt64Handler() {}
         @Override
         public void writeValue(Long value, JsonGenerator g) throws IOException {
@@ -182,7 +282,7 @@ public abstract class JsonValueHandler<T> {
             return p.getValueAsLong();
         }
     }
-    public static class StringHandler extends JsonValueHandler<String> {
+    static class StringHandler extends JsonValueHandler<String> {
         private StringHandler() {}
         @Override
         public void writeValue(String value, JsonGenerator g) throws IOException {
@@ -193,7 +293,7 @@ public abstract class JsonValueHandler<T> {
             return p.getValueAsString();
         }
     }
-    public static class BinaryHandler extends JsonValueHandler<byte[]> {
+    static class BinaryHandler extends JsonValueHandler<byte[]> {
         private BinaryHandler() {}
         @Override
         public void writeValue(byte[] value, JsonGenerator g) throws IOException {
@@ -204,7 +304,7 @@ public abstract class JsonValueHandler<T> {
             return p.getBinaryValue();
         }
     }
-    public static class BooleanHandler extends JsonValueHandler<Boolean> {
+    static class BooleanHandler extends JsonValueHandler<Boolean> {
         private BooleanHandler() {}
         @Override
         public void writeValue(Boolean value, JsonGenerator g) throws IOException {
@@ -215,7 +315,7 @@ public abstract class JsonValueHandler<T> {
             return p.getBooleanValue();
         }
     }
-    public static class DecimalHandler extends JsonValueHandler<BigDecimal> {
+    static class DecimalHandler extends JsonValueHandler<BigDecimal> {
         private DecimalHandler() {}
         @Override
         public void writeValue(BigDecimal value, JsonGenerator g) throws IOException {
@@ -226,7 +326,7 @@ public abstract class JsonValueHandler<T> {
             return p.getDecimalValue(); // TODO: validate range
         }
     }
-    public static class BigDecimalHandler extends JsonValueHandler<BigDecimal> {
+    static class BigDecimalHandler extends JsonValueHandler<BigDecimal> {
         private BigDecimalHandler() {}
         @Override
         public void writeValue(BigDecimal value, JsonGenerator g) throws IOException {
@@ -237,7 +337,7 @@ public abstract class JsonValueHandler<T> {
             return p.getDecimalValue();
         }
     }
-    public static class BigIntHandler extends JsonValueHandler<BigInteger> {
+    static class BigIntHandler extends JsonValueHandler<BigInteger> {
         private BigIntHandler() {}
         @Override
         public void writeValue(BigInteger value, JsonGenerator g) throws IOException {
@@ -248,7 +348,7 @@ public abstract class JsonValueHandler<T> {
             return p.getBigIntegerValue();
         }
     }
-    public static class Float32Handler extends JsonValueHandler<Float> {
+    static class Float32Handler extends JsonValueHandler<Float> {
         private Float32Handler() {}
         @Override
         public void writeValue(Float value, JsonGenerator g) throws IOException {
@@ -259,7 +359,7 @@ public abstract class JsonValueHandler<T> {
             return p.getFloatValue();
         }
     }
-    public static class Float64Handler extends JsonValueHandler<Double> {
+    static class Float64Handler extends JsonValueHandler<Double> {
         private Float64Handler() {}
         @Override
         public void writeValue(Double value, JsonGenerator g) throws IOException {

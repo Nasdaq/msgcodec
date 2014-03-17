@@ -21,7 +21,6 @@ import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -122,38 +121,6 @@ public class JsonCodec implements StreamCodec {
         type = dictionary.resolveToType(type, true);
         GroupDef group = dictionary.resolveToGroup(type);
         switch (type.getType()) {
-        case INT8:
-            return JsonValueHandler.INT8;
-        case INT16:
-            return JsonValueHandler.INT16;
-        case INT32:
-            return JsonValueHandler.INT32;
-        case INT64:
-            return JsonValueHandler.INT64;
-        case UINT8:
-            return JsonValueHandler.UINT8;
-        case UINT16:
-            return JsonValueHandler.UINT16;
-        case UINT32:
-            return JsonValueHandler.UINT32;
-        case UINT64:
-            return JsonValueHandler.UINT64;
-        case STRING:
-            return JsonValueHandler.STRING;
-        case BOOLEAN:
-            return JsonValueHandler.BOOLEAN;
-        case BINARY:
-            return JsonValueHandler.BINARY;
-        case DECIMAL:
-            return JsonValueHandler.DECIMAL;
-        case BIGDECIMAL:
-            return JsonValueHandler.BIGDECIMAL;
-        case BIGINT:
-            return JsonValueHandler.BIGINT;
-        case FLOAT32:
-            return JsonValueHandler.FLOAT32;
-        case FLOAT64:
-            return JsonValueHandler.FLOAT64;
         case SEQUENCE:
             if (javaClass.isArray()) {
                 return new JsonValueHandler.ArraySequenceHandler(
@@ -167,25 +134,8 @@ public class JsonCodec implements StreamCodec {
             return lookupGroupByName(group.getName());
         case DYNAMIC_REFERENCE:
             return dynamicGroupHandler; // TODO: restrict to some base type (if group is not null)
-        case ENUM:
-            if (javaClass.isEnum()) {
-                return new JsonValueHandler.EnumHandler((TypeDef.Enum)type, javaClass);
-            } else { // integer
-                return new JsonValueHandler.IntEnumHandler((TypeDef.Enum)type);
-            }
-        case TIME:
-            if (javaClass.equals(Date.class)) {
-                return new JsonValueHandler.DateTimeHandler((TypeDef.Time)type);
-            } else if(javaClass.equals(Integer.class) || javaClass.equals(int.class)) {
-                return new JsonValueHandler.IntTimeHandler((TypeDef.Time)type);
-            } else if(javaClass.equals(Long.class) || javaClass.equals(long.class)) {
-                return new JsonValueHandler.LongTimeHandler((TypeDef.Time)type);
-            } else {
-                throw new IllegalArgumentException("Illegal time java class: " + javaClass);
-            }
-
         default:
-            throw new RuntimeException("Unhandled type: " + type.getType());
+            return JsonValueHandler.getValueHandler(type, javaClass);
         }
     }
 
