@@ -32,6 +32,7 @@ public class ByteBuffers {
 
     /**
      * Create a hex dump string of the specified binary data.
+     * Default word and group sizes are 1 and 8 bytes respectively.
      *
      * <p>Thread safe: The buffer's position and limit will not be modified.
      *
@@ -44,6 +45,7 @@ public class ByteBuffers {
 
     /**
      * Create a hex dump string of the specified binary data.
+     * Default word and group sizes are 1 and 8 bytes respectively.
      *
      * <p>Thread safe: The buffer's position and limit will not be modified.
      *
@@ -53,12 +55,54 @@ public class ByteBuffers {
      * @return the hex dump string.
      */
     public static String toHex(ByteBuffer data, int position, int limit) {
+        return toHex(data, position, limit, 1, 8, 0);
+    }
+
+    /**
+     * Create a hex dump string of the specified binary data.
+     *
+     * <p>Thread safe: The buffer's position and limit will not be modified.
+     *
+     * @param data the binary data, not null. Data between position and limit will be used.
+     * @param position the position to use, instead of the position of the buffer.
+     * @param limit the limit to use, instead of the limit of the buffer.
+     * @param wordSize the size of a "word" in bytes, which will be grouped with a space, or zero for no grouping.
+     * @param groupSize the size of a "group" in bytes, which will be grouped with two spaces, or zero for no grouping.
+     * @param lineSize the size of a line in bytes, which will be grouped with a new line, or zero for no grouping.
+     * @return the hex dump string.
+     */
+    public static String toHex(ByteBuffer data, int position, int limit, int wordSize, int groupSize, int lineSize) {
         final int length = limit - position;
         StringBuilder str = new StringBuilder(length * 3 + length / 8);
         for (int i = 0; i < length; i++) {
-            appendHex(data.get(position++), i, str);
+            appendHex(data.get(position++), i, str, wordSize, groupSize, lineSize);
         }
         return str.toString();
+    }
+
+    static void validateHexFormatSizes(int wordSize, int groupSize, int lineSize) {
+        if (lineSize < 0) {
+            throw new IllegalArgumentException("Illegal lineSize; negative number");
+        }
+        if (groupSize < 0) {
+            throw new IllegalArgumentException("Illegal groupSize; negative number");
+        }
+        if (wordSize < 0) {
+            throw new IllegalArgumentException("Illegal wordSize; negative number");
+        }
+        if (lineSize != 0) {
+            if (groupSize != 0 && lineSize % groupSize != 0) {
+                throw new IllegalArgumentException("Illegal lineSize; must be a multiple of groupSize");
+            }
+            if (wordSize != 0 && lineSize % wordSize != 0) {
+                throw new IllegalArgumentException("Illegal lineSize; must be a multiple of wordSize");
+            }
+        }
+        if (groupSize != 0) {
+            if (wordSize != 0 && groupSize % wordSize != 0) {
+                throw new IllegalArgumentException("Illegal groupSize; must be a multiple of wordSize");
+            }
+        }
     }
 
     /**
@@ -67,14 +111,17 @@ public class ByteBuffers {
      * @param b the binary data
      * @param index the index of the binary data (zero based)
      * @param appendTo the string builder to append hex string to
+     * @param wordSize the size of a "word" in bytes, which will be grouped with a space, or zero for no grouping.
+     * @param groupSize the size of a "group" in bytes, which will be grouped with two spaces, or zero for no grouping.
+     * @param lineSize the size of a line in bytes, which will be grouped with a new line, or zero for no grouping.
      */
-    static void appendHex(byte b, int index, StringBuilder appendTo) {
+    static void appendHex(byte b, int index, StringBuilder appendTo, int wordSize, int groupSize, int lineSize) {
         if (index != 0) {
-            if (index % 16 == 0) {
+            if (lineSize != 0 && index % lineSize == 0) {
                 appendTo.append('\n');
-            } else if (index % 8 == 0) {
+            } else if (groupSize != 0 && index % groupSize == 0) {
                 appendTo.append("  ");
-            } else {
+            } else if (wordSize != 0 && index % wordSize == 0) {
                 appendTo.append(' ');
             }
         }

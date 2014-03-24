@@ -26,6 +26,7 @@ package com.cinnober.msgcodec.util;
 public class ByteArrays {
     /**
      * Create a hex dump string of the specified binary data.
+     * Default word and group sizes are 1 and 8 bytes respectively.
      *
      * @param data the binary data, not null.
      * @return the hex dump string.
@@ -36,6 +37,7 @@ public class ByteArrays {
 
     /**
      * Create a hex dump string of the specified binary data.
+     * Default word and group sizes are 1 and 8 bytes respectively.
      *
      * @param data the binary data, not null.
      * @param offset start of bytes in the byte array.
@@ -43,10 +45,27 @@ public class ByteArrays {
      * @return the hex dump string.
      */
     public static String toHex(byte[] data, int offset, int length) {
+        return toHex(data, offset, length, 1, 8, 0);
+    }
+
+
+    /**
+     * Create a hex dump string of the specified binary data.
+     *
+     * @param data the binary data, not null.
+     * @param offset start of bytes in the byte array.
+     * @param length number of bytes to use in the byte array.
+     * @param wordSize the size of a "word" in bytes, which will be grouped with a space, or zero for no grouping.
+     * @param groupSize the size of a "group" in bytes, which will be grouped with two spaces, or zero for no grouping.
+     * @param lineSize the size of a line in bytes, which will be grouped with a new line, or zero for no grouping.
+     * @return the hex dump string.
+     */
+    public static String toHex(byte[] data, int offset, int length, int wordSize, int groupSize, int lineSize) {
         StringBuilder str = new StringBuilder(length * 3 + length / 8);
         for (int i = 0; i < length; i++) {
-            ByteBuffers.appendHex(data[offset++], i, str);
+            ByteBuffers.appendHex(data[offset++], i, str, wordSize, groupSize, lineSize);
         }
         return str.toString();
     }
+
 }

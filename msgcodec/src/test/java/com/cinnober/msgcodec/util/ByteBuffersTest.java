@@ -73,4 +73,23 @@ public class ByteBuffersTest {
         ByteBuffers.copy(buf, 0, buf, 2, 3);
         assertArrayEquals(new byte[]{0, 1, 0, 1, 2}, buf.array());
     }
+
+    @Test
+    public void testToHex1() {
+        ByteBuffer buf = ByteBuffer.wrap(new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+
+        assertEquals("00010203040506070809", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 0, 0, 0));
+        assertEquals("00010203040506070809", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 0, 10, 0));
+        assertEquals("00010203040506070809", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 0, 10, 10));
+        assertEquals("00010203040506070809", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 0, 11, 11));
+
+        assertEquals("00 01 02 03 04 05 06 07 08 09", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 1, 0, 0));
+        assertEquals("00 01 02 03 04 05 06 07 08 09", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 1, 10, 10));
+        assertEquals("00 01 02 03 04 05 06 07 08 09", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 1, 10, 10));
+
+        assertEquals("00 01 02 03 04 05 06 07  08 09", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 1, 8, 0));
+        assertEquals("00 01 02 03 04 05 06 07  08 09", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 1, 8, 10));
+        
+        assertEquals("0001 0203  0405 0607\n0809", ByteBuffers.toHex(buf, buf.position(), buf.limit(), 2, 4, 8));
+    }
 }
