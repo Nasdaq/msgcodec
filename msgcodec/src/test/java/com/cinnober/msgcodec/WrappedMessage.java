@@ -19,7 +19,9 @@ package com.cinnober.msgcodec;
 
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.Unsigned;
+import java.util.List;
 
 /**
  * @author mikael.brannstrom
@@ -33,4 +35,14 @@ public class WrappedMessage<T> extends MsgObject {
     @Id(2)
     @Required
     public T wrapped;
+
+    @Id(3)
+    @Required
+    public T[] wrappedArray;
+
+    @Id(4)
+    @Required
+    @Sequence(Object.class)
+    public List<T> wrappedList;
+
 }

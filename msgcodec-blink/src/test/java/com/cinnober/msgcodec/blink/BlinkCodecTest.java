@@ -29,6 +29,7 @@ import org.junit.Test;
 import com.cinnober.msgcodec.Annotations;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Group;
+import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
@@ -70,8 +71,8 @@ public class BlinkCodecTest {
         dictionary = Group.bind(dictionary);
         StreamCodec codec = new BlinkCodec(dictionary);
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        Group hello = new Group("Hello");
-        hello.put("greeting", "Hello World");
+        Group hello = new Group(dictionary, "Hello");
+        hello.set("greeting", "Hello World");
         codec.encode(hello, bout);
         assertEquals("Encoded Hello World", expected, bout.toByteArray());
 
@@ -205,7 +206,7 @@ public class BlinkCodecTest {
     }
 
     @Id(2)
-    public static class Foo {
+    public static class Foo extends MsgObject {
         @Id(1)
         private int id;
         @Id(2)
@@ -227,24 +228,6 @@ public class BlinkCodecTest {
         public void setFoo(Foo foo) {
             this.foo = foo;
         }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Foo other = (Foo) obj;
-            if (foo == null) {
-                if (other.foo != null)
-                    return false;
-            } else if (!foo.equals(other.foo))
-                return false;
-            if (id != other.id)
-                return false;
-            return true;
-        }
     }
 
     @Id(3)
@@ -260,19 +243,6 @@ public class BlinkCodecTest {
         }
         public void setData(int data) {
             this.data = data;
-        }
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (!super.equals(obj))
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Bar other = (Bar) obj;
-            if (data != other.data)
-                return false;
-            return true;
         }
     }
 

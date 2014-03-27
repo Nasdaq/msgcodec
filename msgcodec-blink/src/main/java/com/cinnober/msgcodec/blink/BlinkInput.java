@@ -18,6 +18,7 @@
 package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.DecodeException;
+import com.cinnober.msgcodec.util.InputStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -61,35 +62,10 @@ public class BlinkInput {
      * @param in the input stream to read from, not null.
      * @param buf the buffer into which the data is read
      *
-     * @return the number of bytes read, always bytes.length.
      * @throws EOFException if there is no more data.
      */
-    private static int read(InputStream in, byte[] buf) throws IOException {
-        return read(in, buf, 0, buf.length);
-    }
-
-    /**
-     * Read bytes from the specified input stream.
-     *
-     * @param in the input stream to read from, not null.
-     * @param buf the buffer into which the data is read
-     * @param offset the start offset in the buffer
-     * @param length the number of bytes to read
-     *
-     * @return the number of bytes read, always length.
-     * @throws EOFException if there is no more data.
-     */
-    private static int read(InputStream in, byte[] buf, int offset, int length) throws IOException {
-        final int totalRead = length;
-        while (length > 0) {
-            int read = in.read(buf, offset, length);
-            if (read == -1) {
-                throw new EOFException();
-            }
-            offset += read;
-            length -= read;
-        }
-        return totalRead;
+    private static void read(InputStream in, byte[] buf) throws IOException {
+        InputStreams.readFully(in, buf);
     }
 
 
@@ -675,38 +651,41 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static BigInteger readSignedBigVLCNull(InputStream in) throws IOException {
-	   int b1 = read(in);
-       if ((0x80 & b1) == 0) {
-           // single byte
-           if ((0x40 & b1) != 0) {
-               // negative
-               return BigInteger.valueOf((-1L << 7) | (0x7fL & b1));
-           } else {
-               // positive
-               return BigInteger.valueOf(0x7fL & b1);
-           }
-       } else if ((0xc0 & b1) == 0x80) {
-           // two bytes
-           int b2 = read(in);
-           if ((b2 & 0x80) != 0) {
-               // negative
-               return BigInteger.valueOf((-1L << 14) | (0x3fL & b1) | ((0xffL & b2) << 6));
-           } else {
-               // positive
-               return BigInteger.valueOf((0x3fL & b1) | ((0xffL & b2) << 6));
-           }
-       } else {
-           int size = 0x3f & b1;
-           if (size == 0) {
-               return null;
-           }
-           byte [] bytes = new byte[size];
-           for (int i = bytes.length - 1; i >= 0; i--) {
-                bytes[i] = (byte) read(in);
-           }
-           return new BigInteger(bytes);
-       }
-   }
+        int b1 = read(in);
+        if ((0x80 & b1) == 0) {
+            // single byte
+            if ((0x40 & b1) != 0) {
+                // negative
+                return BigInteger.valueOf((-1L << 7) | (0x7fL & b1));
+            } else {
+                // positive
+                return BigInteger.valueOf(0x7fL & b1);
+            }
+        } else if ((0xc0 & b1) == 0x80) {
+            // two bytes
+            int b2 = read(in);
+            if ((b2 & 0x80) != 0) {
+                // negative
+                return BigInteger.valueOf((-1L << 14) | (0x3fL & b1) | ((0xffL & b2) << 6));
+            } else {
+                // positive
+                return BigInteger.valueOf((0x3fL & b1) | ((0xffL & b2) << 6));
+            }
+        } else {
+            int size = 0x3f & b1;
+            if (size == 0) {
+                return null;
+            } else if (size <= 8) { // optimize: avoid allocation of byte[]
+                return BigInteger.valueOf(readSignedVLC(in, b1));
+            } else {
+                byte[] bytes = new byte[size];
+                for (int i = bytes.length - 1; i >= 0; i--) {
+                    bytes[i] = (byte) read(in);
+                }
+                return new BigInteger(bytes);
+            }
+        }
+    }
 
     /**
      * Read a nullable unsigned variable-length code value.
@@ -791,7 +770,7 @@ public class BlinkInput {
             }
         }
     }
-    
+
     /**
      * Skip a signed 8-bit integer.
      * @param in the input stream to read from, not null.

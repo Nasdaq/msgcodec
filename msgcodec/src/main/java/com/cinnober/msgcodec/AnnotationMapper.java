@@ -24,6 +24,7 @@ import java.lang.annotation.Annotation;
  * The annotation mapper converts a Java annotation to a msgcodec "key=value" string annotation.
  *
  * @author mikael.brannstrom
+ * @param <T> the annotation type
  */
 public interface AnnotationMapper<T extends Annotation> {
     /**

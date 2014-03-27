@@ -19,7 +19,6 @@ package com.cinnober.msgcodec;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -54,6 +53,7 @@ import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.GenericArrayType;
 import java.util.Objects;
 
 /**
@@ -106,6 +106,7 @@ public class ProtocolDictionaryBuilder {
                     )));
 
     private boolean strict;
+    @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Annotation>, AnnotationMapper> annotationMappers = new HashMap<>();
 
     /**
@@ -252,7 +253,7 @@ public class ProtocolDictionaryBuilder {
             groupDefs.add(groupDef);
         }
 
-        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(GroupTypeAccessor.JAVA_CLASS);
+        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(JavaClassGroupTypeAccessor.INSTANCE);
         return new ProtocolDictionary(groupDefs, namedTypes.values(), binding);
     }
 
@@ -269,7 +270,7 @@ public class ProtocolDictionaryBuilder {
             Map<Class<?>, GroupMeta> groups,
             Map<String, NamedType> namedTypes,
             LinkedList<GroupMeta> groupsToScan) {
-        HashMap<TypeVariable<?>, Class<?>> genericParameters = new HashMap<>();
+        HashMap<Type, Class<?>> genericParameters = new HashMap<>();
 
         Class<?> javaClass = group.getJavaClass();
         do {
@@ -277,8 +278,15 @@ public class ProtocolDictionaryBuilder {
                 if (Modifier.isStatic(field.getModifiers())) {
                     continue;
                 }
-                scanType(getType(field, genericParameters),
-                        field.getAnnotation(Sequence.class), groups, namedTypes, groupsToScan);
+                Class<?> type = getType(field, genericParameters);
+                final Sequence sequenceAnot = field.getAnnotation(Sequence.class);
+                if (type.isArray()) {
+                    type = getComponentType(field, genericParameters);
+                } else if (sequenceAnot != null) {
+                    Class<?> listElementType = getListComponentType(field, genericParameters);
+                    type = listElementType != null ? listElementType : sequenceAnot.value();
+                }
+                scanType(type, groups, namedTypes, groupsToScan);
             }
 
             updateGenericParameters(javaClass, genericParameters);
@@ -294,12 +302,11 @@ public class ProtocolDictionaryBuilder {
      * If the type is a group type, a new GroupMeta is added to groups and groupsToScan.
      *
      * @param type the type, not null
-     * @param sequenceAnot sequence annotation, or null
      * @param groups all groups, not null. Newly found groups will be added here.
      * @param namedTypes the named types, not null
      * @param groupsToScan the groups to be scanned, not null. Newly found groups will be added here.
      */
-    private void scanType(Class<?> type, Sequence sequenceAnot,
+    private void scanType(Class<?> type,
             Map<Class<?>,
             GroupMeta> groups,
             Map<String, NamedType> namedTypes,
@@ -308,20 +315,14 @@ public class ProtocolDictionaryBuilder {
             return;
         }
 
-        if (type.isArray()) {
-            scanType(type.getComponentType(), null, groups, namedTypes, groupsToScan);
-        } else if (sequenceAnot != null) {
-            scanType(sequenceAnot.value(), null, groups, namedTypes, groupsToScan);
-        } else {
-            if (type.equals(Object.class)) {
-                return; // placeholder for any type
-            }
+        if (type.equals(Object.class)) {
+            return; // placeholder for 'any' type
+        }
 
-            if (!groups.containsKey(type)) {
-                GroupMeta group = new GroupMeta(type);
-                groups.put(type, group);
-                groupsToScan.add(group);
-            }
+        if (!groups.containsKey(type)) {
+            GroupMeta group = new GroupMeta(type);
+            groups.put(type, group);
+            groupsToScan.add(group);
         }
     }
 
@@ -348,7 +349,7 @@ public class ProtocolDictionaryBuilder {
         group.setId(id);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Map<String, String> toAnnotationsMap(AnnotatedElement element) {
         Map<String, String> map = new HashMap<>();
         Annotate annotateAnot = element.getAnnotation(Annotate.class);
@@ -399,12 +400,12 @@ public class ProtocolDictionaryBuilder {
      * @param group
      */
     private void findFields(GroupMeta group, Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groupsByClass) {
-        findFields(group, group.getJavaClass(), new HashMap<TypeVariable<?>, Class<?>>(), namedTypes, groupsByClass);
+        findFields(group, group.getJavaClass(), new HashMap<Type, Class<?>>(), namedTypes, groupsByClass);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void findFields(GroupMeta group, Class<?> javaClass,
-            Map<TypeVariable<?>, Class<?>> genericParameters,
+            Map<Type, Class<?>> genericParameters,
             Map<String, NamedType> namedTypes,
             Map<Class<?>, GroupMeta> groupsByClass) {
         if (javaClass == null ||
@@ -453,9 +454,15 @@ public class ProtocolDictionaryBuilder {
                 Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
                 Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
                 SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
-                Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
+                Class<?> componentType;
+                if (sequenceAnot != null) {
+                    Class<?> listComponentType = getListComponentType(field, genericParameters);
+                    componentType = listComponentType != null ? listComponentType : sequenceAnot.value();
+                } else {
+                    componentType = getComponentType(field, genericParameters);
+                }
 
-                TypeDef typeDef = getTypeDef(type, sequenceAnot, enumAnot, timeAnot,
+                TypeDef typeDef = getTypeDef(type, componentType, sequenceAnot, enumAnot, timeAnot,
                         dynamicAnot, unsignedAnot, smallDecimalAnot,
                         namedTypes, groupsByClass);
                 FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
@@ -483,7 +490,7 @@ public class ProtocolDictionaryBuilder {
      * @param genericParameters the map, not null
      * @return the field type, not null
      */
-    private Class<?> getType(Field field, Map<TypeVariable<?>, Class<?>> genericParameters) {
+    private static Class<?> getType(Field field, Map<Type, Class<?>> genericParameters) {
         Type genericType = field.getGenericType();
         if (genericType instanceof TypeVariable) {
             TypeVariable<?> genericVar = (TypeVariable<?>) genericType;
@@ -493,6 +500,43 @@ public class ProtocolDictionaryBuilder {
             }
         }
         return field.getType();
+    }
+
+    /**
+     * Returns the field component type, by also resolving any generic type variables using
+     * the supplied generic parameters map.
+     *
+     * @param field the field to return the type of, not null
+     * @param genericParameters the map, not null
+     * @return the field type, not null
+     */
+    private static Class<?> getComponentType(Field field, Map<Type, Class<?>> genericParameters) {
+        Type genericType = field.getGenericType();
+        if (genericType instanceof GenericArrayType) {
+            GenericArrayType genericArrayType = (GenericArrayType) genericType;
+            Type genericComponentType = genericArrayType.getGenericComponentType();
+            Class<?> type = genericParameters.get(genericComponentType);
+            if (type != null) {
+                return type;
+            }
+        }
+        return field.getType().getComponentType();
+    }
+
+    private static Class<?> getListComponentType(Field field, Map<Type, Class<?>> genericParameters) {
+        Class<?> fieldType = field.getType();
+        if (fieldType.equals(List.class)) {
+            Type genericType = field.getGenericType();
+            if (genericType instanceof ParameterizedType) {
+                ParameterizedType paramType = (ParameterizedType) genericType;
+                Type listElementType = paramType.getActualTypeArguments()[0];
+                Class<?> type = genericParameters.get(listElementType);
+                if (type != null) {
+                    return type;
+                }
+            }
+        }
+        return null;
     }
 
     /**
@@ -508,7 +552,7 @@ public class ProtocolDictionaryBuilder {
      * @param genericParameters the parameters map, not null. This map will be updated
      */
     private void updateGenericParameters(Class<?> javaClass,
-            Map<TypeVariable<?>, Class<?>> genericParameters) {
+            Map<Type, Class<?>> genericParameters) {
         Class<?> superclass = javaClass.getSuperclass();
         if (superclass == null) {
             return;
@@ -532,7 +576,7 @@ public class ProtocolDictionaryBuilder {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private TypeDef getTypeDef(Class<?> type, Sequence sequenceAnot, Enumeration enumAnot, Time timeAnot,
+    private TypeDef getTypeDef(Class<?> type, Class<?> componentType, Sequence sequenceAnot, Enumeration enumAnot, Time timeAnot,
             Dynamic dynamicAnot, Unsigned unsignedAnot, SmallDecimal smallDecimalAnot,
             Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groups) {
         // sequence
@@ -550,8 +594,7 @@ public class ProtocolDictionaryBuilder {
                 throw new IllegalArgumentException("@Sequence is not needed for arrays.");
             }
 
-            Class<?> componentType = sequenceAnot != null ? sequenceAnot.value() : type.getComponentType();
-            TypeDef elementType = getTypeDef(componentType, null, enumAnot, timeAnot,
+            TypeDef elementType = getTypeDef(componentType, null, null, enumAnot, timeAnot,
                     dynamicAnot, unsignedAnot, smallDecimalAnot, namedTypes, groups);
             if (elementType.getType() == TypeDef.Type.SEQUENCE) {
                 throw new IllegalArgumentException("Sequence of sequence is not allowed");
@@ -670,7 +713,7 @@ public class ProtocolDictionaryBuilder {
         private int id;
         private String name;
         private GroupMeta parent;
-        private List<FieldDef> fields = new LinkedList<FieldDef>();
+        private final List<FieldDef> fields = new LinkedList<>();
         private Map<String, String> annotations;
         public GroupMeta(Class<?> javaClass) {
             if (Modifier.isAbstract(javaClass.getModifiers())) {

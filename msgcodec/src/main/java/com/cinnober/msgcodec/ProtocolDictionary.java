@@ -138,7 +138,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
                 if (superGroup == null) {
                     throw new IllegalArgumentException("Unknown super group: " + group.getSuperGroup());
                 }
-                if (binding != null && binding.getGroupTypeAccessor() instanceof GroupTypeAccessor.JavaClass) {
+                if (binding != null && binding.getGroupTypeAccessor() instanceof JavaClassGroupTypeAccessor) {
                     Class<?> superGroupClass = (Class<?>) superGroup.getGroupType();
                     Class<?> groupClass = (Class<?>) group.getGroupType();
                     if (!superGroupClass.isAssignableFrom(groupClass)) {

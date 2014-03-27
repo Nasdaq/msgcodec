@@ -59,6 +59,7 @@ import java.util.Set;
 public class MsgObject {
 
     private static final ConcurrentHashMap<Class<?>, GroupHandler> groupHandlerByClass = new ConcurrentHashMap<>();
+    @SuppressWarnings("rawtypes")
     private static final Map<Class<?>, MsgObjectValueHandler> unsignedTypes = initUnsignedTypes();
     private static final Set<Class<?>> simpleTypes = initSimpleTypes();
 
@@ -97,6 +98,7 @@ public class MsgObject {
         return classToString;
     }
 
+    @SuppressWarnings("rawtypes")
     private static MsgObjectValueHandler getValueHandler(Field field) {
         Class<?> type = field.getType();
         Sequence seqAnot = field.getAnnotation(Sequence.class);
@@ -118,6 +120,7 @@ public class MsgObject {
         return getNoSequenceValueHandler(field, type);
     }
 
+    @SuppressWarnings("rawtypes")
     private static MsgObjectValueHandler getNoSequenceValueHandler(AnnotatedElement field, Class<?> type) {
         if (field.getAnnotation(Unsigned.class) != null) {
             MsgObjectValueHandler handler = unsignedTypes.get(type);
@@ -239,6 +242,7 @@ public class MsgObject {
     }
 
 
+    @SuppressWarnings("rawtypes")
     private static Map<Class<?>, MsgObjectValueHandler> initUnsignedTypes() {
         HashMap<Class<?>, MsgObjectValueHandler> map = new HashMap<>();
         map.put(byte.class, UINT8);

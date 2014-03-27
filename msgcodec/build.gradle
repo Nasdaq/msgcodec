@@ -1,1 +1,9 @@
-description = ''
+description = 'msgcodec API'
+
+apply plugin: 'cinnober-java'
+sourceCompatibility = "1.7"
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+}
+

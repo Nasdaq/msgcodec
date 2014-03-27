@@ -15,33 +15,18 @@
  * damages suffered by licensee as a result of using, modifying, or
  * distributing this software or its derivatives.
  */
-package com.cinnober.msgcodec.examples.util;
+package com.cinnober.msgcodec;
 
+import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
  * @author mikael.brannstrom
  *
  */
-public class Util {
-
-    private static final char[] HEX_CHAR = new char[]
-            { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
-    public static final String toHex(byte[] data) {
-        StringBuilder str = new StringBuilder(data.length * 3);
-
-        for (int i = 0; i < data.length; i++) {
-            if (i != 0) {
-                if (i % 8 == 0) {
-                    str.append("\n");
-                } else {
-                    str.append(" ");
-                }
-            }
-            str.append((HEX_CHAR[(data[i] & 0xf0) >> 4]))
-               .append((HEX_CHAR[data[i] & 0xf]));
-        }
-
-        return str.toString();
-    }
+public class ArrayOnlyWrappedMessage<T> extends MsgObject {
+    @Id(3)
+    @Required
+    public T[] wrappedArray;
 }

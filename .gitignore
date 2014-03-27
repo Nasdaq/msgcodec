@@ -14,3 +14,4 @@ build/
 bin/
 /cbuild
 /.nb-gradle/profiles/private/
+/.nb-gradle/private/

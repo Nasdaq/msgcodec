@@ -407,7 +407,7 @@ abstract class FieldInstruction<V> {
         public ArraySequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
-            this.componentType = field.getJavaClass().getComponentType();
+            this.componentType = field.getComponentJavaClass();
         }
         @SuppressWarnings("unchecked")
         @Override

@@ -17,19 +17,18 @@
  */
 package com.cinnober.msgcodec;
 
-/**
- * Extracts the group type from a group instance.
- * The group type corresponds to the value in {@link GroupBinding#getGroupType()}
- *
- * @author mikael.brannstrom
- */
-public interface GroupTypeAccessor {
+import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Sequence;
+import com.cinnober.msgcodec.anot.Unsigned;
+import java.util.List;
 
-    /**
-     * Returns the group type of the specified group value.
-     *
-     * @param groupValue the group value, not null.
-     * @return the group type.
-     */
-    Object getGroupType(Object groupValue);
+/**
+ * @author mikael.brannstrom
+ *
+ */
+public class ListOnlyWrappedMessage<T> extends MsgObject {
+    @Id(4)
+    @Required @Sequence(Object.class)
+    public List<T> wrappedList;
 }

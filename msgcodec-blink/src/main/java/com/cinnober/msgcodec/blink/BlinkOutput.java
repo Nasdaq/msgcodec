@@ -251,7 +251,7 @@ public class BlinkOutput {
     	if (value == null) {
             writeNull(out);
     	} else {
-            writeSignedBigVLC(out, value);
+            writeSignedVLC(out, value);
     	}
     }
     /**
@@ -262,7 +262,7 @@ public class BlinkOutput {
      * @throws IOException if the underlying stream throws an exception
      */
     public static void writeBigInt(OutputStream out, BigInteger value) throws IOException {
-	writeSignedBigVLC(out, value);
+	writeSignedVLC(out, value);
     }
 
     /**
@@ -370,7 +370,7 @@ public class BlinkOutput {
     	int exp = -value.scale();
     	BigInteger bigMantissa = value.unscaledValue();
     	writeSignedVLC(out, exp);
-    	writeSignedBigVLC(out, bigMantissa);
+    	writeSignedVLC(out, bigMantissa);
     }
     /**
      * Write a nullable big decimal number.
@@ -466,13 +466,13 @@ public class BlinkOutput {
         }
     }
     /**
-     * Write a signed big variable-length code value.
+     * Write a signed variable-length code value.
      *
      * @param out the output stream to write to, not null.
      * @param value the value to be written, not null
      * @throws IOException if the underlying stream throws an exception
      */
-    public static void writeSignedBigVLC(OutputStream out, BigInteger value) throws IOException {
+    public static void writeSignedVLC(OutputStream out, BigInteger value) throws IOException {
         if (value.bitLength() <= 63) {
             writeSignedVLC(out, value.longValue());
         } else {
@@ -622,6 +622,19 @@ public class BlinkOutput {
                 return 8;
         }
         return 9;
+    }
+
+    /**
+     * Returns the size in bytes of a signed variable-length coded value.
+     * @param value the value, not null.
+     * @return the number of bytes.
+     */
+    public static final int sizeOfSignedVLC(BigInteger value) {
+        if (value.bitLength() <= 63) {
+            return sizeOfSignedVLC(value.longValue());
+        } else {
+            return 2 + value.bitLength() / 8;
+        }
     }
 
     /**

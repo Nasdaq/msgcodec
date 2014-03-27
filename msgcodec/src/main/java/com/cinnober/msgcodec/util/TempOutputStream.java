@@ -23,6 +23,7 @@ import java.util.ArrayList;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.Objects;
 
 /**
  * Reusable output stream where temporary encoded data can be stored.
@@ -44,8 +45,12 @@ public class TempOutputStream extends OutputStream {
     /** The number of bytes before currentBuffer. */
     private int currentOffset;
 
+    /**
+     * Create a new temporary output stream.
+     * @param bufferPool the buffer pool, not null.
+     */
     public TempOutputStream(Pool<byte[]> bufferPool) {
-        this.bufferPool = bufferPool;
+        this.bufferPool = Objects.requireNonNull(bufferPool);
     }
 
     /** 

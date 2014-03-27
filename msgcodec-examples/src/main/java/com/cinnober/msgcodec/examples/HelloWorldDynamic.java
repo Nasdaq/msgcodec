@@ -28,11 +28,11 @@ import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.blink.BlinkCodec;
 import com.cinnober.msgcodec.examples.messages.Hello;
-import com.cinnober.msgcodec.examples.util.Util;
 import com.cinnober.msgcodec.json.JsonCodec;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
 import com.cinnober.msgcodec.tap.TapCodec;
+import com.cinnober.msgcodec.util.ByteArrays;
 import com.cinnober.msgcodec.xml.XmlCodec;
 
 /** This is a somewhat advanced example, that demonstrates the dynamic binding feature of msgcodec,
@@ -64,7 +64,7 @@ public class HelloWorldDynamic {
         // lets just dump it to see what it looks like
         System.out.println("Encoded dictionary:");
         if (isBinary(format)) {
-            System.out.println(Util.toHex(encodedDictionary));
+            System.out.println(ByteArrays.toHex(encodedDictionary));
         } else {
             System.out.println(new String(encodedDictionary, UTF8));
         }
@@ -89,7 +89,7 @@ public class HelloWorldDynamic {
         // just dump it to see what it looks like
         System.out.println("Encoded message:");
         if (isBinary(format)) {
-            System.out.println(Util.toHex(encodedMessage));
+            System.out.println(ByteArrays.toHex(encodedMessage));
         } else {
             System.out.println(new String(encodedMessage, UTF8));
         }

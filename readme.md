@@ -1,5 +1,7 @@
 # msgcodec #
-A library to encode and decode messages in various formats where messages are defined as plain old java objects. This library is maintained by [Mikael Brännström ](mailto://mikael.brannstrom@cinnober.com). Feedback is very welcome. 
+A library to encode and decode messages in various formats where messages are defined as plain old java objects. 
+
+This library is maintained by [Mikael Brännström ](mailto:mikael.brannstrom@cinnober.com). Feedback is very welcome. 
 
 ## Usage ##
 Given a POJO:
@@ -59,17 +61,16 @@ The code is divided into the following projects:
 
 ## Build ##
 
-First clone a copy of the repo:
->git clone git@gitrepo.cinnober.com:platform/msgcodec.git
-
-Then build:
->cd msgcodec
->gradle build
+	# First clone a copy of the repo:
+	git clone git@gitrepo.cinnober.com:platform/msgcodec.git
+	cd msgcodec
+	
+	# Compile, build and test:
+	gradle build
 
 ### Eclipse IDE ###
 
-If you want to edit java files from within eclipse, run
->gradle eclipse
+If you want to edit java files from within eclipse, run `gradle eclipse`
 
 and then from within eclipse File -> Import... -> General -> Existing projects into workspace -> Next.. Browse.. browse to where you cloned repo -> Ok.. -> Select All -> Import.
 
@@ -78,8 +79,7 @@ and then from within eclipse File -> Import... -> General -> Existing projects i
 Install the [Netbeans Gradle Plugin](http://plugins.netbeans.org/plugin/44510/gradle-support) and just open the project (the cloned repo).
 
 ### Documentation ###
-See the javadoc of `msgcodec`. To build the javadoc run:
->gradle javadoc
+See the javadoc of `msgcodec`. To build the javadoc run: `gradle javadoc`
 
 The result ends up in msgcodec/build/docs/javadoc/.
 
@@ -96,7 +96,7 @@ To create a new release, e.g. 1.2.3:
     git tag -a 1.2.3 -m "New release"
     git push --tags
 
-Then jenkins will to the following:
+Then jenkins will do the following. mavenUser and mavenPassword are required in your ~/.gradle/gradle.properties for `uploadArchives`
 
     gradle clean build uploadArchives
 

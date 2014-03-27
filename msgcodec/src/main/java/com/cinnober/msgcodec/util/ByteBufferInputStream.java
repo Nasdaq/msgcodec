@@ -17,7 +17,6 @@
  */
 package com.cinnober.msgcodec.util;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.BufferUnderflowException;
@@ -27,7 +26,7 @@ import java.nio.ByteBuffer;
  * An input stream backed by a ByteBuffer.
  *
  * A read will advance the position of the underlying buffer until it reaches the limit,
- * when EOF is considered reached.
+ * when {@link BufferUnderflowException} is thrown.
  *
  * @author mikael.brannstrom
  *
@@ -63,18 +62,12 @@ public class ByteBufferInputStream extends InputStream {
     }
 
     @Override
-    public int read() throws IOException {
-        try {
-            return buffer.get() & 0xff;
-        } catch (BufferUnderflowException e) {
-            EOFException eofException = new EOFException();
-            eofException.initCause(e);
-            throw eofException;
-        }
+    public int read() throws IOException, BufferUnderflowException {
+        return buffer.get() & 0xff;
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public int read(byte[] b, int off, int len) throws IOException, BufferUnderflowException {
         if (len > buffer.remaining()) {
             len = buffer.remaining();
         }

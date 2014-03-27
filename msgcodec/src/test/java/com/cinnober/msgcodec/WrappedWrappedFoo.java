@@ -17,19 +17,10 @@
  */
 package com.cinnober.msgcodec;
 
-/**
- * Extracts the group type from a group instance.
- * The group type corresponds to the value in {@link GroupBinding#getGroupType()}
- *
- * @author mikael.brannstrom
- */
-public interface GroupTypeAccessor {
 
-    /**
-     * Returns the group type of the specified group value.
-     *
-     * @param groupValue the group value, not null.
-     * @return the group type.
-     */
-    Object getGroupType(Object groupValue);
+/**
+ * @author mikael.brannstrom
+ *
+ */
+public class WrappedWrappedFoo extends WrappedMessage<FooMessage> {
 }

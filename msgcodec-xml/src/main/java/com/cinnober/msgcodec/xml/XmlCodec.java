@@ -42,6 +42,7 @@ import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Enum;
+import com.cinnober.msgcodec.util.TimeFormat;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ArraySequenceValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.DynamicGroupField;
@@ -56,10 +57,59 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
 import java.util.Date;
 
 /**
- *
- * Annotations:
- * - xml:ns = string
- * - xml:field = attribute | element | inlineElement
+ * The XML codec can serialize and deserialize Java objects to/from XML.
+ * 
+ * <p>XML codec support a number of annotations to the protocol dictionary that control the encoding.
+ * <table>
+ * <caption>XML specific annotations</caption>
+ * <tr style="text-align: left">
+ * <th>Annotation</th><th>Location</th><th>Description</th>
+ * </tr>
+ * <tr>
+ * <td><code>xml:ns</code></td>
+ * <td>ProtocolDictionary</td>
+ * <td>Set the XML namespace of all elements. Default is none.</td>
+ * </tr>
+ * <tr>
+ * <td><code>xml:field</code></td>
+ * <td>FieldDef</td>
+ * <td>Values:
+ * <br><code>attribute</code> = the field is encoded as an attribute in the group element. 
+ * Default for simple field types. Not applicable to group types.
+ * <br><code>element</code> = the field is encoded as an child element in the group element.
+ * Default for complex field types (group, sequence).
+ * <br><code>inlineElement</code> = the field, which is a group type, is inlined within the contained group element.
+ * This requires that there is no potential conflict with another field.
+ * </td>
+ * </tr>
+ * </table>
+ * 
+ * <p>The following mapping between msgcodec types and XML constructs applies:
+ * <table>
+ * <caption>Mapping between msgcodec and XML types.</caption>
+ * <tr style="text-align: left"><th>Msgcodec</th><th>XML</th></tr>
+ * <tr><td>uInt8</td><td>xs:unsignedByte</td></tr>
+ * <tr><td>uInt16</td><td>xs:unsignedShort</td></tr>
+ * <tr><td>uInt32</td><td>xs:unsignedInt</td></tr>
+ * <tr><td>uInt64</td><td>xs:unsignedLong</td></tr>
+ * <tr><td>int8</td><td>xs:byte</td></tr>
+ * <tr><td>int16</td><td>xs:short</td></tr>
+ * <tr><td>int32</td><td>xs:int</td></tr>
+ * <tr><td>int64</td><td>xs:long</td></tr>
+ * <tr><td>bigInt</td><td>xs:integer</td></tr>
+ * <tr><td>decimal</td><td>xs:decimal</td></tr>
+ * <tr><td>bigDecimal</td><td>xs:decimal</td></tr>
+ * <tr><td>boolean</td><td>xs:boolean</td></tr>
+ * <tr><td>string</td><td>xs:string</td></tr>
+ * <tr><td>enum</td><td>xs:string (name)</td></tr>
+ * <tr><td>time</td><td>xs:string, see {@link TimeFormat}. PENDING: use xs:time and xs:date?</td></tr>
+ * <tr><td>binary</td><td>xs:binary. TODO: not implemented yet</td></tr>
+ * <tr><td>sequence</td><td>TODO: To be documented.</td></tr>
+ * <tr><td>group</td><td>element with group name as element name. 
+ * Fields are represented as nested attributes or elements.</td></tr>
+ * </table>
+ * 
+ * <p><b>Note:</b> missing fields are not checked. (TODO)
  *
  * @author mikael.brannstrom
  *
@@ -178,7 +228,7 @@ public class XmlCodec implements StreamCodec {
             if (valueInstr != null) {
                 if (field.getJavaClass().isArray()) {
                     ArraySequenceValueField fieldInstr = new ArraySequenceValueField(nsName, field, valueInstr,
-                            field.getJavaClass().getComponentType());
+                            field.getComponentJavaClass());
                     putElement(elementFields, fieldInstr);
                 } else {
                     ListSequenceValueField fieldInstr =

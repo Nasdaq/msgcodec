@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
  * An output stream backed by a ByteBuffer.
  *
  * A write will advance the position of the underlying buffer until it reaches the limit,
- * when an IOException is thrown.
+ * when {@link BufferOverflowException} is thrown.
  *
  * @author mikael.brannstrom
  *
@@ -64,21 +64,13 @@ public class ByteBufferOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
-        try {
-            buffer.put((byte)b);
-        } catch (BufferOverflowException e) {
-            throw new IOException(e);
-        }
+    public void write(int b) throws IOException, BufferOverflowException {
+        buffer.put((byte)b);
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-        try {
-            buffer.put(b, off, len);
-        } catch (BufferOverflowException e) {
-            throw new IOException(e);
-        }
+    public void write(byte[] b, int off, int len) throws IOException, BufferOverflowException {
+        buffer.put(b, off, len);
     }
 
 
