@@ -27,6 +27,8 @@ import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.util.ByteArrays;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -246,8 +248,76 @@ public class CodeGenerator {
         int nextVar = 3;
         mv.visitCode();
 
-        mv.visitInsn(RETURN);
-        mv.visitMaxs(3, 3);
+        mv.visitVarInsn(ALOAD, 2);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+        int classVariable = nextVar++;
+        mv.visitInsn(DUP);
+        mv.visitVarInsn(ASTORE, classVariable);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;", false);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "hashCode", "()I", false);
+
+        // switch on hashCode of class name
+        Map<Integer,SwitchOnClassCase> casesByHashCode = new TreeMap<>();
+        for (GroupDef group : dict.getGroups()) {
+            Class<?> groupType = (Class<?>) group.getGroupType();
+            int groupHash = groupType.getName().hashCode();
+            SwitchOnClassCase hashCase = casesByHashCode.get(groupHash);
+            if (hashCase == null) {
+                hashCase = new SwitchOnClassCase(groupHash);
+                casesByHashCode.put(hashCase.classNameHashCode, hashCase);
+            }
+            hashCase.add(groupType);
+        }
+
+        Label unknownHashLabel = new Label();
+        {
+            int[] caseValues = new int[casesByHashCode.size()];
+            int i = 0;
+            for (int hashCode : casesByHashCode.keySet()) {
+                caseValues[i++] = hashCode;
+            }
+            Label[] caseLabels = new Label[casesByHashCode.size()];
+            i = 0;
+            for (SwitchOnClassCase hashCase : casesByHashCode.values()) {
+                caseLabels[i++] = hashCase.label;
+            }
+            mv.visitLookupSwitchInsn(unknownHashLabel, caseValues, caseLabels);
+        }
+        for (SwitchOnClassCase hashCase : casesByHashCode.values()) {
+            mv.visitLabel(hashCase.label);
+            mv.visitFrame(F_SAME, 0, null, 0, null);
+            for (SwitchOnClassSecondaryCase classCase : hashCase.cases) {
+                mv.visitVarInsn(ALOAD, classVariable);
+                mv.visitLdcInsn(classCase.clazz.getCanonicalName() + ".class");
+                mv.visitJumpInsn(IF_ACMPEQ, classCase.label);
+            }
+        }
+        mv.visitLabel(unknownHashLabel);
+        mv.visitFrame(F_SAME, 0, null, 0, null);
+        mv.visitVarInsn(ALOAD, 0); // this
+        mv.visitVarInsn(ALOAD, classVariable);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", "unknownObjectType",
+                "(Ljava/lang/Class;)Ljava/lang/IllegalArgumentException;", false);
+        mv.visitInsn(ATHROW);
+
+        
+        for (SwitchOnClassCase hashCase : casesByHashCode.values()) {
+            for (SwitchOnClassSecondaryCase classCase : hashCase.cases) {
+                Class<?> groupType = classCase.clazz;
+                GroupDef group = dict.getGroup(groupType);
+                String groupDescriptor = Type.getDescriptor(groupType);
+                mv.visitLabel(classCase.label);
+                mv.visitFrame(F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 0); // this
+                mv.visitVarInsn(ALOAD, 1); // out
+                mv.visitVarInsn(ALOAD, 2); // obj
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + group.getName(),
+                        "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
+                mv.visitInsn(RETURN);
+            }
+        }
+
+        mv.visitMaxs(3, nextVar);
         mv.visitEnd();
 
 //
@@ -347,4 +417,29 @@ public class CodeGenerator {
         mv.visitMaxs(2, nextVar); // PENDING: maxStack
         mv.visitEnd();
     }
+
+    private static class SwitchOnClassCase {
+        final int classNameHashCode;
+        final Label label = new Label();
+        final List<SwitchOnClassSecondaryCase> cases = new ArrayList<>();
+
+        SwitchOnClassCase(int classNameHashCode) {
+            this.classNameHashCode = classNameHashCode;
+        }
+        void add(Class<?> clazz) {
+            cases.add(new SwitchOnClassSecondaryCase(clazz, new Label()));
+        }
+    }
+    private static class SwitchOnClassSecondaryCase {
+        final Class<?> clazz;
+        final Label label;
+
+        SwitchOnClassSecondaryCase(
+                Class<?> clazz, Label label) {
+            this.clazz = clazz;
+            this.label = label;
+        }
+
+    }
+
 }
