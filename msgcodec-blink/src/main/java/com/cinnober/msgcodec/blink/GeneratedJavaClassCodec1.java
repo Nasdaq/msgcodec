@@ -28,8 +28,14 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
     
     @Override
     protected void writeStaticGroupWithId(OutputStream out, Object obj) throws IOException {
-        Class groupType = obj.getClass();
-        // invokedynamic writeStaticGroupWithId class (out, obj) -> writeStaticGroupWithId(out, class obj)
+        Class javaClass = obj.getClass();
+        switch(javaClass.getName()) {
+            case "Foo":
+                writeStaticGroupWithId(out, (Foo)obj);
+                break;
+            default:
+                throw unknownObjectType(javaClass);
+        }
     }
 
     @Override
@@ -38,10 +44,10 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
             case 123:
                 return readStaticGroup_Foo(in);
             default:
-                throw new DecodeException("Unknown group id: " + groupId);
+                throw unknownGroupId(groupId);
         }
     }
-    
+
     Factory factory1;
     
     Bar readStaticGroup_Bar(LimitInputStream in) throws IOException {

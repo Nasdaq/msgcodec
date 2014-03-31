@@ -947,15 +947,15 @@ abstract class FieldInstruction<V> {
     }
     // --- GROUP ---
     static class DynamicGroup extends FieldInstruction<Object> {
-        private final BlinkCodec codec;
-        public DynamicGroup(FieldDef field, BlinkCodec codec) {
+        private final GeneratedCodec codec;
+        public DynamicGroup(FieldDef field, GeneratedCodec codec) {
             super(field);
             this.codec = codec;
         }
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
             require(value);
-            codec.writeDynamicGroup(value, out);
+            codec.writeDynamicGroup(out, value);
         }
         @Override
         public Object decodeValue(BlinkInputStream in) throws IOException {
@@ -963,14 +963,14 @@ abstract class FieldInstruction<V> {
         }
     }
     static class DynamicGroupNull extends FieldInstruction<Object> {
-        private final BlinkCodec codec;
-        public DynamicGroupNull(FieldDef field, BlinkCodec codec) {
+        private final GeneratedCodec codec;
+        public DynamicGroupNull(FieldDef field, GeneratedCodec codec) {
             super(field);
             this.codec = codec;
         }
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
-            codec.writeDynamicGroupNull(value, out);
+            codec.writeDynamicGroupNull(out, value);
         }
         @Override
         public Object decodeValue(BlinkInputStream in) throws IOException {
