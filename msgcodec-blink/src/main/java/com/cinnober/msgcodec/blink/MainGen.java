@@ -34,7 +34,7 @@ public class MainGen {
         LogManager.getLogManager().readConfiguration();
 
 
-        ProtocolDictionary dict = new ProtocolDictionaryBuilder().build(Foo.class, Bar.class);
+        ProtocolDictionary dict = new ProtocolDictionaryBuilder().build(Foo.class, Bar.class, Foo2.class);
         CodeGenerator codeGen = new CodeGenerator();
         byte[] generateClass = codeGen.generateClass(dict, 3);
         System.out.println("done! " + generateClass.length + " bytes");
@@ -48,6 +48,10 @@ public class MainGen {
     }
     public static class Bar {
         Bar bar;
+    }
+    @Id(456)
+    public static class Foo2 extends Foo {
+        String string;
     }
 
 }

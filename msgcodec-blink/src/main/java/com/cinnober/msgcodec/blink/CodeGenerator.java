@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -95,6 +96,7 @@ public class CodeGenerator {
                 "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", null);
 
         generateJConstructorAndFields(dict, cv, genClassInternalName);
+        generateJReadStaticGroupNewInstance(dict, cv, genClassInternalName);
         generateJReadStaticGroup(dict, cv, genClassInternalName);
         generateJWriteStaticGroup(dict, cv, genClassInternalName);
         generateJWriteStaticGroupWithId(dict, cv, genClassInternalName);
@@ -156,6 +158,20 @@ public class CodeGenerator {
                     new String[] { "java/io/IOException" });
             writemv.visitCode();
             int nextWriteVar = 3;
+
+            // write fields of super group
+            if (group.getSuperGroup() != null) {
+                GroupDef superGroup = dict.getGroup(group.getSuperGroup());
+                Class<?> superGroupType = (Class) superGroup.getGroupType();
+                String superGroupDescriptor = Type.getDescriptor(superGroupType);
+                writemv.visitVarInsn(ALOAD, 0);
+                writemv.visitVarInsn(ALOAD, 1);
+                writemv.visitVarInsn(ALOAD, 2);
+                writemv.visitMethodInsn(INVOKEVIRTUAL,
+                        genClassInternalName,
+                        "writeStaticGroup",
+                        "(Ljava/io/OutputStream;"+superGroupDescriptor+")V", false);
+            }
 
             // fields
             for (FieldDef field : group.getFields()) {
@@ -317,14 +333,68 @@ public class CodeGenerator {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBooleanNull", "(Ljava/io/OutputStream;Ljava/lang/Boolean;)V", false);
                 }
                 break;
-//            case ENUM:
-//                if (javaClass.isEnum()) {
-//                    if (required) {
-//
-//                    } else {
-//
-//                    }
-//                }
+            case ENUM:
+                if (javaClass.isEnum()) {
+                    if (required) {
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                    } else {
+                        Label endLabel = new Label();
+                        Label nullLabel = new Label();
+                        mv.visitInsn(DUP);
+                        mv.visitJumpInsn(IFNULL, nullLabel);
+                        // not null
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                        mv.visitJumpInsn(GOTO, endLabel);
+                        // null
+                        mv.visitLabel(nullLabel);
+                        mv.visitInsn(POP);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                        // end
+                        mv.visitLabel(endLabel);
+                    }
+                } else if (javaClass == int.class || javaClass == Integer.class) {
+                    // PENDING: validate that the value is a correct enum value?
+                    if (required) {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+                    }
+                } else {
+                    throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
+                }
+                break;
+            case TIME:
+                if (javaClass == long.class || javaClass == Long.class) {
+                    if (required) {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64Null", "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+                    }
+                } else if (javaClass == int.class || javaClass == Integer.class) {
+                    if (required) {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+                    }
+                } else if (javaClass == Date.class) {
+                    throw new RuntimeException("java.util.Date not supported yet (FIXME)"); // FIXME
+                } else {
+                    throw new IllegalArgumentException("Illegal time javaClass: " + javaClass);
+                }
+                break;
+            case SEQUENCE:
+                if (javaClass.isArray()) {
+                    throw new RuntimeException("array sequence not supported yet (FIXME)"); // FIXME
+                } else if (javaClass == List.class) {
+                    throw new RuntimeException("list sequence not supported yet (FIXME)"); // FIXME
+                } else {
+                    throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
+                }
+                //break;
+            case REFERENCE:
+            case DYNAMIC_REFERENCE:
             default:
                 // FIXME: throw exception here
                 mv.visitInsn(POP); // just a marker
@@ -366,7 +436,7 @@ public class CodeGenerator {
             readmv.visitVarInsn(ALOAD, 0);
             readmv.visitVarInsn(ALOAD, 1);
             readmv.visitVarInsn(ALOAD, readInstanceVar);
-            readmv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(),
+            readmv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup",
                     "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V", false);
 
             // end read
@@ -383,12 +453,12 @@ public class CodeGenerator {
             //String groupInternalName = Type.getInternalName(groupType);
             MethodVisitor readmv = cv.visitMethod(
                     ACC_PRIVATE,
-                    "readStaticGroup_" + group.getName(),
+                    "readStaticGroup",
                     "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V",
                     null,
                     new String[] { "java/io/IOException" });
             readmv.visitCode();
-            int nextReadVar = 2;
+            int nextReadVar = 3;
 
             // read fields of super group
             if (group.getSuperGroup() != null) {
@@ -400,7 +470,7 @@ public class CodeGenerator {
                 readmv.visitVarInsn(ALOAD, 2);
                 readmv.visitMethodInsn(INVOKEVIRTUAL,
                         genClassInternalName,
-                        "readStaticGroup_" + superGroup.getName(),
+                        "readStaticGroup",
                         "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+superGroupDescriptor+")V", false);
             }
 
