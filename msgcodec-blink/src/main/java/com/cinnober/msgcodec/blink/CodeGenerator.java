@@ -45,8 +45,6 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.commons.Method;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceClassVisitor;
 
@@ -334,7 +332,7 @@ public class CodeGenerator {
     }
 
 
-    private void generateJReadStaticGroup(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+    private void generateJReadStaticGroupNewInstance(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
         for (GroupDef group : dict.getGroups()) {
             Class<?> groupType = (Class) group.getGroupType();
             String groupDescriptor = Type.getDescriptor(groupType);
@@ -365,10 +363,11 @@ public class CodeGenerator {
             final int readInstanceVar = nextReadVar++;
             readmv.visitVarInsn(ASTORE, readInstanceVar);
 
-            // fields
-            for (FieldDef field : group.getFields()) {
-                // TODO: generate read instructions
-            }
+            readmv.visitVarInsn(ALOAD, 0);
+            readmv.visitVarInsn(ALOAD, 1);
+            readmv.visitVarInsn(ALOAD, readInstanceVar);
+            readmv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(),
+                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V", false);
 
             // end read
             readmv.visitVarInsn(ALOAD, readInstanceVar);
@@ -377,6 +376,45 @@ public class CodeGenerator {
             readmv.visitEnd();
         }
     }
+    private void generateJReadStaticGroup(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+        for (GroupDef group : dict.getGroups()) {
+            Class<?> groupType = (Class) group.getGroupType();
+            String groupDescriptor = Type.getDescriptor(groupType);
+            //String groupInternalName = Type.getInternalName(groupType);
+            MethodVisitor readmv = cv.visitMethod(
+                    ACC_PRIVATE,
+                    "readStaticGroup_" + group.getName(),
+                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V",
+                    null,
+                    new String[] { "java/io/IOException" });
+            readmv.visitCode();
+            int nextReadVar = 2;
+
+            // read fields of super group
+            if (group.getSuperGroup() != null) {
+                GroupDef superGroup = dict.getGroup(group.getSuperGroup());
+                Class<?> superGroupType = (Class) superGroup.getGroupType();
+                String superGroupDescriptor = Type.getDescriptor(superGroupType);
+                readmv.visitVarInsn(ALOAD, 0);
+                readmv.visitVarInsn(ALOAD, 1);
+                readmv.visitVarInsn(ALOAD, 2);
+                readmv.visitMethodInsn(INVOKEVIRTUAL,
+                        genClassInternalName,
+                        "readStaticGroup_" + superGroup.getName(),
+                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+superGroupDescriptor+")V", false);
+            }
+
+            // fields
+            for (FieldDef field : group.getFields()) {
+                // TODO: generate read instructions
+            }
+
+            readmv.visitInsn(RETURN);
+            readmv.visitMaxs(4, nextReadVar); // PENDING: maxStack
+            readmv.visitEnd();
+        }
+    }
+
     private void generateJConstructorAndFields(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
         MethodVisitor ctormv;
         ctormv = cv.visitMethod(ACC_PUBLIC, "<init>", "(Lcom/cinnober/msgcodec/blink/BlinkCodec;Lcom/cinnober/msgcodec/ProtocolDictionary;)V", null, null);
