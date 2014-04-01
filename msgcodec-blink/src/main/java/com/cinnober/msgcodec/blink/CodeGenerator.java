@@ -253,18 +253,17 @@ public class CodeGenerator {
         int classVariable = nextVar++;
         mv.visitInsn(DUP);
         mv.visitVarInsn(ASTORE, classVariable);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;", false);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "hashCode", "()I", false);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I", false);
 
-        // switch on hashCode of class name
-        Map<Integer,SwitchOnClassCase> casesByHashCode = new TreeMap<>();
+        // switch on class.hashCode()
+        Map<Integer,ObjectHashCodeSwitchCase<Class<?>>> casesByHashCode = new TreeMap<>();
         for (GroupDef group : dict.getGroups()) {
             Class<?> groupType = (Class<?>) group.getGroupType();
-            int groupHash = groupType.getName().hashCode();
-            SwitchOnClassCase hashCase = casesByHashCode.get(groupHash);
+            int groupHash = groupType.hashCode();
+            ObjectHashCodeSwitchCase<Class<?>> hashCase = casesByHashCode.get(groupHash);
             if (hashCase == null) {
-                hashCase = new SwitchOnClassCase(groupHash);
-                casesByHashCode.put(hashCase.classNameHashCode, hashCase);
+                hashCase = new ObjectHashCodeSwitchCase<>(groupHash);
+                casesByHashCode.put(hashCase.hashCode, hashCase);
             }
             hashCase.add(groupType);
         }
@@ -278,17 +277,17 @@ public class CodeGenerator {
             }
             Label[] caseLabels = new Label[casesByHashCode.size()];
             i = 0;
-            for (SwitchOnClassCase hashCase : casesByHashCode.values()) {
+            for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
                 caseLabels[i++] = hashCase.label;
             }
             mv.visitLookupSwitchInsn(unknownHashLabel, caseValues, caseLabels);
         }
-        for (SwitchOnClassCase hashCase : casesByHashCode.values()) {
+        for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
             mv.visitLabel(hashCase.label);
             mv.visitFrame(F_SAME, 0, null, 0, null);
-            for (SwitchOnClassSecondaryCase classCase : hashCase.cases) {
+            for (ObjectSwitchCase<Class<?>> classCase : hashCase.cases) {
                 mv.visitVarInsn(ALOAD, classVariable);
-                mv.visitLdcInsn(classCase.clazz.getCanonicalName() + ".class");
+                mv.visitLdcInsn(classCase.object.getCanonicalName() + ".class");
                 mv.visitJumpInsn(IF_ACMPEQ, classCase.label);
             }
         }
@@ -301,9 +300,9 @@ public class CodeGenerator {
         mv.visitInsn(ATHROW);
 
         
-        for (SwitchOnClassCase hashCase : casesByHashCode.values()) {
-            for (SwitchOnClassSecondaryCase classCase : hashCase.cases) {
-                Class<?> groupType = classCase.clazz;
+        for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
+            for (ObjectSwitchCase<Class<?>> classCase : hashCase.cases) {
+                Class<?> groupType = classCase.object;
                 GroupDef group = dict.getGroup(groupType);
                 String groupDescriptor = Type.getDescriptor(groupType);
                 mv.visitLabel(classCase.label);
@@ -319,56 +318,6 @@ public class CodeGenerator {
 
         mv.visitMaxs(3, nextVar);
         mv.visitEnd();
-
-//
-//        mv.visitVarInsn(ALOAD, 2);
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-//        mv.visitVarInsn(ASTORE, 3);
-//        mv.visitVarInsn(ALOAD, 3);
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;", false);
-//        mv.visitVarInsn(ASTORE, 4);
-//        mv.visitInsn(ICONST_M1);
-//        mv.visitVarInsn(ISTORE, 5);
-//        mv.visitVarInsn(ALOAD, 4);
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "hashCode", "()I", false);
-//        Label l0 = new Label();
-//        Label l1 = new Label();
-//        mv.visitLookupSwitchInsn(l1, new int[] { 70822 }, new Label[] { l0 });
-//        mv.visitLabel(l0);
-//        mv.visitFrame(F_APPEND,3, new Object[] {"java/lang/Class", "java/lang/String", INTEGER}, 0, null);
-//        mv.visitVarInsn(ALOAD, 4);
-//        mv.visitLdcInsn("Foo");
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "equals", "(Ljava/lang/Object;)Z", false);
-//        mv.visitJumpInsn(IFEQ, l1);
-//        mv.visitInsn(ICONST_0);
-//        mv.visitVarInsn(ISTORE, 5);
-//        mv.visitLabel(l1);
-//        mv.visitFrame(F_SAME, 0, null, 0, null);
-//        mv.visitVarInsn(ILOAD, 5);
-//        Label l2 = new Label();
-//        Label unknownObjectTypeLabel = new Label();
-//        mv.visitLookupSwitchInsn(unknownObjectTypeLabel, new int[] { 0 }, new Label[] { l2 });
-//        mv.visitLabel(l2);
-//        mv.visitFrame(F_SAME, 0, null, 0, null);
-//        mv.visitVarInsn(ALOAD, 0);
-//        mv.visitVarInsn(ALOAD, 1);
-//        mv.visitVarInsn(ALOAD, 2);
-//        mv.visitTypeInsn(CHECKCAST, "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec1$Foo");
-//        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroupWithId", "(Ljava/io/OutputStream;Lcom/cinnober/msgcodec/blink/GeneratedJavaClassCodec1$Foo;)V", false);
-//        Label l4 = new Label();
-//        mv.visitJumpInsn(GOTO, l4);
-//
-//        mv.visitLabel(unknownObjectTypeLabel);
-//        mv.visitFrame(F_SAME, 0, null, 0, null);
-//        mv.visitVarInsn(ALOAD, 0);
-//        mv.visitVarInsn(ALOAD, 3);
-//        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", "unknownObjectType", "(Ljava/lang/Class;)Ljava/lang/IllegalArgumentException;", false);
-//        mv.visitInsn(ATHROW);
-//        mv.visitLabel(l4);
-//        mv.visitFrame(F_CHOP,2, null, 0, null);
-//        mv.visitInsn(RETURN);
-//        mv.visitMaxs(3, 6);
-//        mv.visitEnd();
     } 
 
     private void generateJReadStaticGroupSwitch(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
@@ -418,25 +367,24 @@ public class CodeGenerator {
         mv.visitEnd();
     }
 
-    private static class SwitchOnClassCase {
-        final int classNameHashCode;
+    private static class ObjectHashCodeSwitchCase<T> {
+        final int hashCode;
         final Label label = new Label();
-        final List<SwitchOnClassSecondaryCase> cases = new ArrayList<>();
+        final List<ObjectSwitchCase<T>> cases = new ArrayList<>();
 
-        SwitchOnClassCase(int classNameHashCode) {
-            this.classNameHashCode = classNameHashCode;
+        ObjectHashCodeSwitchCase(int hashCode) {
+            this.hashCode = hashCode;
         }
-        void add(Class<?> clazz) {
-            cases.add(new SwitchOnClassSecondaryCase(clazz, new Label()));
+        void add(T object) {
+            cases.add(new ObjectSwitchCase<T>(object, new Label()));
         }
     }
-    private static class SwitchOnClassSecondaryCase {
-        final Class<?> clazz;
+    private static class ObjectSwitchCase<T> {
+        final T object;
         final Label label;
 
-        SwitchOnClassSecondaryCase(
-                Class<?> clazz, Label label) {
-            this.clazz = clazz;
+        ObjectSwitchCase(T object, Label label) {
+            this.object = object;
             this.label = label;
         }
 
