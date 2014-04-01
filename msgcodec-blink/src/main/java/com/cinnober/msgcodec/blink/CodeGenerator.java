@@ -376,7 +376,7 @@ public class CodeGenerator {
             this.hashCode = hashCode;
         }
         void add(T object) {
-            cases.add(new ObjectSwitchCase<T>(object, new Label()));
+            cases.add(new ObjectSwitchCase<>(object, new Label()));
         }
     }
     private static class ObjectSwitchCase<T> {
