@@ -157,7 +157,7 @@ public class CodeGenerator {
                     null,
                     new String[] { "java/io/IOException" });
             writemv.visitCode();
-            int nextWriteVar = 3;
+            LocalVariable nextWriteVar = new LocalVariable(3);
 
             // write fields of super group
             if (group.getSuperGroup() != null) {
@@ -201,18 +201,21 @@ public class CodeGenerator {
                     }
                 }
                 // the output stream and the value is now on the stack
-                generateEncodeValue(writemv, field.isRequired(), field.getType(), javaClass, field.getComponentJavaClass());
+                generateEncodeValue(writemv, 1, nextWriteVar, field.isRequired(), field.getType(), javaClass, field.getComponentJavaClass(), dict, genClassInternalName);
             }
 
             // end write
             writemv.visitInsn(RETURN);
-            writemv.visitMaxs(4, nextWriteVar); // PENDING: maxStack
+            writemv.visitMaxs(4, nextWriteVar.get()); // PENDING: maxStack
             writemv.visitEnd();
         }
     }
 
-    private void generateEncodeValue(MethodVisitor mv, boolean required, TypeDef type,
-            Class<?> javaClass, Class<?> componentJavaClass) {
+    private void generateEncodeValue(MethodVisitor mv, int outputStreamVar, LocalVariable nextVar, 
+            boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, ProtocolDictionary dict, String genClassInternalName) {
+
+        type = dict.resolveToType(type, false);
+        GroupDef refGroup = dict.resolveToGroup(type);
 
         if (javaClass.isPrimitive() && !required) {
             box(mv, javaClass);
@@ -386,18 +389,192 @@ public class CodeGenerator {
                 break;
             case SEQUENCE:
                 if (javaClass.isArray()) {
-                    throw new RuntimeException("array sequence not supported yet (FIXME)"); // FIXME
+                    int sequenceVar = nextVar.next();
+                    mv.visitInsn(DUP);
+                    mv.visitVarInsn(ASTORE, sequenceVar);
+                    int lengthVar = nextVar.next();
+                    Label endLabel = new Label();
+                    if (required) {
+                        mv.visitFieldInsn(GETFIELD, Type.getInternalName(javaClass), "length", "I");
+                        mv.visitInsn(DUP);
+                        mv.visitVarInsn(ISTORE, lengthVar);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                    } else {
+                        Label nonNullLabel = new Label();
+                        mv.visitInsn(DUP);
+                        mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+                        // null
+                        mv.visitInsn(POP);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                        mv.visitJumpInsn(GOTO, endLabel);
+                        // not null
+                        mv.visitLabel(nonNullLabel);
+                        // PENDING: mv.visitFrame
+                        mv.visitFieldInsn(GETFIELD, Type.getInternalName(javaClass), "length", "I");
+                        mv.visitInsn(DUP);
+                        mv.visitVarInsn(ISTORE, lengthVar);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                    }
+                    // for loop
+                    int loopVar = nextVar.next();
+                    mv.visitInsn(ICONST_0);
+                    mv.visitVarInsn(ISTORE, loopVar);
+                    Label loopLabel = new Label();
+                    mv.visitLabel(loopLabel);
+                    // PENDING: mv.visitFrame
+                    mv.visitVarInsn(ILOAD, loopVar);
+                    mv.visitVarInsn(ILOAD, lengthVar);
+                    mv.visitJumpInsn(IF_ICMPGE, endLabel);
+                    mv.visitVarInsn(ALOAD, outputStreamVar);
+                    mv.visitVarInsn(ALOAD, sequenceVar);
+                    mv.visitVarInsn(ILOAD, loopVar);
+                    if (componentJavaClass == byte.class || componentJavaClass == boolean.class) {
+                        mv.visitInsn(BALOAD);
+                    } else if (componentJavaClass == short.class) {
+                        mv.visitInsn(SALOAD);
+                    } else if (componentJavaClass == int.class) {
+                        mv.visitInsn(IALOAD);
+                    } else if (componentJavaClass == long.class) {
+                        mv.visitInsn(LALOAD);
+                    } else if (componentJavaClass == float.class) {
+                        mv.visitInsn(FALOAD);
+                    } else if (componentJavaClass == double.class) {
+                        mv.visitInsn(DALOAD);
+                    } else {
+                        mv.visitInsn(AALOAD);
+                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
+                    }
+
+                    // encode the element
+                    TypeDef.Sequence seqType = (TypeDef.Sequence) type;
+                    generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+                    
+                    mv.visitIincInsn(loopVar, 1);
+                    mv.visitJumpInsn(GOTO, loopLabel);
+                    mv.visitLabel(endLabel);
+                    // PENDING: mv.visitFrame
                 } else if (javaClass == List.class) {
-                    throw new RuntimeException("list sequence not supported yet (FIXME)"); // FIXME
+                    int sequenceVar = nextVar.next();
+                    mv.visitInsn(DUP);
+                    mv.visitVarInsn(ASTORE, sequenceVar);
+                    int lengthVar = nextVar.next();
+                    Label endLabel = new Label();
+                    if (required) {
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+                        mv.visitInsn(DUP);
+                        mv.visitVarInsn(ISTORE, lengthVar);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                    } else {
+                        Label nonNullLabel = new Label();
+                        mv.visitInsn(DUP);
+                        mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+                        // null
+                        mv.visitInsn(POP);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                        mv.visitJumpInsn(GOTO, endLabel);
+                        // not null
+                        mv.visitLabel(nonNullLabel);
+                        // PENDING: mv.visitFrame
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+                        mv.visitInsn(DUP);
+                        mv.visitVarInsn(ISTORE, lengthVar);
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                    }
+                    // for loop, using iterator
+                    int iteratorVar = nextVar.next();
+                    mv.visitVarInsn(ALOAD, sequenceVar);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
+                    mv.visitVarInsn(ASTORE, iteratorVar);
+                    Label loopLabel = new Label();
+                    mv.visitLabel(loopLabel);
+                    // PENDING: mv.visitFrame
+                    mv.visitVarInsn(ALOAD, iteratorVar);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
+                    mv.visitJumpInsn(IFEQ, endLabel);
+                    mv.visitVarInsn(ALOAD, outputStreamVar);
+                    mv.visitVarInsn(ALOAD, iteratorVar);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
+                    if (componentJavaClass.isPrimitive()) {
+                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(componentJavaClass)));
+                        unbox(mv, componentJavaClass);
+                    } else {
+                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
+                    }
+
+                    // encode the element
+                    TypeDef.Sequence seqType = (TypeDef.Sequence) type;
+                    generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+
+                    mv.visitJumpInsn(GOTO, loopLabel);
+                    mv.visitLabel(endLabel);
+                    // PENDING: mv.visitFrame
                 } else {
                     throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
                 }
-                //break;
+                break;
             case REFERENCE:
+                if (refGroup != null) {
+                    if (required) {
+                        int instanceVar = nextVar.next();
+                        mv.visitVarInsn(ASTORE, instanceVar);
+                        mv.visitVarInsn(ALOAD, 0); // this
+                        mv.visitInsn(SWAP); // this and out
+                        mv.visitVarInsn(ALOAD, instanceVar);
+                        Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
+                        String refGroupDescriptor = Type.getDescriptor(refGroupType);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
+                                "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
+                    } else {
+                        int instanceVar = nextVar.next();
+                        mv.visitInsn(DUP);
+                        Label nonNullLabel = new Label();
+                        Label endLabel = new Label();
+                        mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+                        // null
+                        mv.visitInsn(POP);
+                        mv.visitInsn(ICONST_0); // false
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+                        mv.visitJumpInsn(GOTO, endLabel);
+
+                        // not null
+                        mv.visitLabel(nonNullLabel);
+                        // PENDING: mv.visitFrame
+                        mv.visitVarInsn(ASTORE, instanceVar);
+                        mv.visitInsn(ICONST_1); // true
+                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+                        mv.visitVarInsn(ALOAD, 0); // this
+                        mv.visitVarInsn(ALOAD, outputStreamVar);
+                        mv.visitVarInsn(ALOAD, instanceVar);
+                        Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
+                        String refGroupDescriptor = Type.getDescriptor(refGroupType);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
+                                "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
+                        mv.visitLabel(endLabel);
+                        // PENDING: mv.visitFrame
+                    }
+                } else {
+                    throw new IllegalArgumentException("Illegal reference: " + type);
+                }
+                break;
             case DYNAMIC_REFERENCE:
+                {
+                    // PENDING: validate that the instance class is a subclass of refGroup (unless null)
+                    int instanceVar = nextVar.next();
+                    mv.visitVarInsn(ASTORE, instanceVar);
+                    mv.visitVarInsn(ALOAD, 0); // this
+                    mv.visitInsn(SWAP); // this and out
+                    mv.visitVarInsn(ALOAD, instanceVar);
+                    if (required) {
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+                                "writeDynamicGroup", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
+                    } else {
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+                                "writeDynamicGroupNull", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
+                    }
+                }
+                break;
             default:
-                // FIXME: throw exception here
-                mv.visitInsn(POP); // just a marker
+                throw new RuntimeException("Unhandled case: " + type.getType());
         }
     }
 
@@ -730,6 +907,20 @@ public class CodeGenerator {
             this.label = label;
         }
 
+    }
+
+    private static class LocalVariable {
+        private int nextVariable;
+        LocalVariable(int nextVariable) {
+            this.nextVariable = nextVariable;
+        }
+
+        int next() {
+            return nextVariable++;
+        }
+        int get() {
+            return nextVariable;
+        }
     }
 
 }

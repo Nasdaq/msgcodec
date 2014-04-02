@@ -14,6 +14,7 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.List;
 
 /**
  * Experimental example of a subclass of GeneratedJavaClassCodec.
@@ -171,6 +172,22 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
 
         // -- accessor to Integer.class
         Integer i4 = (Integer)accessor2.getValue(foo);
+
+        // -- sequence
+        long[] sequence = null;
+        int len = sequence.length;
+        BlinkOutput.writeUInt32(out, len);
+        for (int i=0; i<len; i++) {
+            BlinkOutput.writeUInt64(out, sequence[i]);
+        }
+
+        // -- sequence2
+        List<Long> sequence2 = null;
+        int len2 = sequence2.size();
+        BlinkOutput.writeUInt32(out, len2);
+        for (long val : sequence2) {
+            BlinkOutput.writeUInt64(out, val);
+        }
     }
 
     Accessor accessor1; // Foo.fieldX

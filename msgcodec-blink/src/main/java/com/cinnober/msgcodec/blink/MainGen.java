@@ -20,7 +20,11 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Sequence;
+import java.util.List;
 import java.util.logging.LogManager;
 
 /**
@@ -45,6 +49,14 @@ public class MainGen {
         int i32;
         Integer i32Obj;
         Bar bar;
+        double[] doubles;
+        @Required
+        double[] doublesReq;
+
+        @Sequence(String.class)
+        List<String> strings;
+        @Required @Sequence(String.class)
+        List<String> stringsReq;
     }
     public static class Bar {
         Bar bar;
@@ -52,6 +64,9 @@ public class MainGen {
     @Id(456)
     public static class Foo2 extends Foo {
         String string;
+
+        @Dynamic
+        Foo anyFoo;
     }
 
 }
