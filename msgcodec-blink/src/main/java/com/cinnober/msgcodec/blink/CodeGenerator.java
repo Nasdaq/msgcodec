@@ -89,6 +89,40 @@ public class CodeGenerator {
         return bytes;
     }
 
+    /**
+     * Generates a class that extends {@link GeneratedJavaClassCodec).
+     *
+     * <p>Generated layout:
+     * <pre>
+     * // fields
+     * Factory factory_MessageType1; // unless a ConstructorFactory
+     * Accessor accessor_MessageType1_field1; // unless a FieldAccessor or a IgnoreAccessor
+     * ...
+     *
+     * // methods
+     * Constructor(BlinkCodec, ProtocolDictionary);
+     *
+     * Object readStaticGroup(int groupId, LimitInputStream); // switch on groupId
+     * void writeStaticGroup(OutputStream, Object); // switch on class
+     * 
+     * void readStaticGroup(LimitInputStream, MessageType1);
+     * void readStaticGroup(LimitInputStream, MessageType2);
+     * ...
+     * MessageType1 readStaticGroup_MessageType1(LimitInputStream);
+     * MessageType2 readStaticGroup_MessageType2(LimitInputStream);
+     * ...
+     * void writeStaticGroup(OutputStream, MessageType1);
+     * void writeStaticGroup(OutputStream, MessageType2);
+     * ...
+     * void writeStaticGroupWithId(OutputStream, MessageType1);
+     * void writeStaticGroupWithId(OutputStream, MessageType2);
+     * ...
+     * </pre>
+     *
+     * @param cv
+     * @param dict
+     * @param suffix
+     */
     private void generateJCodec(ClassVisitor cv, ProtocolDictionary dict, int suffix) {
 
         final String genClassInternalName = GENERATED_CLASS_INTERNALNAME + suffix;
@@ -211,6 +245,21 @@ public class CodeGenerator {
         }
     }
 
+    /**
+     * Generate instructions to decode the specified value type.
+     * The values on the stack are; the output stream and the value to be encoded.
+     * After this call these values are expected to be consumed.
+     *
+     * @param mv the method visitor, open for code instructions.
+     * @param outputStreamVar the variable instance that contains the output stream.
+     * @param nextVar the next variable
+     * @param required true if the field is required, otherwise false.
+     * @param type the field type
+     * @param javaClass the field java class
+     * @param componentJavaClass the field component java class, or null if not a sequence type
+     * @param dict the protocol dictionary, not null
+     * @param genClassInternalName the internal name of the generated class
+     */
     private void generateEncodeValue(MethodVisitor mv, int outputStreamVar, LocalVariable nextVar, 
             boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, ProtocolDictionary dict, String genClassInternalName) {
 
