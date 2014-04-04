@@ -684,7 +684,7 @@ public class CodeGenerator {
                     null,
                     new String[] { "java/io/IOException" });
             readmv.visitCode();
-            int nextReadVar = 3;
+            LocalVariable nextReadVar = new LocalVariable(3);
 
             // read fields of super group
             if (group.getSuperGroup() != null) {
@@ -702,13 +702,170 @@ public class CodeGenerator {
 
             // fields
             for (FieldDef field : group.getFields()) {
-                // TODO: generate read instructions
+                Class<?> javaClass = field.getJavaClass();
+
+                Accessor<?,?> accessor = field.getAccessor();
+                if (accessor.getClass() == FieldAccessor.class) {
+                    Field f = ((FieldAccessor)accessor).getField();
+                    readmv.visitVarInsn(ALOAD, 2); // instance
+                    // value
+                    readmv.visitVarInsn(ALOAD, 1); // input stream
+                    generateDecodeValue(readmv, 1, nextReadVar, field.isRequired(), field.getType(), javaClass,
+                            field.getComponentJavaClass(), dict, genClassInternalName);
+                    // store
+                    readmv.visitFieldInsn(PUTFIELD, Type.getInternalName(f.getDeclaringClass()), f.getName(), Type.getDescriptor(f.getType()));
+                } else if(accessor.getClass() == IgnoreAccessor.class) {
+                    // value
+                    readmv.visitVarInsn(ALOAD, 1); // input stream
+                    generateDecodeValue(readmv, 1, nextReadVar, field.isRequired(), field.getType(), javaClass,
+                            field.getComponentJavaClass(), dict, genClassInternalName);
+                    // discard
+                    readmv.visitInsn(POP);
+                } else {
+                    // accessor
+                    readmv.visitFieldInsn(GETFIELD, genClassInternalName, "accessor_" + group.getName() + "_" + field.getName(), "com/cinnober/msgcodec/Accessor");
+                    // instance
+                    readmv.visitVarInsn(ALOAD, 2); // instance
+                    // value
+                    readmv.visitVarInsn(ALOAD, 1); // input stream
+                    generateDecodeValue(readmv, 1, nextReadVar, field.isRequired(), field.getType(), javaClass,
+                            field.getComponentJavaClass(), dict, genClassInternalName);
+                    if (javaClass.isPrimitive()) {
+                        box(readmv, javaClass);
+                    }
+                    readmv.visitInsn(SWAP); // instance and value
+                    // store
+                    readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "setValue", "(Ljava/lang/Object;Ljava/lang/Object;)V", true);
+                }
             }
 
             readmv.visitInsn(RETURN);
-            readmv.visitMaxs(4, nextReadVar); // PENDING: maxStack
+            readmv.visitMaxs(4, nextReadVar.get()); // PENDING: maxStack
             readmv.visitEnd();
         }
+    }
+
+    private void generateDecodeValue(MethodVisitor mv, int inputStreamVar, LocalVariable nextVar,
+            boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, ProtocolDictionary dict, String genClassInternalName) {
+        type = dict.resolveToType(type, false);
+        GroupDef refGroup = dict.resolveToGroup(type);
+
+        String blinkInput = "com/cinnober/msgcodec/blink/BlinkInput";
+//        switch (type.getType()) {
+//            fortsätt här
+//            case INT8:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt8", "(Ljava/io/OutputStream;B)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt8Null", "(Ljava/io/OutputStream;Ljava/lang/Byte;)V", false);
+//                }
+//                break;
+//            case UINT8:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt8", "(Ljava/io/OutputStream;B)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt8Null", "(Ljava/io/OutputStream;Ljava/lang/Byte;)V", false);
+//                }
+//                break;
+//            case INT16:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt16", "(Ljava/io/OutputStream;S)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt16Null", "(Ljava/io/OutputStream;Ljava/lang/Short;)V", false);
+//                }
+//                break;
+//            case UINT16:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt16", "(Ljava/io/OutputStream;S)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt16Null", "(Ljava/io/OutputStream;Ljava/lang/Short;)V", false);
+//                }
+//                break;
+//            case INT32:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+//                }
+//                break;
+//            case UINT32:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+//                }
+//                break;
+//            case INT64:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeInt64Null", "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+//                }
+//                break;
+//            case UINT64:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt64", "(Ljava/io/OutputStream;J)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeUInt64Null", "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+//                }
+//                break;
+//            case FLOAT32:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeFloat32", "(Ljava/io/OutputStream;F)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeFloat32Null", "(Ljava/io/OutputStream;Ljava/lang/Float;)V", false);
+//                }
+//                break;
+//            case FLOAT64:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeFloat64", "(Ljava/io/OutputStream;D)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeFloat64Null", "(Ljava/io/OutputStream;Ljava/lang/Double;)V", false);
+//                }
+//                break;
+//            case BIGINT:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBigInt", "(Ljava/io/OutputStream;Ljava/math/BigInteger;)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBigIntNull", "(Ljava/io/OutputStream;Ljava/math/BigInteger;)V", false);
+//                }
+//                break;
+//            case DECIMAL:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeDecimal", "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeDecimalNull", "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+//                }
+//                break;
+//            case BIGDECIMAL:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBigDecimal", "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBigDecimalNull", "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+//                }
+//                break;
+//            case STRING:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeStringUTF8", "(Ljava/io/OutputStream;Ljava/lang/String;)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeStringUTF8Null", "(Ljava/io/OutputStream;Ljava/lang/String;)V", false);
+//                }
+//                break;
+//            case BINARY:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBinary", "(Ljava/io/OutputStream;[B)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBinaryNull", "(Ljava/io/OutputStream;|B)V", false);
+//                }
+//                break;
+//            case BOOLEAN:
+//                if (required) {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+//                } else {
+//                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "writeBooleanNull", "(Ljava/io/OutputStream;Ljava/lang/Boolean;)V", false);
+//                }
+//                break;
+//        }
     }
 
     private void generateJConstructorAndFields(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
