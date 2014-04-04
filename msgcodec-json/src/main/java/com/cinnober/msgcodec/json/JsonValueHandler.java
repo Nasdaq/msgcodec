@@ -380,9 +380,19 @@ public abstract class JsonValueHandler<T> {
             this.timeFormat = TimeFormat.getTimeFormat(unit, epoch);
         }
 
-        /** Convert the value to a long value for the specified epoch and time unit. */
+        /**
+         * Convert the value to a long value for the specified epoch and time unit.
+         *
+         * @param value the time value, not null.
+         * @return the long value for the specified epoch and time unit.
+         */
         protected abstract long convertToLong(T value);
-        /** Convert the value from a long value for the specified epoch and time unit. */
+        /** 
+         * Convert the value from a long value for the specified epoch and time unit.
+         *
+         * @param value the long value for the specified epoch and time unit.
+         * @return the time value, not null.
+         */
         protected abstract T convertFromLong(long value);
 
         @Override
