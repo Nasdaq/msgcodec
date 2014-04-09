@@ -588,6 +588,10 @@ public abstract class JsonValueHandler<T> {
             }
             return list;
         }
+
+        public JsonValueHandler getComponentHandler() {
+            return componentHandler;
+        }
     }
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static class ArraySequenceHandler extends JsonValueHandler<Object> {
@@ -627,6 +631,10 @@ public abstract class JsonValueHandler<T> {
 
             return array;
         }
+
+        public JsonValueHandler getComponentHandler() {
+            return componentHandler;
+        }
     }
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static class FieldHandler {
@@ -650,6 +658,10 @@ public abstract class JsonValueHandler<T> {
         void readValue(Object group, JsonParser p) throws IOException {
             Object value = valueHandler.readValue(p);
             accessor.setValue(group, value);
+        }
+
+        public JsonValueHandler getValueHandler() {
+            return valueHandler;
         }
     }
 

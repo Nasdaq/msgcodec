@@ -18,13 +18,6 @@
 package com.cinnober.msgcodec.json;
 
 import com.cinnober.msgcodec.DecodeException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
@@ -32,14 +25,22 @@ import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Sequence;
+import com.cinnober.msgcodec.json.JsonValueHandler.ArraySequenceHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.DynamicGroupHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.FieldHandler;
+import com.cinnober.msgcodec.json.JsonValueHandler.ListSequenceHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.StaticGroupHandler;
 import com.cinnober.msgcodec.util.TimeFormat;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * The JSON codec can serialize and deserialize Java objects to/from JSON.
@@ -139,6 +140,34 @@ public class JsonCodec implements StreamCodec {
         }
     }
 
+    /**
+     * Returns the JSON value handler for the specified group name and any field names.
+     * The value handler can be used to encode and decode a field value.
+     *
+     * @param groupName the name of the group, not null.
+     * @param fieldNames the field names, if any.
+     * @return the JSON value handler.
+     */
+    public JsonValueHandler<?> getValueHandler(String groupName, String ... fieldNames) {
+        JsonValueHandler<?> valueHandler = lookupGroupByName(groupName);
+        for (String fieldName : fieldNames) {
+            if (valueHandler instanceof StaticGroupHandler) {
+                StaticGroupHandler groupHandler = (StaticGroupHandler) valueHandler;
+                FieldHandler fieldHandler = groupHandler.getFields().get(fieldName);
+                if (fieldHandler == null) {
+                    throw new IllegalArgumentException("No such field '" + fieldName + "'");
+                }
+                valueHandler = fieldHandler.getValueHandler();
+            } else if (valueHandler instanceof ArraySequenceHandler) {
+                valueHandler = ((ArraySequenceHandler)valueHandler).getComponentHandler();
+            } else if (valueHandler instanceof ListSequenceHandler) {
+                valueHandler = ((ListSequenceHandler)valueHandler).getComponentHandler();
+            } else {
+                throw new IllegalArgumentException("Cannot get sub field '" + fieldName + "' of primitive type");
+            }
+        }
+        return valueHandler;
+    }
 
     @Override
     public void encode(Object group, OutputStream out) throws IOException {
