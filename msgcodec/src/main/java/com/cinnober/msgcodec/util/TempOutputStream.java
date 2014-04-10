@@ -335,7 +335,7 @@ public class TempOutputStream extends OutputStream {
                 return -1;
             }
 
-            return currentBuffer[currentPosition++];
+            return 0xff & currentBuffer[currentPosition++];
         }
 
         @Override
