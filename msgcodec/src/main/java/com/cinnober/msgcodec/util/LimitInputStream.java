@@ -39,7 +39,7 @@ public class LimitInputStream extends InputStream {
      *
      * @param in the wrapped input stream.
      */
-    protected LimitInputStream(InputStream in) {
+    public LimitInputStream(InputStream in) {
         this.in = in;
     }
 

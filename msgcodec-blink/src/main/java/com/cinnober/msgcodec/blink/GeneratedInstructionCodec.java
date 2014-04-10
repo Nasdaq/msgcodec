@@ -70,35 +70,38 @@ class GeneratedInstructionCodec extends GeneratedCodec {
             int index = 0;
             for (FieldDef fieldDef : groupDef.getFields()) {
                 @SuppressWarnings("rawtypes")
-                FieldInstruction fieldInstruction = createFieldInstruction(dictionary, fieldDef, fieldDef.getType());
+                FieldInstruction fieldInstruction = createFieldInstruction(dictionary, fieldDef, fieldDef.getType(),
+                        fieldDef.getJavaClass(), fieldDef.getComponentJavaClass());
                 groupInstruction.initFieldInstruction(index++, fieldInstruction);
             }
         }
     }
 
     @SuppressWarnings("rawtypes")
-    private FieldInstruction createFieldInstruction(ProtocolDictionary dictionary, FieldDef field, TypeDef type) {
+    private FieldInstruction createFieldInstruction(ProtocolDictionary dictionary, FieldDef field, TypeDef type,
+            Class<?> javaClass, Class<?> componentJavaClass) {
         type = dictionary.resolveToType(type, true);
         GroupDef typeGroup = dictionary.resolveToGroup(type);
         boolean required = field == null || field.isRequired();
         if (type instanceof TypeDef.Sequence) {
             // --- SEQUENCE ---
             FieldInstruction elementInstruction =
-                    createFieldInstruction(dictionary, null, ((TypeDef.Sequence) type).getComponentType());
-            if (field.getJavaClass().isArray()) {
+                    createFieldInstruction(dictionary, null, ((TypeDef.Sequence) type).getComponentType(),
+                            componentJavaClass, null);
+            if (javaClass.isArray()) {
                 if (required) {
                     return new FieldInstruction.ArraySequence(field, elementInstruction);
                 } else {
                     return new FieldInstruction.ArraySequenceNull(field, elementInstruction);
                 }
-            } else if (List.class.equals(field.getJavaClass())) {
+            } else if (List.class.equals(javaClass)) {
                 if (required) {
                     return new FieldInstruction.ListSequence(field, elementInstruction);
                 } else {
                     return new FieldInstruction.ListSequenceNull(field, elementInstruction);
                 }
             } else {
-                throw new RuntimeException("Unhandled sequence type: " + field.getJavaClass().getName());
+                throw new RuntimeException("Unhandled sequence type: " + javaClass.getName());
             }
         } else {
             // --- SIMPLE TYPE ---
@@ -200,42 +203,42 @@ class GeneratedInstructionCodec extends GeneratedCodec {
                     return new FieldInstruction.BinaryNull(field);
                 }
             case ENUM:
-                if (field.getJavaClass().isEnum()) {
+                if (javaClass.isEnum()) {
                     if (required) {
                         return new FieldInstruction.Enumeration(field, (TypeDef.Enum) type);
                     } else {
                         return new FieldInstruction.EnumerationNull(field, (TypeDef.Enum) type);
                     }
-                } else if (field.getJavaClass().equals(int.class) || field.getJavaClass().equals(Integer.class)) {
+                } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
                     if (required) {
                         return new FieldInstruction.IntEnumeration(field);
                     } else {
                         return new FieldInstruction.IntEnumerationNull(field);
                     }
                 } else {
-                    throw new RuntimeException("Unhandled ENUM java type: " + field.getJavaClass());
+                    throw new RuntimeException("Unhandled ENUM java type: " + javaClass);
                 }
             case TIME:
-                if (field.getJavaClass().equals(Date.class)) {
+                if (javaClass.equals(Date.class)) {
                     if (required) {
                         return new FieldInstruction.DateTime(field);
                     } else {
                         return new FieldInstruction.DateTimeNull(field);
                     }
-                } else if (field.getJavaClass().equals(long.class) || field.getJavaClass().equals(Long.class)) {
+                } else if (javaClass.equals(long.class) || javaClass.equals(Long.class)) {
                     if (required) {
                         return new FieldInstruction.Int64(field);
                     } else {
                         return new FieldInstruction.Int64Null(field);
                     }
-                } else if (field.getJavaClass().equals(int.class) || field.getJavaClass().equals(Integer.class)) {
+                } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
                     if (required) {
                         return new FieldInstruction.Int32(field);
                     } else {
                         return new FieldInstruction.Int32Null(field);
                     }
                 } else {
-                    throw new RuntimeException("Unhandled time type: "+field.getJavaClass().getName());
+                    throw new RuntimeException("Unhandled time type: "+javaClass.getName());
                 }
             case REFERENCE: // static group
                 if (required) {

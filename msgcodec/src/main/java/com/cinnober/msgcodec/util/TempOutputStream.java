@@ -17,12 +17,14 @@
  */
 package com.cinnober.msgcodec.util;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Objects;
 
 /**
@@ -272,5 +274,89 @@ public class TempOutputStream extends OutputStream {
         }
         throw new Error("Internal error. start=" + start + ", end=" + end +
                 ", bufferStart=" + bufferStart + ", bufferEnd=" + bufferEnd);
+    }
+
+    /**
+     * Returns an input stream view which can be used to read bytes from this output stream.
+     * 
+     * @param start the position of the first byte to read
+     * @return the input stream, not null.
+     * @throws IOException if the start position is beyond the end of this temp output stream.
+     */
+    public InputStream getInputStream(int start) throws IOException {
+        return new InputStreamView(buffers.iterator(), start);
+    }
+
+    private static class InputStreamView extends InputStream {
+        private static final byte[] EMPTY_BUFFER = new byte[0];
+        private final Iterator<byte[]> buffers;
+        /** The current (last) buffer. */
+        private byte[] currentBuffer;
+        /** The next byte to read in currentBuffer. */
+        private int currentPosition;
+
+        public InputStreamView(Iterator<byte[]> buffers, int start) throws EOFException {
+            this.buffers = buffers;
+            this.currentBuffer = buffers.next();
+            this.currentPosition = start;
+            drainBuffers();
+        }
+        
+        @Override
+        public long skip(long n) throws IOException {
+            currentPosition += n;
+            drainBuffers();
+            return n;
+        }
+
+        /**
+         * Consumes buffers up to the currentPosition.
+         * @return true if there are additional bytes remaining.
+         * @throws EOFException if the bytes could not be consumed;
+         */
+        private boolean drainBuffers() throws EOFException {
+            while (currentPosition >= currentBuffer.length) {
+                currentPosition -= currentBuffer.length;
+                if (buffers.hasNext()) {
+                    currentBuffer = buffers.next();
+                } else {
+                    currentBuffer = EMPTY_BUFFER;
+                    if (currentPosition > 0) {
+                        throw new EOFException();
+                    }
+                }
+            }
+            return currentPosition < currentBuffer.length;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (!drainBuffers()) {
+                return -1;
+            }
+
+            return currentBuffer[currentPosition++];
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (!drainBuffers()) {
+                return -1;
+            }
+
+            len = Math.min(available(), len);
+            System.arraycopy(currentBuffer, currentPosition, b, off, len);
+            currentPosition += len;
+            return len;
+        }
+
+        @Override
+        public int available() throws IOException {
+            drainBuffers();
+            return currentBuffer.length - currentPosition;
+        }
+
+
+
     }
 }

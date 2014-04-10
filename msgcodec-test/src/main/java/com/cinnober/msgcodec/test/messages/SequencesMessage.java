@@ -23,6 +23,7 @@ import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
+import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -54,6 +55,11 @@ public class SequencesMessage extends MsgObject {
     @Required
     public long[] arrayLongsReq;
 
+    @Required @Time
+    public long[] arrayTime;
+
+    @Sequence(Long.class) @Time
+    public List<Long> listTime;
 
     @Sequence(Integer.class)
     public List<Integer> listInts;
@@ -89,6 +95,7 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayTime = new long[]{};
 
         msg = new SequencesMessage();
         messages.put("arrayObjs", msg);
@@ -96,6 +103,7 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayTime = new long[]{};
         msg.arrayEmployees = new Employee[] { createEmployee("Bob", 123), createEmployee("Alice", 456) };
 
         return messages;
