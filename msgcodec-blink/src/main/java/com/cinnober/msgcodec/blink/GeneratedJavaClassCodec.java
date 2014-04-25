@@ -23,9 +23,9 @@ import java.util.Map;
  *
  * @author mikael brannstrom
  */
-abstract class GeneratedJavaClassCodec extends GeneratedCodec {
+public abstract class GeneratedJavaClassCodec extends GeneratedCodec {
 
-    GeneratedJavaClassCodec(BlinkCodec codec, ProtocolDictionary dict) {
+    public GeneratedJavaClassCodec(BlinkCodec codec, ProtocolDictionary dict) {
         super(codec);
     }
 

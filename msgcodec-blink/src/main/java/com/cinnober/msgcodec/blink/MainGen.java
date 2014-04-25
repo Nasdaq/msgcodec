@@ -18,12 +18,17 @@
 
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
+import com.cinnober.msgcodec.util.ByteArrays;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.LogManager;
 
@@ -39,34 +44,49 @@ public class MainGen {
 
 
         ProtocolDictionary dict = new ProtocolDictionaryBuilder().build(Foo.class, Bar.class, Foo2.class);
-        CodeGenerator codeGen = new CodeGenerator();
-        byte[] generateClass = codeGen.generateClass(dict, 3);
-        System.out.println("done! " + generateClass.length + " bytes");
+        System.out.println("dict: " + dict);
+//        CodeGenerator codeGen = new CodeGenerator();
+//        byte[] generateClass = codeGen.generateClass(dict, 3);
+//        System.out.println("done! " + generateClass.length + " bytes");
+
+        BlinkCodec codec = new BlinkCodec(dict);
+        Thread.sleep(100); // just make sure the logging output comes before stdout
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Foo foo = new Foo();
+        foo.i32 = 123;
+        foo.stringsReq = Arrays.asList("one", "two");
+        codec.encode(foo, out);
+        System.out.println("HEX: " + ByteArrays.toHex(out.toByteArray()));
+        System.out.println("Decoded: "+codec.decode(new ByteArrayInputStream(out.toByteArray())));
+
+
+        System.out.println("Yay!");
+
     }
 
     @Id(123)
-    public static class Foo {
-        int i32;
-        Integer i32Obj;
-        Bar bar;
-        double[] doubles;
-        @Required
-        double[] doublesReq;
+    public static class Foo extends MsgObject {
+        public int i32;
+        public Integer i32Obj;
+        public Bar bar;
+//        double[] doubles;
+//        @Required
+//        double[] doublesReq;
 
         @Sequence(String.class)
-        List<String> strings;
+        public List<String> strings;
         @Required @Sequence(String.class)
-        List<String> stringsReq;
+        public List<String> stringsReq;
     }
-    public static class Bar {
-        Bar bar;
+    public static class Bar extends MsgObject {
+        public Bar bar;
     }
     @Id(456)
     public static class Foo2 extends Foo {
-        String string;
+        public String string;
 
         @Dynamic
-        Foo anyFoo;
+        public Foo anyFoo;
     }
 
 }

@@ -30,10 +30,12 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
     @Override
     protected void writeStaticGroupWithId(OutputStream out, Object obj) throws IOException {
         Class javaClass = obj.getClass();
-        switch(javaClass.getName()) {
-            case "Foo":
-                writeStaticGroupWithId(out, (Foo)obj);
-                break;
+        switch(javaClass.hashCode()) {
+            case 123:
+                if (javaClass == Foo.class) {
+                    writeStaticGroupWithId(out, (Foo)obj);
+                    break;
+                }
             default:
                 throw unknownObjectType(javaClass);
         }
@@ -103,6 +105,12 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
 
         // -- ignoreaccessor
         BlinkInput.skipInt32(in);
+
+        // -- sequence array
+        int len1 = BlinkInput.readUInt32(in);
+        int[] a1 = new int[len1];
+        double[] a2 = new double[len1];
+        String[] a3 = new String[len1];
         
         
         return group;

@@ -28,6 +28,10 @@ import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
 import com.cinnober.msgcodec.util.TempOutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The Blink codec can serialize and deserialize Java objects according to
@@ -85,7 +89,25 @@ public class BlinkCodec implements StreamCodec {
             this.internalBuffer = null;
             this.internalStream = null;
         }
-        generatedCodec = new GeneratedInstructionCodec(this, dictionary);
+
+
+        GeneratedCodec generatedCodecTmp;
+        Class<GeneratedCodec> generatedCodecClass =
+                GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(dictionary);
+
+        if (generatedCodecClass != null) {
+            try {
+                Constructor<GeneratedCodec> constructor =
+                        generatedCodecClass.getConstructor(new Class<?>[]{ BlinkCodec.class, ProtocolDictionary.class });
+                generatedCodecTmp = constructor.newInstance(this, dictionary);
+            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
+                    IllegalArgumentException | InvocationTargetException e) {
+                generatedCodecTmp = new GeneratedInstructionCodec(this, dictionary);
+            }
+        } else {
+            generatedCodecTmp = new GeneratedInstructionCodec(this, dictionary);
+        }
+        generatedCodec = generatedCodecTmp;
     }
 
     @Override
