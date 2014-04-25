@@ -67,7 +67,7 @@ public class MainGen {
 
     @Id(123)
     public static class Foo extends MsgObject {
-        public int i32;
+        private int i32;
         public Integer i32Obj;
         public Bar bar;
         public double[] doubles;

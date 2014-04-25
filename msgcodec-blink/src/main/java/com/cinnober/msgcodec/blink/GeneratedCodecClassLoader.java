@@ -53,7 +53,7 @@ class GeneratedCodecClassLoader extends ClassLoader {
                 try {
                     codecClass = generateCodecClass(dictionary, nextClassSuffix++);
                 } catch (Exception e) {
-                    log.log(Level.INFO, "Could not generate codec class for dictionary uid {0}", uid);
+                    log.log(Level.INFO, "Could not generate codec class for dictionary uid " + uid, e);
                 }
                 codecClassesByDictionaryUID.put(uid, codecClass);
             }

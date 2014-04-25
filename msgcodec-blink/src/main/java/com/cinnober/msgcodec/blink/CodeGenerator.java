@@ -227,12 +227,13 @@ public class CodeGenerator {
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
                     writemv.visitInsn(NULL);
                 } else {
-                    writemv.visitVarInsn(ALOAD, 2);
+                    writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
                             "accessor_" + group.getName() + "_" + field.getName(),
-                            "Lcom/cinnober/msgcodec/Accessor;");
-                    writemv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "getValue",
-                            "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+                            Type.getDescriptor(accessor.getClass()));
+                    writemv.visitVarInsn(ALOAD, 2); // instance
+                    writemv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(accessor.getClass()), "getValue",
+                            "(Ljava/lang/Object;)Ljava/lang/Object;", false);
                     if (javaClass.isPrimitive()) {
                         writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(javaClass)));
                         unbox(writemv, javaClass);
@@ -254,6 +255,11 @@ public class CodeGenerator {
     private static boolean isPublicFieldAccessor(Accessor<?,?> accessor) {
         return accessor.getClass() == FieldAccessor.class &&
                 Modifier.isPublic(((FieldAccessor)accessor).getField().getModifiers());
+    }
+
+    public static boolean isPublicConstructorFactory(Factory<?> factory) {
+        return factory.getClass() == ConstructorFactory.class &&
+                Modifier.isPublic(((ConstructorFactory)factory).getConstructor().getModifiers());
     }
 
 
@@ -656,7 +662,7 @@ public class CodeGenerator {
             int nextReadVar = 2;
 
             Factory<?> factory = group.getFactory();
-            if (factory.getClass() == ConstructorFactory.class) {
+            if (isPublicConstructorFactory(factory)) {
                 // read, create instance
                 readmv.visitTypeInsn(NEW, groupInternalName);
                 readmv.visitInsn(DUP);
@@ -664,7 +670,9 @@ public class CodeGenerator {
             } else {
                 // read, create instance
                 readmv.visitVarInsn(ALOAD, 0); // this
-                readmv.visitFieldInsn(GETFIELD, genClassInternalName, "factory_" + group.getName(), "Lcom/cinnober/msgcodec/Factory;");
+                readmv.visitFieldInsn(GETFIELD, genClassInternalName, 
+                        "factory_" + group.getName(),
+                        Type.getDescriptor(factory.getClass()));
                 readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Factory", "newInstance",
                         "()Ljava/lang/Object;", true);
                 readmv.visitTypeInsn(CHECKCAST, groupInternalName);
@@ -736,7 +744,10 @@ public class CodeGenerator {
                     readmv.visitInsn(POP);
                 } else {
                     // accessor
-                    readmv.visitFieldInsn(GETFIELD, genClassInternalName, "accessor_" + group.getName() + "_" + field.getName(), "Lcom/cinnober/msgcodec/Accessor;");
+                    readmv.visitVarInsn(ALOAD, 0);
+                    readmv.visitFieldInsn(GETFIELD, genClassInternalName, 
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            Type.getDescriptor(accessor.getClass()));
                     // instance
                     readmv.visitVarInsn(ALOAD, 2); // instance
                     // value
@@ -746,14 +757,14 @@ public class CodeGenerator {
                     if (javaClass.isPrimitive()) {
                         box(readmv, javaClass);
                     }
-                    readmv.visitInsn(SWAP); // instance and value
                     // store
-                    readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "setValue", "(Ljava/lang/Object;Ljava/lang/Object;)V", true);
+                    readmv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(accessor.getClass()), "setValue",
+                            "(Ljava/lang/Object;Ljava/lang/Object;)V", false);
                 }
             }
 
             readmv.visitInsn(RETURN);
-            readmv.visitMaxs(5, nextReadVar.get()); // PENDING: maxStack
+            readmv.visitMaxs(6, nextReadVar.get()); // PENDING: maxStack
             readmv.visitEnd();
         }
     }
@@ -1129,9 +1140,11 @@ public class CodeGenerator {
             //String groupInternalName = Type.getInternalName(groupType);
 
             Factory<?> factory = group.getFactory();
-            if (factory.getClass() != ConstructorFactory.class) {
+            if (!isPublicConstructorFactory(factory)) {
                 // field
-                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "factory_" + group.getName(), "Lcom/cinnober/msgcodec/Factory;", null, null);
+                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, 
+                        "factory_" + group.getName(),
+                        Type.getDescriptor(factory.getClass()), null, null);
                 fv.visitEnd();
 
                 // ctor, init field
@@ -1140,8 +1153,46 @@ public class CodeGenerator {
                 ctormv.visitLdcInsn(group.getName());
                 ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
                         "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef", false);
-                ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, "factory_" + group.getName(), "Lcom/cinnober/msgcodec/Factory;");
+                ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getFactory",
+                        "()Lcom/cinnober/msgcodec/Factory;", false);
+                ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(factory.getClass()));
+                ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, 
+                        "factory_" + group.getName(),
+                        Type.getDescriptor(factory.getClass()));
             }
+
+            for (FieldDef field : group.getFields()) {
+                Accessor<?,?> accessor = field.getAccessor();
+                if (isPublicFieldAccessor(accessor)) {
+                    // ok
+                } else if (accessor.getClass() == IgnoreAccessor.class) {
+                    // ok
+                } else {
+                    // field
+                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            Type.getDescriptor(accessor.getClass()), null, null);
+                    fv.visitEnd();
+
+                    // ctor, init field
+                    ctormv.visitVarInsn(ALOAD, 0); // this
+                    ctormv.visitVarInsn(ALOAD, 2); // dict
+                    ctormv.visitLdcInsn(group.getName());
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
+                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef;", false);
+                    ctormv.visitLdcInsn(field.getName());
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getField",
+                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/FieldDef;", false);
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/FieldDef", "getAccessor",
+                            "()Lcom/cinnober/msgcodec/Accessor;", false);
+                    ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(accessor.getClass()));
+                    ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            Type.getDescriptor(accessor.getClass()));
+                }
+
+            }
+
         }
 
         ctormv.visitInsn(RETURN);
