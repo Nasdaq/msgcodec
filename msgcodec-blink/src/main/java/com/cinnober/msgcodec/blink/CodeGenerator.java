@@ -32,6 +32,7 @@ import com.cinnober.msgcodec.util.ByteArrays;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -219,7 +220,7 @@ public class CodeGenerator {
 
                 Class<?> javaClass = field.getJavaClass();
                 Accessor<?,?> accessor = field.getAccessor();
-                if (accessor.getClass() == FieldAccessor.class) {
+                if (isPublicFieldAccessor(accessor)) {                   
                     Field f = ((FieldAccessor)accessor).getField();
                     writemv.visitVarInsn(ALOAD, 2);
                     writemv.visitFieldInsn(GETFIELD, Type.getInternalName(f.getDeclaringClass()), f.getName(), Type.getDescriptor(f.getType()));
@@ -229,7 +230,7 @@ public class CodeGenerator {
                     writemv.visitVarInsn(ALOAD, 2);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
                             "accessor_" + group.getName() + "_" + field.getName(),
-                            "com/cinnober/msgcodec/Accessor");
+                            "Lcom/cinnober/msgcodec/Accessor;");
                     writemv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "getValue",
                             "(Ljava/lang/Object;)Ljava/lang/Object;", true);
                     if (javaClass.isPrimitive()) {
@@ -249,6 +250,12 @@ public class CodeGenerator {
             writemv.visitEnd();
         }
     }
+
+    private static boolean isPublicFieldAccessor(Accessor<?,?> accessor) {
+        return accessor.getClass() == FieldAccessor.class &&
+                Modifier.isPublic(((FieldAccessor)accessor).getField().getModifiers());
+    }
+
 
     /**
      * Generate instructions to decode the specified value type.
@@ -450,7 +457,7 @@ public class CodeGenerator {
                     int lengthVar = nextVar.next();
                     Label endLabel = new Label();
                     if (required) {
-                        mv.visitFieldInsn(GETFIELD, Type.getInternalName(javaClass), "length", "I");
+                        mv.visitInsn(ARRAYLENGTH);
                         mv.visitInsn(DUP);
                         mv.visitVarInsn(ISTORE, lengthVar);
                         mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
@@ -465,7 +472,7 @@ public class CodeGenerator {
                         // not null
                         mv.visitLabel(nonNullLabel);
                         // PENDING: mv.visitFrame
-                        mv.visitFieldInsn(GETFIELD, Type.getInternalName(javaClass), "length", "I");
+                        mv.visitInsn(ARRAYLENGTH);
                         mv.visitInsn(DUP);
                         mv.visitVarInsn(ISTORE, lengthVar);
                         mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
@@ -657,7 +664,7 @@ public class CodeGenerator {
             } else {
                 // read, create instance
                 readmv.visitVarInsn(ALOAD, 0); // this
-                readmv.visitFieldInsn(GETFIELD, genClassInternalName, "factory_" + group.getName(), "com/cinnober/msgcodec/Factory");
+                readmv.visitFieldInsn(GETFIELD, genClassInternalName, "factory_" + group.getName(), "Lcom/cinnober/msgcodec/Factory;");
                 readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Factory", "newInstance",
                         "()Ljava/lang/Object;", true);
                 readmv.visitTypeInsn(CHECKCAST, groupInternalName);
@@ -711,9 +718,8 @@ public class CodeGenerator {
                 Class<?> javaClass = field.getJavaClass();
 
                 Accessor<?,?> accessor = field.getAccessor();
-                if (accessor.getClass() == FieldAccessor.class) {
+                if (isPublicFieldAccessor(accessor)) {
                     Field f = ((FieldAccessor)accessor).getField();
-                    f.setAccessible(true);
                     readmv.visitVarInsn(ALOAD, 2); // instance
                     // value
                     readmv.visitVarInsn(ALOAD, 1); // input stream
@@ -730,7 +736,7 @@ public class CodeGenerator {
                     readmv.visitInsn(POP);
                 } else {
                     // accessor
-                    readmv.visitFieldInsn(GETFIELD, genClassInternalName, "accessor_" + group.getName() + "_" + field.getName(), "com/cinnober/msgcodec/Accessor");
+                    readmv.visitFieldInsn(GETFIELD, genClassInternalName, "accessor_" + group.getName() + "_" + field.getName(), "Lcom/cinnober/msgcodec/Accessor;");
                     // instance
                     readmv.visitVarInsn(ALOAD, 2); // instance
                     // value
@@ -997,8 +1003,9 @@ public class CodeGenerator {
                     mv.visitVarInsn(ALOAD, sequenceVar);
                     mv.visitLabel(finalEndLabel);
                     mv.visitFrame(F_SAME, 0, null, 0, null);
-
-                    //mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+                    if (javaClass.isArray()) {
+                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+                    }
                 }
                 break;
             case REFERENCE:
@@ -1124,7 +1131,7 @@ public class CodeGenerator {
             Factory<?> factory = group.getFactory();
             if (factory.getClass() != ConstructorFactory.class) {
                 // field
-                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "factory_" + group.getName(), "com/cinnober/msgcodec/Factory", null, null);
+                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "factory_" + group.getName(), "Lcom/cinnober/msgcodec/Factory;", null, null);
                 fv.visitEnd();
 
                 // ctor, init field
@@ -1133,7 +1140,7 @@ public class CodeGenerator {
                 ctormv.visitLdcInsn(group.getName());
                 ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
                         "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef", false);
-                ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, "factory_" + group.getName(), "com/cinnober/msgcodec/Factory");
+                ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, "factory_" + group.getName(), "Lcom/cinnober/msgcodec/Factory;");
             }
         }
 

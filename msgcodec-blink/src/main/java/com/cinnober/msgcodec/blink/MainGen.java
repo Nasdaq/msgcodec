@@ -55,6 +55,7 @@ public class MainGen {
         Foo foo = new Foo();
         foo.i32 = 123;
         foo.stringsReq = Arrays.asList("one", "two");
+        foo.doublesReq = new double[1];
         codec.encode(foo, out);
         System.out.println("HEX: " + ByteArrays.toHex(out.toByteArray()));
         System.out.println("Decoded: "+codec.decode(new ByteArrayInputStream(out.toByteArray())));
@@ -69,14 +70,15 @@ public class MainGen {
         public int i32;
         public Integer i32Obj;
         public Bar bar;
-//        double[] doubles;
-//        @Required
-//        double[] doublesReq;
+        public double[] doubles;
+        @Required
+        public double[] doublesReq;
 
         @Sequence(String.class)
         public List<String> strings;
         @Required @Sequence(String.class)
         public List<String> stringsReq;
+        public String[] strings2;
     }
     public static class Bar extends MsgObject {
         public Bar bar;

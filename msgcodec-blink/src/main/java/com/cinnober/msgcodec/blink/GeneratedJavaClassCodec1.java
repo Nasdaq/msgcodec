@@ -111,7 +111,8 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
         int[] a1 = new int[len1];
         double[] a2 = new double[len1];
         String[] a3 = new String[len1];
-        
+        group.doubles = a2;
+        group.strings = a3;
         
         return group;
     }
@@ -210,6 +211,8 @@ class GeneratedJavaClassCodec1 extends GeneratedJavaClassCodec {
         int i32;
         Integer i32Obj;
         Bar bar;
+        double[] doubles;
+        String[] strings;
     }
     public static class Bar {
         Bar bar;
