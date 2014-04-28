@@ -102,10 +102,10 @@ public class BlinkCodec implements StreamCodec {
                 generatedCodecTmp = constructor.newInstance(this, dictionary);
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
                     IllegalArgumentException | InvocationTargetException e) {
-                generatedCodecTmp = new GeneratedInstructionCodec(this, dictionary);
+                generatedCodecTmp = new InstructionCodec(this, dictionary);
             }
         } else {
-            generatedCodecTmp = new GeneratedInstructionCodec(this, dictionary);
+            generatedCodecTmp = new InstructionCodec(this, dictionary);
         }
         generatedCodec = generatedCodecTmp;
     }

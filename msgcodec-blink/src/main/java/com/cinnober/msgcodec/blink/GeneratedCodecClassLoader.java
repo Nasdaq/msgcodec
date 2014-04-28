@@ -36,13 +36,13 @@ class GeneratedCodecClassLoader extends ClassLoader {
         return instance;
     }
 
-    private final CodeGenerator codeGenerator;
+    private final ByteCodeGenerator codeGenerator;
     private final WeakHashMap<Object, Class<GeneratedCodec>> codecClassesByDictionaryUID = new WeakHashMap<>();
     private int nextClassSuffix = 0;
     
     private GeneratedCodecClassLoader() {
         super(GeneratedCodecClassLoader.class.getClassLoader());
-        codeGenerator = new CodeGenerator();
+        codeGenerator = new ByteCodeGenerator();
     }
 
     public Class<GeneratedCodec> getGeneratedCodecClass(ProtocolDictionary dictionary) {

@@ -8,14 +8,6 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.ProtocolDictionary;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.invoke.CallSite;
-import java.lang.invoke.ConstantCallSite;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.util.Map;
 
 /**
  * Base class for a dynamically generated codec for a specific dictionary, where group type is the Java class.
@@ -29,7 +21,7 @@ public abstract class GeneratedJavaClassCodec extends GeneratedCodec {
         super(codec);
     }
 
-    protected IllegalArgumentException unknownObjectType(Class javaClass) {
+    protected IllegalArgumentException unknownObjectType(Class<?> javaClass) {
         return new IllegalArgumentException("Unknown object type: " + javaClass);
     }
 

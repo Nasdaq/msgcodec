@@ -33,17 +33,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A generated codec for a specific dictionary, which use FieldInstruction for encoding/decoding.
+ * A codec for a specific dictionary, which use FieldInstruction for encoding/decoding.
  *
  * @author mikael.brannstrom
  */
-class GeneratedInstructionCodec extends GeneratedCodec {
+class InstructionCodec extends GeneratedCodec {
     private final GroupTypeAccessor groupTypeAccessor;
     private final Map<Object, StaticGroupInstruction> groupInstructionsByGroupType;
     /** The compiled static groups by group id. */
     private final Map<Integer, StaticGroupInstruction> groupInstructionsById;
 
-    public GeneratedInstructionCodec(BlinkCodec codec, ProtocolDictionary dictionary) {
+    public InstructionCodec(BlinkCodec codec, ProtocolDictionary dictionary) {
         super(codec);
         groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
         groupInstructionsByGroupType = new HashMap<>(dictionary.getGroups().size() * 2);

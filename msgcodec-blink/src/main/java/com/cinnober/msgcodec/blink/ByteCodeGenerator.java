@@ -54,10 +54,10 @@ import org.objectweb.asm.util.TraceClassVisitor;
  *
  * @author mikael.brannstrom
  */
-public class CodeGenerator {
+class ByteCodeGenerator {
     private static final String GENERATED_CLASS_INTERNALNAME = "com/cinnober/msgcodec/blink/GeneratedBlinkCodec";
     private static final String GENERATED_CLASS_NAME = "com.cinnober.msgcodec.blink.GeneratedBlinkCodec";
-    private static final Logger log = Logger.getLogger(CodeGenerator.class.getName());
+    private static final Logger log = Logger.getLogger(ByteCodeGenerator.class.getName());
 
     public String getGeneratedClassName(int suffix) {
         return GENERATED_CLASS_NAME + suffix;
@@ -925,7 +925,8 @@ public class CodeGenerator {
 //                } else {
 //                    throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
 //                }
-                break;
+                throw new RuntimeException("Enum not implemented yet (FIXME)"); // FIXME
+                //break;
             case TIME:
                 // TODO: implement this
 //                if (javaClass == long.class || javaClass == Long.class) {
@@ -945,7 +946,8 @@ public class CodeGenerator {
 //                } else {
 //                    throw new IllegalArgumentException("Illegal time javaClass: " + javaClass);
 //                }
-                break;
+                throw new RuntimeException("Time not implemented yet (FIXME)"); // FIXME
+                //break;
             case SEQUENCE:
                 {
                     if (!javaClass.isArray() && javaClass != List.class) {
