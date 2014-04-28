@@ -404,245 +404,276 @@ class ByteCodeGenerator {
                 }
                 break;
             case ENUM:
-                if (javaClass.isEnum()) {
-                    // TODO: ordinal should not be used. Use symbol id instead!
-                    if (required) {
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                    } else {
-                        Label endLabel = new Label();
-                        Label nullLabel = new Label();
-                        mv.visitInsn(DUP);
-                        mv.visitJumpInsn(IFNULL, nullLabel);
-                        // not null
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                        mv.visitJumpInsn(GOTO, endLabel);
-                        // null
-                        mv.visitLabel(nullLabel);
-                        mv.visitInsn(POP);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
-                        // end
-                        mv.visitLabel(endLabel);
-                    }
-                } else if (javaClass == int.class || javaClass == Integer.class) {
-                    // PENDING: validate that the value is a correct enum value?
-                    if (required) {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                    } else {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
-                    }
-                } else {
-                    throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
-                }
+                generateEncodeEnumValue(javaClass, required, mv, blinkOutput);
                 break;
             case TIME:
-                if (javaClass == long.class || javaClass == Long.class) {
-                    if (required) {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
-                    } else {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64Null", "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
-                    }
-                } else if (javaClass == int.class || javaClass == Integer.class) {
-                    if (required) {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
-                    } else {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
-                    }
-                } else if (javaClass == Date.class) {
-                    throw new RuntimeException("java.util.Date not supported yet (FIXME)"); // FIXME
-                } else {
-                    throw new IllegalArgumentException("Illegal time javaClass: " + javaClass);
-                }
+                generateEncodeTimeValue(javaClass, required, mv, blinkOutput);
                 break;
             case SEQUENCE:
-                if (javaClass.isArray()) {
-                    int sequenceVar = nextVar.next();
-                    mv.visitInsn(DUP);
-                    mv.visitVarInsn(ASTORE, sequenceVar);
-                    int lengthVar = nextVar.next();
-                    Label endLabel = new Label();
-                    if (required) {
-                        mv.visitInsn(ARRAYLENGTH);
-                        mv.visitInsn(DUP);
-                        mv.visitVarInsn(ISTORE, lengthVar);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                    } else {
-                        Label nonNullLabel = new Label();
-                        mv.visitInsn(DUP);
-                        mv.visitJumpInsn(IFNONNULL, nonNullLabel);
-                        // null
-                        mv.visitInsn(POP);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
-                        mv.visitJumpInsn(GOTO, endLabel);
-                        // not null
-                        mv.visitLabel(nonNullLabel);
-                        // PENDING: mv.visitFrame
-                        mv.visitInsn(ARRAYLENGTH);
-                        mv.visitInsn(DUP);
-                        mv.visitVarInsn(ISTORE, lengthVar);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                    }
-                    // for loop
-                    int loopVar = nextVar.next();
-                    mv.visitInsn(ICONST_0);
-                    mv.visitVarInsn(ISTORE, loopVar);
-                    Label loopLabel = new Label();
-                    mv.visitLabel(loopLabel);
-                    // PENDING: mv.visitFrame
-                    mv.visitVarInsn(ILOAD, loopVar);
-                    mv.visitVarInsn(ILOAD, lengthVar);
-                    mv.visitJumpInsn(IF_ICMPGE, endLabel);
-                    mv.visitVarInsn(ALOAD, outputStreamVar);
-                    mv.visitVarInsn(ALOAD, sequenceVar);
-                    mv.visitVarInsn(ILOAD, loopVar);
-                    if (componentJavaClass == byte.class || componentJavaClass == boolean.class) {
-                        mv.visitInsn(BALOAD);
-                    } else if (componentJavaClass == short.class) {
-                        mv.visitInsn(SALOAD);
-                    } else if (componentJavaClass == int.class) {
-                        mv.visitInsn(IALOAD);
-                    } else if (componentJavaClass == long.class) {
-                        mv.visitInsn(LALOAD);
-                    } else if (componentJavaClass == float.class) {
-                        mv.visitInsn(FALOAD);
-                    } else if (componentJavaClass == double.class) {
-                        mv.visitInsn(DALOAD);
-                    } else {
-                        mv.visitInsn(AALOAD);
-                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
-                    }
-
-                    // encode the element
-                    TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-                    generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
-                    
-                    mv.visitIincInsn(loopVar, 1);
-                    mv.visitJumpInsn(GOTO, loopLabel);
-                    mv.visitLabel(endLabel);
-                    // PENDING: mv.visitFrame
-                } else if (javaClass == List.class) {
-                    int sequenceVar = nextVar.next();
-                    mv.visitInsn(DUP);
-                    mv.visitVarInsn(ASTORE, sequenceVar);
-                    int lengthVar = nextVar.next();
-                    Label endLabel = new Label();
-                    if (required) {
-                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
-                        mv.visitInsn(DUP);
-                        mv.visitVarInsn(ISTORE, lengthVar);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                    } else {
-                        Label nonNullLabel = new Label();
-                        mv.visitInsn(DUP);
-                        mv.visitJumpInsn(IFNONNULL, nonNullLabel);
-                        // null
-                        mv.visitInsn(POP);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
-                        mv.visitJumpInsn(GOTO, endLabel);
-                        // not null
-                        mv.visitLabel(nonNullLabel);
-                        // PENDING: mv.visitFrame
-                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
-                        mv.visitInsn(DUP);
-                        mv.visitVarInsn(ISTORE, lengthVar);
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
-                    }
-                    // for loop, using iterator
-                    int iteratorVar = nextVar.next();
-                    mv.visitVarInsn(ALOAD, sequenceVar);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
-                    mv.visitVarInsn(ASTORE, iteratorVar);
-                    Label loopLabel = new Label();
-                    mv.visitLabel(loopLabel);
-                    // PENDING: mv.visitFrame
-                    mv.visitVarInsn(ALOAD, iteratorVar);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
-                    mv.visitJumpInsn(IFEQ, endLabel);
-                    mv.visitVarInsn(ALOAD, outputStreamVar);
-                    mv.visitVarInsn(ALOAD, iteratorVar);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
-                    if (componentJavaClass.isPrimitive()) {
-                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(componentJavaClass)));
-                        unbox(mv, componentJavaClass);
-                    } else {
-                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
-                    }
-
-                    // encode the element
-                    TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-                    generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
-
-                    mv.visitJumpInsn(GOTO, loopLabel);
-                    mv.visitLabel(endLabel);
-                    // PENDING: mv.visitFrame
-                } else {
-                    throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
-                }
+                generateEncodeSequenceValue(javaClass, nextVar, mv, required, blinkOutput, outputStreamVar,
+                        componentJavaClass, type, dict, genClassInternalName);
                 break;
             case REFERENCE:
-                if (refGroup != null) {
-                    if (required) {
-                        int instanceVar = nextVar.next();
-                        mv.visitVarInsn(ASTORE, instanceVar);
-                        mv.visitVarInsn(ALOAD, 0); // this
-                        mv.visitInsn(SWAP); // this and out
-                        mv.visitVarInsn(ALOAD, instanceVar);
-                        Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
-                        String refGroupDescriptor = Type.getDescriptor(refGroupType);
-                        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
-                                "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
-                    } else {
-                        int instanceVar = nextVar.next();
-                        mv.visitInsn(DUP);
-                        Label nonNullLabel = new Label();
-                        Label endLabel = new Label();
-                        mv.visitJumpInsn(IFNONNULL, nonNullLabel);
-                        // null
-                        mv.visitInsn(POP);
-                        mv.visitInsn(ICONST_0); // false
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
-                        mv.visitJumpInsn(GOTO, endLabel);
-
-                        // not null
-                        mv.visitLabel(nonNullLabel);
-                        // PENDING: mv.visitFrame
-                        mv.visitVarInsn(ASTORE, instanceVar);
-                        mv.visitInsn(ICONST_1); // true
-                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
-                        mv.visitVarInsn(ALOAD, 0); // this
-                        mv.visitVarInsn(ALOAD, outputStreamVar);
-                        mv.visitVarInsn(ALOAD, instanceVar);
-                        Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
-                        String refGroupDescriptor = Type.getDescriptor(refGroupType);
-                        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
-                                "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
-                        mv.visitLabel(endLabel);
-                        // PENDING: mv.visitFrame
-                    }
-                } else {
-                    throw new IllegalArgumentException("Illegal reference: " + type);
-                }
+                generateEncodeRefValue(refGroup, required, nextVar, mv, genClassInternalName, blinkOutput,
+                        outputStreamVar, type);
                 break;
             case DYNAMIC_REFERENCE:
-                {
-                    // PENDING: validate that the instance class is a subclass of refGroup (unless null)
-                    int instanceVar = nextVar.next();
-                    mv.visitVarInsn(ASTORE, instanceVar);
-                    mv.visitVarInsn(ALOAD, 0); // this
-                    mv.visitInsn(SWAP); // this and out
-                    mv.visitVarInsn(ALOAD, instanceVar);
-                    if (required) {
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
-                                "writeDynamicGroup", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
-                    } else {
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
-                                "writeDynamicGroupNull", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
-                    }
-                }
+                generateEncodeDynRefValue(nextVar, mv, required);
                 break;
             default:
                 throw new RuntimeException("Unhandled case: " + type.getType());
+        }
+    }
+
+    private void generateEncodeDynRefValue(LocalVariable nextVar, MethodVisitor mv, boolean required) {
+        // PENDING: validate that the instance class is a subclass of refGroup (unless null)
+        int instanceVar = nextVar.next();
+        mv.visitVarInsn(ASTORE, instanceVar);
+        mv.visitVarInsn(ALOAD, 0); // this
+        mv.visitInsn(SWAP); // this and out
+        mv.visitVarInsn(ALOAD, instanceVar);
+        if (required) {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+                    "writeDynamicGroup", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
+        } else {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+                    "writeDynamicGroupNull", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
+        }
+    }
+
+    private void generateEncodeRefValue(GroupDef refGroup, boolean required, LocalVariable nextVar, MethodVisitor mv,
+            String genClassInternalName, String blinkOutput, int outputStreamVar, TypeDef type) throws
+            IllegalArgumentException {
+        if (refGroup != null) {
+            if (required) {
+                int instanceVar = nextVar.next();
+                mv.visitVarInsn(ASTORE, instanceVar);
+                mv.visitVarInsn(ALOAD, 0); // this
+                mv.visitInsn(SWAP); // this and out
+                mv.visitVarInsn(ALOAD, instanceVar);
+                Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
+                String refGroupDescriptor = Type.getDescriptor(refGroupType);
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
+                                                                                "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
+            } else {
+                int instanceVar = nextVar.next();
+                mv.visitInsn(DUP);
+                Label nonNullLabel = new Label();
+                Label endLabel = new Label();
+                mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+                // null
+                mv.visitInsn(POP);
+                mv.visitInsn(ICONST_0); // false
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+                mv.visitJumpInsn(GOTO, endLabel);
+
+                // not null
+                mv.visitLabel(nonNullLabel);
+                // PENDING: mv.visitFrame
+                mv.visitVarInsn(ASTORE, instanceVar);
+                mv.visitInsn(ICONST_1); // true
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+                mv.visitVarInsn(ALOAD, 0); // this
+                mv.visitVarInsn(ALOAD, outputStreamVar);
+                mv.visitVarInsn(ALOAD, instanceVar);
+                Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
+                String refGroupDescriptor = Type.getDescriptor(refGroupType);
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
+                                                                                "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
+                mv.visitLabel(endLabel);
+                // PENDING: mv.visitFrame
+            }
+        } else {
+            throw new IllegalArgumentException("Illegal reference: " + type);
+        }
+    }
+
+    private void generateEncodeSequenceValue(
+            Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required, String blinkOutput,
+            int outputStreamVar,
+            Class<?> componentJavaClass, TypeDef type, ProtocolDictionary dict, String genClassInternalName) throws
+            IllegalArgumentException {
+
+        // PENDING: merge the two if-cases, and reuse common code blocks (see generateDecodeSquenceValue)
+        if (javaClass.isArray()) {
+            int sequenceVar = nextVar.next();
+            mv.visitInsn(DUP);
+            mv.visitVarInsn(ASTORE, sequenceVar);
+            int lengthVar = nextVar.next();
+            Label endLabel = new Label();
+            if (required) {
+                mv.visitInsn(ARRAYLENGTH);
+                mv.visitInsn(DUP);
+                mv.visitVarInsn(ISTORE, lengthVar);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            } else {
+                Label nonNullLabel = new Label();
+                mv.visitInsn(DUP);
+                mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+                // null
+                mv.visitInsn(POP);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                mv.visitJumpInsn(GOTO, endLabel);
+                // not null
+                mv.visitLabel(nonNullLabel);
+                // PENDING: mv.visitFrame
+                mv.visitInsn(ARRAYLENGTH);
+                mv.visitInsn(DUP);
+                mv.visitVarInsn(ISTORE, lengthVar);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            }
+            // for loop
+            int loopVar = nextVar.next();
+            mv.visitInsn(ICONST_0);
+            mv.visitVarInsn(ISTORE, loopVar);
+            Label loopLabel = new Label();
+            mv.visitLabel(loopLabel);
+            // PENDING: mv.visitFrame
+            mv.visitVarInsn(ILOAD, loopVar);
+            mv.visitVarInsn(ILOAD, lengthVar);
+            mv.visitJumpInsn(IF_ICMPGE, endLabel);
+            mv.visitVarInsn(ALOAD, outputStreamVar);
+            mv.visitVarInsn(ALOAD, sequenceVar);
+            mv.visitVarInsn(ILOAD, loopVar);
+            if (componentJavaClass == byte.class || componentJavaClass == boolean.class) {
+                mv.visitInsn(BALOAD);
+            } else if (componentJavaClass == short.class) {
+                mv.visitInsn(SALOAD);
+            } else if (componentJavaClass == int.class) {
+                mv.visitInsn(IALOAD);
+            } else if (componentJavaClass == long.class) {
+                mv.visitInsn(LALOAD);
+            } else if (componentJavaClass == float.class) {
+                mv.visitInsn(FALOAD);
+            } else if (componentJavaClass == double.class) {
+                mv.visitInsn(DALOAD);
+            } else {
+                mv.visitInsn(AALOAD);
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
+            }
+
+            // encode the element
+            TypeDef.Sequence seqType = (TypeDef.Sequence) type;
+            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+
+            mv.visitIincInsn(loopVar, 1);
+            mv.visitJumpInsn(GOTO, loopLabel);
+            mv.visitLabel(endLabel);
+            // PENDING: mv.visitFrame
+            
+        } else if (javaClass == List.class) {
+            int sequenceVar = nextVar.next();
+            mv.visitInsn(DUP);
+            mv.visitVarInsn(ASTORE, sequenceVar);
+            int lengthVar = nextVar.next();
+            Label endLabel = new Label();
+            if (required) {
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+                mv.visitInsn(DUP);
+                mv.visitVarInsn(ISTORE, lengthVar);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            } else {
+                Label nonNullLabel = new Label();
+                mv.visitInsn(DUP);
+                mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+                // null
+                mv.visitInsn(POP);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                mv.visitJumpInsn(GOTO, endLabel);
+                // not null
+                mv.visitLabel(nonNullLabel);
+                // PENDING: mv.visitFrame
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+                mv.visitInsn(DUP);
+                mv.visitVarInsn(ISTORE, lengthVar);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            }
+            // for loop, using iterator
+            int iteratorVar = nextVar.next();
+            mv.visitVarInsn(ALOAD, sequenceVar);
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "iterator", "()Ljava/util/Iterator;", true);
+            mv.visitVarInsn(ASTORE, iteratorVar);
+            Label loopLabel = new Label();
+            mv.visitLabel(loopLabel);
+            // PENDING: mv.visitFrame
+            mv.visitVarInsn(ALOAD, iteratorVar);
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
+            mv.visitJumpInsn(IFEQ, endLabel);
+            mv.visitVarInsn(ALOAD, outputStreamVar);
+            mv.visitVarInsn(ALOAD, iteratorVar);
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
+            if (componentJavaClass.isPrimitive()) {
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(componentJavaClass)));
+                unbox(mv, componentJavaClass);
+            } else {
+                mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
+            }
+
+            // encode the element
+            TypeDef.Sequence seqType = (TypeDef.Sequence) type;
+            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+
+            mv.visitJumpInsn(GOTO, loopLabel);
+            mv.visitLabel(endLabel);
+            // PENDING: mv.visitFrame
+        } else {
+            throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
+        }
+    }
+
+    private void generateEncodeTimeValue(
+            Class<?> javaClass, boolean required, MethodVisitor mv, String blinkOutput) throws RuntimeException {
+        if (javaClass == long.class || javaClass == Long.class) {
+            if (required) {
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+            } else {
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64Null", "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+            }
+        } else if (javaClass == int.class || javaClass == Integer.class) {
+            if (required) {
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
+            } else {
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+            }
+        } else if (javaClass == Date.class) {
+            throw new RuntimeException("java.util.Date not supported yet (FIXME)"); // FIXME
+        } else {
+            throw new IllegalArgumentException("Illegal time javaClass: " + javaClass);
+        }
+    }
+
+    private void generateEncodeEnumValue(
+            Class<?> javaClass, boolean required, MethodVisitor mv, String blinkOutput) throws IllegalArgumentException {
+        if (javaClass.isEnum()) {
+            // TODO: ordinal should not be used. Use symbol id instead!
+            if (required) {
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            } else {
+                Label endLabel = new Label();
+                Label nullLabel = new Label();
+                mv.visitInsn(DUP);
+                mv.visitJumpInsn(IFNULL, nullLabel);
+                // not null
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitJumpInsn(GOTO, endLabel);
+                // null
+                mv.visitLabel(nullLabel);
+                mv.visitInsn(POP);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                // end
+                mv.visitLabel(endLabel);
+            }
+        } else if (javaClass == int.class || javaClass == Integer.class) {
+            // PENDING: validate that the value is a correct enum value?
+            if (required) {
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            } else {
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+            }
+        } else {
+            throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
         }
     }
 
@@ -949,128 +980,15 @@ class ByteCodeGenerator {
                 throw new RuntimeException("Time not implemented yet (FIXME)"); // FIXME
                 //break;
             case SEQUENCE:
-                {
-                    if (!javaClass.isArray() && javaClass != List.class) {
-                        throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
-                    }
-
-                    int lengthVar = nextVar.next();
-                    int sequenceVar = nextVar.next();
-                    Label finalEndLabel = new Label();
-                    if (required) {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32", "(Ljava/io/InputStream;)I", false);
-                        mv.visitVarInsn(ISTORE, lengthVar);
-                    } else {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32Null", "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
-                        mv.visitInsn(DUP);
-                        mv.visitJumpInsn(IFNULL, finalEndLabel);
-                        unbox(mv, Integer.class);
-                        mv.visitVarInsn(ISTORE, lengthVar);
-                    }
-
-                    if (javaClass.isArray()) {
-                        mv.visitVarInsn(ILOAD, lengthVar);
-                        generateNewArray(mv, componentJavaClass);
-                    } else {
-                        mv.visitTypeInsn(NEW, "java/util/ArrayList");
-                        mv.visitInsn(DUP);
-                        mv.visitVarInsn(ILOAD, lengthVar);
-                        mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "(I)V", false);
-                    }
-                    mv.visitVarInsn(ASTORE, sequenceVar);
-
-
-                    // for loop
-                    Label endLabel = new Label();
-                    int loopVar = nextVar.next();
-                    mv.visitInsn(ICONST_0);
-                    mv.visitVarInsn(ISTORE, loopVar);
-                    Label loopLabel = new Label();
-                    mv.visitLabel(loopLabel);
-                    // PENDING: mv.visitFrame
-                    mv.visitFrame(F_SAME, 0, null, 0, null);
-                    mv.visitVarInsn(ILOAD, loopVar);
-                    mv.visitVarInsn(ILOAD, lengthVar);
-                    mv.visitJumpInsn(IF_ICMPGE, endLabel);
-
-                    mv.visitVarInsn(ALOAD, sequenceVar);
-                    mv.visitVarInsn(ILOAD, loopVar);
-                    mv.visitVarInsn(ALOAD, inputStreamVar);
-
-                    // decode the element
-                    TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-                    generateDecodeValue(mv, inputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
-
-                    // store the value
-                    //mv.visitInsn(SWAP);
-                    if (javaClass.isArray()) {
-                        generateArrayStore(mv, componentJavaClass);
-                    } else {
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/ArrayList", "add", "(ILjava/lang/Object;)V", false);
-                    }
-
-                    mv.visitIincInsn(loopVar, 1);
-                    mv.visitJumpInsn(GOTO, loopLabel);
-                    mv.visitLabel(endLabel);
-                    mv.visitFrame(F_SAME, 0, null, 0, null);
-                    mv.visitVarInsn(ALOAD, sequenceVar);
-                    mv.visitLabel(finalEndLabel);
-                    mv.visitFrame(F_SAME, 0, null, 0, null);
-                    if (javaClass.isArray()) {
-                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
-                    }
-                }
+                generateDecodeSequenceValue(javaClass, nextVar, required, mv, blinkInput, componentJavaClass,
+                        inputStreamVar, type, dict, genClassInternalName);
                 break;
             case REFERENCE:
-                if (refGroup != null) {
-                    if (required) {
-                        mv.visitInsn(POP); // input stream
-                        mv.visitVarInsn(ALOAD, 0);
-                        mv.visitVarInsn(ALOAD, inputStreamVar);
-                        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + refGroup.getName(),
-                                "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + Type.getDescriptor(javaClass),
-                                false);
-                    } else {
-                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBoolean", "(Ljava/io/InputStream;)Z", false);
-                        Label nonNullLabel = new Label();
-                        Label endLabel = new Label();
-                        mv.visitJumpInsn(IFNE, nonNullLabel); // not false, i.e. true
-                        // null
-                        mv.visitInsn(ACONST_NULL);
-                        mv.visitJumpInsn(GOTO, endLabel);
-
-                        // not null
-                        mv.visitLabel(nonNullLabel);
-                        mv.visitFrame(F_SAME, 0, null, 0, null);
-                        mv.visitVarInsn(ALOAD, 0);
-                        mv.visitVarInsn(ALOAD, inputStreamVar);
-                        mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + refGroup.getName(),
-                                "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + Type.getDescriptor(javaClass),
-                                false);
-
-                        mv.visitLabel(endLabel);
-                        // PENDING: mv.visitFrame
-                        mv.visitFrame(F_SAME, 0, null, 0, null);
-                    }
-                } else {
-                    throw new IllegalArgumentException("Illegal reference: " + type);
-                }
+                generateDecodeRefValue(refGroup, required, mv, inputStreamVar, genClassInternalName, javaClass,
+                        blinkInput, type);
                 break;
             case DYNAMIC_REFERENCE:
-                {
-                    mv.visitVarInsn(ALOAD, 0); // this
-                    mv.visitInsn(SWAP); // this and in
-                    if (required) {
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
-                                "readDynamicGroup", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
-                    } else {
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
-                                "readDynamicGroupNull", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
-                    }
-                    if (refGroup != null) {
-                        mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
-                    }
-                }
+                generateDecodeDynRefValue(mv, required, refGroup, javaClass);
                 break;
             default:
                 throw new RuntimeException("Unhandled case: " + type.getType());        }
@@ -1079,6 +997,135 @@ class ByteCodeGenerator {
             box(mv, javaClass);
         } else if (!javaClass.isPrimitive() && required) {
             unbox(mv, javaClass);
+        }
+    }
+
+    private void generateDecodeDynRefValue(MethodVisitor mv, boolean required, GroupDef refGroup,
+            Class<?> javaClass) {
+        mv.visitVarInsn(ALOAD, 0); // this
+        mv.visitInsn(SWAP); // this and in
+        if (required) {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+                    "readDynamicGroup", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
+        } else {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+                    "readDynamicGroupNull", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
+        }
+        if (refGroup != null) {
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+        }
+    }
+
+    private void generateDecodeRefValue(GroupDef refGroup, boolean required, MethodVisitor mv, int inputStreamVar,
+            String genClassInternalName,
+            Class<?> javaClass, String blinkInput, TypeDef type) throws IllegalArgumentException {
+        if (refGroup != null) {
+            if (required) {
+                mv.visitInsn(POP); // input stream
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, inputStreamVar);
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + refGroup.getName(),
+                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + Type.getDescriptor(javaClass),
+                        false);
+            } else {
+                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBoolean", "(Ljava/io/InputStream;)Z", false);
+                Label nonNullLabel = new Label();
+                Label endLabel = new Label();
+                mv.visitJumpInsn(IFNE, nonNullLabel); // not false, i.e. true
+                // null
+                mv.visitInsn(ACONST_NULL);
+                mv.visitJumpInsn(GOTO, endLabel);
+
+                // not null
+                mv.visitLabel(nonNullLabel);
+                mv.visitFrame(F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, inputStreamVar);
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + refGroup.getName(),
+                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + Type.getDescriptor(javaClass),
+                        false);
+
+                mv.visitLabel(endLabel);
+                // PENDING: mv.visitFrame
+                mv.visitFrame(F_SAME, 0, null, 0, null);
+            }
+        } else {
+            throw new IllegalArgumentException("Illegal reference: " + type);
+        }
+    }
+
+    private void generateDecodeSequenceValue(
+            Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv, String blinkInput,
+            Class<?> componentJavaClass, int inputStreamVar, TypeDef type, ProtocolDictionary dict,
+            String genClassInternalName) throws IllegalArgumentException {
+        if (!javaClass.isArray() && javaClass != List.class) {
+            throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
+        }
+
+        int lengthVar = nextVar.next();
+        int sequenceVar = nextVar.next();
+        Label finalEndLabel = new Label();
+        if (required) {
+            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32", "(Ljava/io/InputStream;)I", false);
+            mv.visitVarInsn(ISTORE, lengthVar);
+        } else {
+            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32Null", "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+            mv.visitInsn(DUP);
+            mv.visitJumpInsn(IFNULL, finalEndLabel);
+            unbox(mv, Integer.class);
+            mv.visitVarInsn(ISTORE, lengthVar);
+        }
+
+        if (javaClass.isArray()) {
+            mv.visitVarInsn(ILOAD, lengthVar);
+            generateNewArray(mv, componentJavaClass);
+        } else {
+            mv.visitTypeInsn(NEW, "java/util/ArrayList");
+            mv.visitInsn(DUP);
+            mv.visitVarInsn(ILOAD, lengthVar);
+            mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "(I)V", false);
+        }
+        mv.visitVarInsn(ASTORE, sequenceVar);
+
+
+        // for loop
+        Label endLabel = new Label();
+        int loopVar = nextVar.next();
+        mv.visitInsn(ICONST_0);
+        mv.visitVarInsn(ISTORE, loopVar);
+        Label loopLabel = new Label();
+        mv.visitLabel(loopLabel);
+        // PENDING: mv.visitFrame
+        mv.visitFrame(F_SAME, 0, null, 0, null);
+        mv.visitVarInsn(ILOAD, loopVar);
+        mv.visitVarInsn(ILOAD, lengthVar);
+        mv.visitJumpInsn(IF_ICMPGE, endLabel);
+
+        mv.visitVarInsn(ALOAD, sequenceVar);
+        mv.visitVarInsn(ILOAD, loopVar);
+        mv.visitVarInsn(ALOAD, inputStreamVar);
+
+        // decode the element
+        TypeDef.Sequence seqType = (TypeDef.Sequence) type;
+        generateDecodeValue(mv, inputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+
+        // store the value
+        //mv.visitInsn(SWAP);
+        if (javaClass.isArray()) {
+            generateArrayStore(mv, componentJavaClass);
+        } else {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/ArrayList", "add", "(ILjava/lang/Object;)V", false);
+        }
+
+        mv.visitIincInsn(loopVar, 1);
+        mv.visitJumpInsn(GOTO, loopLabel);
+        mv.visitLabel(endLabel);
+        mv.visitFrame(F_SAME, 0, null, 0, null);
+        mv.visitVarInsn(ALOAD, sequenceVar);
+        mv.visitLabel(finalEndLabel);
+        mv.visitFrame(F_SAME, 0, null, 0, null);
+        if (javaClass.isArray()) {
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
         }
     }
 
