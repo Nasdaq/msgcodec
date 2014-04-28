@@ -92,8 +92,8 @@ public class BlinkCodec implements StreamCodec {
 
 
         GeneratedCodec generatedCodecTmp;
-        Class<GeneratedCodec> generatedCodecClass =
-                GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(dictionary);
+        Class<GeneratedCodec> generatedCodecClass = null;
+        generatedCodecClass = GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(dictionary);
 
         if (generatedCodecClass != null) {
             try {
