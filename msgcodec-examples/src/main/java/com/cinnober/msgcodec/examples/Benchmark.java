@@ -120,6 +120,8 @@ public class Benchmark {
         }
 
         ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(EnterDoubleSidedTrade.class);
+        System.out.println("dict: \n" + dict);
+
         BlinkCodec codec = new BlinkCodec(dict);
 
         Benchmark benchmark = new Benchmark(codec, messages);
@@ -163,6 +165,7 @@ public class Benchmark {
     @Id(1)
     public static class EnterDoubleSidedTrade extends MsgObject {
 
+        @Unsigned
         public long requestId;
         /**
          * Client assigned double-sided trade id, e.g. the market place assigned trade id.
@@ -173,6 +176,7 @@ public class Benchmark {
         /**
          * The instrument the trade applies to.
          */
+        @Unsigned
         public long instrumentKey;
 
         /**
@@ -207,7 +211,6 @@ public class Benchmark {
         public IncomingTradeSide sell;
     }
 
-    @Id(2)
     public static class IncomingTradeSide extends MsgObject {
 
         /**
@@ -231,7 +234,6 @@ public class Benchmark {
         }
     }
 
-    @Id(3)
     public static class TradeDestination extends MsgObject {
 
         /**
