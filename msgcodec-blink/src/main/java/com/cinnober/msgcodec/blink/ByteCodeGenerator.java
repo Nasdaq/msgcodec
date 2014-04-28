@@ -959,26 +959,24 @@ class ByteCodeGenerator {
                 throw new RuntimeException("Enum not implemented yet (FIXME)"); // FIXME
                 //break;
             case TIME:
-                // TODO: implement this
-//                if (javaClass == long.class || javaClass == Long.class) {
-//                    if (required) {
-//                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "readInt64", "(Ljava/io/OutputStream;J)V", false);
-//                    } else {
-//                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "readInt64Null", "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
-//                    }
-//                } else if (javaClass == int.class || javaClass == Integer.class) {
-//                    if (required) {
-//                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "readInt32", "(Ljava/io/OutputStream;I)V", false);
-//                    } else {
-//                        mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "readInt32Null", "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
-//                    }
-//                } else if (javaClass == Date.class) {
-//                    throw new RuntimeException("java.util.Date not supported yet (FIXME)"); // FIXME
-//                } else {
-//                    throw new IllegalArgumentException("Illegal time javaClass: " + javaClass);
-//                }
-                throw new RuntimeException("Time not implemented yet (FIXME)"); // FIXME
-                //break;
+                if (javaClass == long.class || javaClass == Long.class) {
+                    if (required) {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Ljava/io/InputStream;)J", false);
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64Null", "(Ljava/io/InputStream;)Ljava/lang/Long;", false);
+                    }
+                } else if (javaClass == int.class || javaClass == Integer.class) {
+                    if (required) {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32", "(Ljava/io/InputStream;)I", false);
+                    } else {
+                        mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32Null", "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+                    }
+                } else if (javaClass == Date.class) {
+                    throw new RuntimeException("java.util.Date not supported yet (FIXME)"); // FIXME
+                } else {
+                    throw new IllegalArgumentException("Illegal time javaClass: " + javaClass);
+                }
+                break;
             case SEQUENCE:
                 generateDecodeSequenceValue(javaClass, nextVar, required, mv, blinkInput, componentJavaClass,
                         inputStreamVar, type, dict, genClassInternalName);

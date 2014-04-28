@@ -191,7 +191,7 @@ public class Benchmark {
         /**
          * The business date the trade occurred.
          */
-        //@Time(unit=TimeUnit.DAYS, timeZone="")
+        @Time(unit=TimeUnit.DAYS, timeZone="")
         public int tradeBusinessDate;
 
         /**
