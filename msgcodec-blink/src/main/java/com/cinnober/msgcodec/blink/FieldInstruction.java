@@ -587,104 +587,60 @@ abstract class FieldInstruction<V> {
         }
     }
     // --- STRING ---
-    private static int getMaxLength(FieldDef field) {
-        if (field == null) {
-            return -1;
-        }
-        String maxLengthStr = field.getAnnotation("maxLength");
-        if (maxLengthStr == null) {
-            return -1;
-        }
-        try {
-            return Integer.parseInt(maxLengthStr);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-    private static void validateMaxLength(String value, int maxLength) throws IllegalArgumentException {
-        if (value != null && maxLength >= 0 && value.length() > maxLength) {
-            throw new IllegalArgumentException("String length (" + value.length() + ") exceeds max length (" +
-                    maxLength + ")");
-        }
-    }
-    private static void validateMaxLength(byte[] value, int maxLength) throws IllegalArgumentException {
-        if (value != null && maxLength >= 0 && value.length > maxLength) {
-            throw new IllegalArgumentException("Binary length (" + value.length + ") exceeds max length (" +
-                    maxLength + ")");
-        }
-    }
-    private static void validateMaxLength(int length, int maxLength) throws IllegalArgumentException {
-        if (maxLength >= 0 && length > maxLength) {
-            throw new IllegalArgumentException("Sequence length (" + length + ") exceeds max length (" +
-                    maxLength + ")");
-        }
-    }
     static class StringUTF8 extends FieldInstruction<String> {
-        private final int maxLength;
         public StringUTF8(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(String value, BlinkOutputStream out) throws IOException {
             require(value);
-            validateMaxLength(value, maxLength);
             out.writeStringUTF8(value);
         }
         @Override
         public String decodeValue(BlinkInputStream in) throws IOException {
-            return in.readStringUTF8(maxLength);
+            return in.readStringUTF8();
         }
     }
     static class StringUTF8Null extends FieldInstruction<String> {
-        private final int maxLength;
         public StringUTF8Null(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(String value, BlinkOutputStream out) throws IOException {
-            validateMaxLength(value, maxLength);
             out.writeStringUTF8Null(value);
         }
         @Override
         public String decodeValue(BlinkInputStream in) throws IOException {
-            return in.readStringUTF8Null(maxLength);
+            return in.readStringUTF8Null();
         }
     }
 
     // --- BINARY ---
     static class Binary extends FieldInstruction<byte[]> {
-        private final int maxLength;
         public Binary(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(byte[] value, BlinkOutputStream out) throws IOException {
             require(value);
-            validateMaxLength(value, maxLength);
             out.writeBinary(value);
         }
         @Override
         public byte[] decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBinary(maxLength);
+            return in.readBinary();
         }
     }
     static class BinaryNull extends FieldInstruction<byte[]> {
-        private final int maxLength;
         public BinaryNull(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(byte[] value, BlinkOutputStream out) throws IOException {
-            validateMaxLength(value, maxLength);
             out.writeBinaryNull(value);
         }
         @Override
         public byte[] decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBinaryNull(maxLength);
+            return in.readBinaryNull();
         }
     }
 
@@ -789,18 +745,15 @@ abstract class FieldInstruction<V> {
     @SuppressWarnings("rawtypes")
     static class ListSequence extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
-        private final int maxLength;
         public ListSequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
         public void encodeValue(List value, BlinkOutputStream out) throws IOException {
             require(value);
             int length = value.size();
-            validateMaxLength(length, maxLength);
             out.writeUInt32(length);
             for (Object element : value) {
                 elementInstruction.encodeValue(element, out);
@@ -814,7 +767,6 @@ abstract class FieldInstruction<V> {
             if (size < 0) {
                 throw new DecodeException("Sequence size overflow: " + size);
             }
-            validateMaxLength(size, maxLength);
             ArrayList value = new ArrayList(size);
             for (int i=0; i<size; i++) {
                 value.add(elementInstruction.decodeValue(in));
@@ -825,11 +777,9 @@ abstract class FieldInstruction<V> {
     @SuppressWarnings("rawtypes")
     static class ListSequenceNull extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
-        private final int maxLength;
         public ListSequenceNull(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
@@ -838,7 +788,6 @@ abstract class FieldInstruction<V> {
                 out.writeUInt32Null(null);
             } else {
                 int length = value.size();
-                validateMaxLength(length, maxLength);
                 out.writeUInt32Null(length);
                 for (Object element : value) {
                     elementInstruction.encodeValue(element, out);
@@ -856,7 +805,6 @@ abstract class FieldInstruction<V> {
                 if (size < 0) {
                     throw new DecodeException("Sequence size overflow: " + size);
                 }
-                validateMaxLength(size, maxLength);
                 ArrayList value = new ArrayList(size);
                 for (int i=0; i<size; i++) {
                     value.add(elementInstruction.decodeValue(in));
@@ -869,19 +817,16 @@ abstract class FieldInstruction<V> {
     static class ArraySequence extends FieldInstruction<Object> { // actually <array>
         private final FieldInstruction elementInstruction;
         private final Class<?> componentType;
-        private final int maxLength;
         public ArraySequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
             this.componentType = field.getComponentJavaClass();
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
             require(value);
             int size = Array.getLength(value);
-            validateMaxLength(size, maxLength);
             out.writeUInt32(size);
             for (int i=0; i<size; i++) {
                 elementInstruction.encodeValue(Array.get(value, i), out);
@@ -893,7 +838,6 @@ abstract class FieldInstruction<V> {
             if (size < 0) {
                 throw new DecodeException("Sequence size overflow: " + size);
             }
-            validateMaxLength(size, maxLength);
             Object value = Array.newInstance(componentType, size);
             for (int i=0; i<size; i++) {
                 Array.set(value, i, elementInstruction.decodeValue(in));
@@ -905,12 +849,10 @@ abstract class FieldInstruction<V> {
     static class ArraySequenceNull extends FieldInstruction<Object> { // actually <array>
         private final FieldInstruction elementInstruction;
         private final Class<?> componentType;
-        private final int maxLength;
         public ArraySequenceNull(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
             this.componentType = field.getComponentJavaClass();
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
@@ -919,7 +861,6 @@ abstract class FieldInstruction<V> {
                 out.writeUInt32Null(null);
             } else {
                 int size = Array.getLength(value);
-                validateMaxLength(size, maxLength);
                 out.writeUInt32Null(size);
                 for (int i=0; i<size; i++) {
                     elementInstruction.encodeValue(Array.get(value, i), out);
@@ -936,7 +877,6 @@ abstract class FieldInstruction<V> {
                 if (size < 0) {
                     throw new DecodeException("Sequence size overflow: " + size);
                 }
-                validateMaxLength(size, maxLength);
                 Object value = Array.newInstance(componentType, size);
                 for (int i=0; i<size; i++) {
                     Array.set(value, i, elementInstruction.decodeValue(in));
