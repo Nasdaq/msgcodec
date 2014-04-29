@@ -36,6 +36,7 @@ import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
+import org.junit.Ignore;
 
 /**
  * @author mikael.brannstrom
@@ -79,45 +80,6 @@ public class BlinkCodecTest {
         // ensure that the message can be parsed as well
         Group msg = (Group) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals("Hello greeting", "Hello World", msg.get("greeting"));
-    }
-
-    @Test
-    public void testHelloExampleMaxLength() throws IOException {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        Annotations annotations = new Annotations();
-        annotations.path("Hello", "greeting").put("maxLength", "5");
-        ProtocolDictionary dictionary5 = dictionary.addAnnotations(annotations);
-        annotations.path("Hello", "greeting").put("maxLength", "11");
-        ProtocolDictionary dictionary11 = dictionary.addAnnotations(annotations);
-
-        StreamCodec codec = new BlinkCodec(dictionary);
-        StreamCodec codec5 = new BlinkCodec(dictionary5);
-        StreamCodec codec11 = new BlinkCodec(dictionary11);
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        ByteArrayOutputStream bout5 = new ByteArrayOutputStream();
-        ByteArrayOutputStream bout11 = new ByteArrayOutputStream();
-        Hello msg = new Hello("Hello Wörld");
-
-        // encode, unlimit
-        codec.encode(msg, bout); // OK
-        // encode, 11 chars
-        codec11.encode(msg, bout11); // OK
-
-        // encode, 5 chars
-        try {
-            codec5.encode(msg, bout5); // should fail
-            fail("Expected exception");
-        } catch(IllegalArgumentException e) {}
-
-        // decode, unlimit
-        codec.decode(new ByteArrayInputStream(bout.toByteArray()));
-        // decode, 11 chars
-        codec11.decode(new ByteArrayInputStream(bout.toByteArray()));
-        // decode, 5 chars
-        try {
-            codec5.decode(new ByteArrayInputStream(bout.toByteArray()));
-            fail("Expected exception");
-        } catch(DecodeException e) {}
     }
 
     @Test

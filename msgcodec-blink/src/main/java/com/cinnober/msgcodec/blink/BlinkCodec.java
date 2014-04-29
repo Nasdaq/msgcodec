@@ -39,10 +39,6 @@ import java.util.logging.Logger;
  *
  * Null values are supported in encode and decode.
  *
- * <p>The Blink Codec understands the annotation named "maxLength" for strings, binaries and sequences.
- * If present, this limit will be used as the maximum number of chars, bytes and elements for
- * strings, binaries and sequences respectively.
- *
  * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta2.pdf">Blink Specification beta2 - 2013-02-05.</a>
  *
  * @author mikael.brannstrom
