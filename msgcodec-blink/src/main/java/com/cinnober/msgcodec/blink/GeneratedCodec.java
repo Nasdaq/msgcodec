@@ -129,5 +129,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
         }
     }
     
-    
+    protected IllegalArgumentException missingRequiredValue(String valueName) {
+        return new IllegalArgumentException("Missing required value: " + valueName);
+    }
 }

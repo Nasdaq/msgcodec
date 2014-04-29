@@ -242,7 +242,9 @@ class ByteCodeGenerator {
                     }
                 }
                 // the output stream and the value is now on the stack
-                generateEncodeValue(writemv, 1, nextWriteVar, field.isRequired(), field.getType(), javaClass, field.getComponentJavaClass(), dict, genClassInternalName);
+                generateEncodeValue(writemv, 1, nextWriteVar, field.isRequired(), field.getType(), javaClass,
+                        field.getComponentJavaClass(), dict, genClassInternalName,
+                        group.getName() + "." + field.getName());
             }
 
             // end write
@@ -279,7 +281,8 @@ class ByteCodeGenerator {
      * @param genClassInternalName the internal name of the generated class
      */
     private void generateEncodeValue(MethodVisitor mv, int outputStreamVar, LocalVariable nextVar, 
-            boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, ProtocolDictionary dict, String genClassInternalName) {
+            boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, 
+            ProtocolDictionary dict, String genClassInternalName, String debugValueLabel) {
 
         type = dict.resolveToType(type, false);
         GroupDef refGroup = dict.resolveToGroup(type);
@@ -287,6 +290,16 @@ class ByteCodeGenerator {
         if (javaClass.isPrimitive() && !required) {
             box(mv, javaClass);
         } else if (!javaClass.isPrimitive() && required) {
+            mv.visitInsn(DUP);
+            Label notNullLabel = new Label();
+            mv.visitJumpInsn(IFNONNULL, notNullLabel);
+            mv.visitInsn(POP); // output stream
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitLdcInsn(debugValueLabel);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec", "missingRequiredValue",
+                    "(Ljava/lang/String;)Ljava/lang/IllegalArgumentException;", false);
+            mv.visitInsn(ATHROW);
+            mv.visitLabel(notNullLabel);
             unbox(mv, javaClass);
         }
         String blinkOutput = "com/cinnober/msgcodec/blink/BlinkOutput";
@@ -411,7 +424,7 @@ class ByteCodeGenerator {
                 break;
             case SEQUENCE:
                 generateEncodeSequenceValue(javaClass, nextVar, mv, required, blinkOutput, outputStreamVar,
-                        componentJavaClass, type, dict, genClassInternalName);
+                        componentJavaClass, type, dict, genClassInternalName, debugValueLabel);
                 break;
             case REFERENCE:
                 generateEncodeRefValue(refGroup, required, nextVar, mv, genClassInternalName, blinkOutput,
@@ -491,8 +504,8 @@ class ByteCodeGenerator {
     private void generateEncodeSequenceValue(
             Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required, String blinkOutput,
             int outputStreamVar,
-            Class<?> componentJavaClass, TypeDef type, ProtocolDictionary dict, String genClassInternalName) throws
-            IllegalArgumentException {
+            Class<?> componentJavaClass, TypeDef type, ProtocolDictionary dict, String genClassInternalName,
+            String debugValueLabel) throws IllegalArgumentException {
 
         // PENDING: merge the two if-cases, and reuse common code blocks (see generateDecodeSquenceValue)
         if (javaClass.isArray()) {
@@ -554,7 +567,8 @@ class ByteCodeGenerator {
 
             // encode the element
             TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, 
+                    null, dict, genClassInternalName, debugValueLabel + ".component");
 
             mv.visitIincInsn(loopVar, 1);
             mv.visitJumpInsn(GOTO, loopLabel);
@@ -611,7 +625,8 @@ class ByteCodeGenerator {
 
             // encode the element
             TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, dict, genClassInternalName);
+            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass,
+                    null, dict, genClassInternalName, debugValueLabel + ".component");
 
             mv.visitJumpInsn(GOTO, loopLabel);
             mv.visitLabel(endLabel);
