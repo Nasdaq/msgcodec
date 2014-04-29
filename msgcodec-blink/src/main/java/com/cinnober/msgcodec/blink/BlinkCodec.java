@@ -45,6 +45,7 @@ import java.util.logging.Logger;
  *
  */
 public class BlinkCodec implements StreamCodec {
+    private static final Logger log = Logger.getLogger(BlinkCodec.class.getName());
 
     private final GeneratedCodec generatedCodec;
 
@@ -61,20 +62,36 @@ public class BlinkCodec implements StreamCodec {
     /** Blink output stream wrapped around the {@link #internalBuffer}. */
     private final BlinkOutputStream internalStream;
 
+    private final int maxBinarySize;
+    private final int maxSequenceLength;
 
-    /** Create a Blink codec, with an internal buffer pool of 8192 bytes.
+    /**
+     * Create a Blink codec, with an internal buffer pool of 8192 bytes.
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      */
     public BlinkCodec(ProtocolDictionary dictionary) {
         this(dictionary, new ConcurrentBufferPool(8192, 1));
     }
-    /** Create a Blink codec.
+    /**
+     * Create a Blink codec.
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      */
     public BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) {
+        this(dictionary, bufferPool, 10 * 1048576, 1_000_000);
+    }
+    /**
+     * Create a Blink codec.
+     *
+     * @param dictionary the definition of the messages to be understood by the codec.
+     * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
+     * @param maxBinarySize the maximum binary size (including strings) allowed while decoding, or -1 for no limit.
+     * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
+     */
+    BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool,
+            int maxBinarySize, int maxSequenceLength) {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
@@ -86,6 +103,8 @@ public class BlinkCodec implements StreamCodec {
             this.internalStream = null;
         }
 
+        this.maxBinarySize = maxBinarySize;
+        this.maxSequenceLength = maxSequenceLength;
 
         GeneratedCodec generatedCodecTmp;
         Class<GeneratedCodec> generatedCodecClass = null;
@@ -98,12 +117,23 @@ public class BlinkCodec implements StreamCodec {
                 generatedCodecTmp = constructor.newInstance(this, dictionary);
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
                     IllegalArgumentException | InvocationTargetException e) {
+                log.log(Level.WARNING, "Could instantiate generated codec", e);
                 generatedCodecTmp = new InstructionCodec(this, dictionary);
             }
         } else {
+            log.info("Fallback to (slower) instruction based codec");
             generatedCodecTmp = new InstructionCodec(this, dictionary);
         }
         generatedCodec = generatedCodecTmp;
+    }
+
+    // PENDING: this method should be package private. For some reason the generated codec cannot access package private stuff...
+    public int getMaxBinarySize() {
+        return maxBinarySize;
+    }
+
+    int getMaxSequenceLength() {
+        return maxSequenceLength;
     }
 
     @Override

@@ -919,17 +919,25 @@ class ByteCodeGenerator {
                 }
                 break;
             case STRING:
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, "com/cinnober/msgcodec/blink/GeneratedCodec", "codec",
+                        "Lcom/cinnober/msgcodec/blink/BlinkCodec;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize", "()I", false);
                 if (required) {
-                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8", "(Ljava/io/InputStream;)Ljava/lang/String;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8", "(Ljava/io/InputStream;I)Ljava/lang/String;", false);
                 } else {
-                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8Null", "(Ljava/io/InputStream;)Ljava/lang/String;", false);
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8Null", "(Ljava/io/InputStream;I)Ljava/lang/String;", false);
                 }
                 break;
             case BINARY:
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, "com/cinnober/msgcodec/blink/GeneratedCodec", "codec",
+                        "Lcom/cinnober/msgcodec/blink/BlinkCodec;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize", "()I", false);
                 if (required) {
-                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinary", "(Ljava/io/InputStream;)[B", false);
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinary", "(Ljava/io/InputStream;I)[B", false);
                 } else {
-                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinaryNull", "(Ljava/io/InputStream;)[B", false);
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinaryNull", "(Ljava/io/InputStream;I)[B", false);
                 }
                 break;
             case BOOLEAN:

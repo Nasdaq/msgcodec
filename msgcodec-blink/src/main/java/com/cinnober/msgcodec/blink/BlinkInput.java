@@ -455,38 +455,30 @@ public class BlinkInput {
     /**
      * Read a unicode string.
      * @param in the input stream to read from, not null.
-     * @param maxLength the maximum string length (characters) that is allowed, or -1 for no limit.
+     * @param maxLength the maximum string length (bytes) that is allowed, or -1 for no limit.
      * @return the value, not null.
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
     public static String readStringUTF8(InputStream in, int maxLength) throws IOException {
-        final int maxBinaryLength = maxLength < 0 ? -1 : maxLength * UTF8_MAX_CHARS_PER_BYTE;
-        byte[] bytes = readBinary(in, maxBinaryLength);
+        byte[] bytes = readBinary(in, maxLength);
         String value = new String(bytes, UTF8); // TODO: use a cache?
-        if (maxLength >= 0 && value.length() > maxLength) {
-            throw new DecodeException("String length (" + value.length() + ") exceeds limit (" + maxLength + ")");
-        }
         return value;
     }
     /**
      * Read a nullable unicode string.
      * @param in the input stream to read from, not null.
-     * @param maxLength the maximum string length (characters) that is allowed, or -1 for no limit.
+     * @param maxLength the maximum string length (bytes) that is allowed, or -1 for no limit.
      * @return the value, or null.
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
     public static String readStringUTF8Null(InputStream in, int maxLength) throws IOException {
-        final int maxBinaryLength = maxLength < 0 ? -1 : maxLength * UTF8_MAX_CHARS_PER_BYTE;
-        byte[] bytes = readBinaryNull(in, maxBinaryLength);
+        byte[] bytes = readBinaryNull(in, maxLength);
         if (bytes == null) {
             return null;
         } else {
             String value = new String(bytes, UTF8); // TODO: use a cache?
-            if (maxLength >= 0 && value.length() > maxLength) {
-                throw new DecodeException("String length (" + value.length() + ") exceeds limit (" + maxLength + ")");
-            }
             return value;
         }
     }
