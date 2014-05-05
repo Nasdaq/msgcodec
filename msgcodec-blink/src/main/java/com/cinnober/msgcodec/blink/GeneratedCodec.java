@@ -130,20 +130,74 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
             in.limit(limit); // restore old limit
         }
     }
-    
-    protected IllegalArgumentException missingRequiredValue(String valueName) {
+
+    // --- UTILITY METHODS FOR CREATING EXCEPTIONS ---
+
+    /**
+     * Create an encode exception when a required value is missing.
+     * 
+     * @param valueName the name of the value, e.g. a field name, not null.
+     * @return the exception to be thrown.
+     */
+    protected static IllegalArgumentException missingRequiredValue(String valueName) {
         return new IllegalArgumentException(valueName + ": Missing required value");
     }
 
-    protected DecodeException unmappableEnumSymbolId(String valueName, int symbolId, Class<? extends Enum> enumClass) {
+    /**
+     * Create a decode exception when an unmappable enum symbol id is read.
+     * This means that for a given valid symbol id, there is no Java enum value.
+     *
+     * @param valueName the name of the value, e.g. a field name, not null.
+     * @param symbolId the symbol id
+     * @param enumClass the enum class, not null
+     * @return the exception to be thrown.
+     */
+    protected static DecodeException unmappableEnumSymbolId(String valueName, int symbolId, Class<? extends Enum> enumClass) {
         return new DecodeException(valueName + ": Cannot map symbol id " + symbolId +
                 " to enum value of type " + enumClass);
     }
-    protected DecodeException illegalEnumSymbol(String valueName, int symbolId) {
-        return new DecodeException(valueName + ": Illegal enum symbol id " + symbolId);
+
+    /**
+     * Create a decode exception when an unknown enum symbol id is read.
+     * @param valueName the name of the value, e.g. a field name, not null.
+     * @param symbolId the symbol id
+     * @return the exception to be thrown.
+     */
+    protected static DecodeException unknownEnumSymbol(String valueName, int symbolId) {
+        return new DecodeException(valueName + ": Unknown enum symbol id " + symbolId);
     }
 
-    protected <E extends Enum<E>> IllegalArgumentException unmappableEnumSymbolValue(String valueName, E enumValue) {
+    /**
+     * Create an encode exception when an unmappable enum value is found.
+     * This means that for a given Java enum value, there is no mapping to a symbol id.
+     * 
+     * @param <E> the enum type
+     * @param valueName the name of the value, e.g. a field name, not null.
+     * @param enumValue the unmappable unum value, not null
+     * @return the exception to be thrown.
+     */
+    protected static <E extends Enum<E>> IllegalArgumentException unmappableEnumSymbolValue(String valueName, E enumValue) {
         return new IllegalArgumentException(valueName + ": Cannot map enum value to symbol " + enumValue);
+    }
+
+    /**
+     * Create an encode exception when trying to encode an object for an unknown Java class.
+     * This mean that the group is not present in the dictionary.
+     * 
+     * @param javaClass the java class of the group to be encoded, not null.
+     * @return the exception to be thrown.
+     */
+    protected static IllegalArgumentException unknownObjectType(Class<?> javaClass) {
+        return new IllegalArgumentException("Unknown object type: " + javaClass);
+    }
+
+    /**
+     * Create a decode exception when an unknown group id is read.
+     *
+     * @param groupId the group id.
+     * @return the exception to be thrown.
+     */
+    protected static DecodeException unknownGroupId(int groupId) {
+        return new DecodeException("Unknown group id: " + groupId);
     }
 }

@@ -6,7 +6,6 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.ProtocolDictionary;
 
 /**
@@ -20,13 +19,4 @@ public abstract class GeneratedJavaClassCodec extends GeneratedCodec {
     public GeneratedJavaClassCodec(BlinkCodec codec, ProtocolDictionary dict) {
         super(codec);
     }
-
-    protected IllegalArgumentException unknownObjectType(Class<?> javaClass) {
-        return new IllegalArgumentException("Unknown object type: " + javaClass);
-    }
-
-    protected DecodeException unknownGroupId(int groupId) {
-        return new DecodeException("Unknown group id: " + groupId);
-    }
-
 }

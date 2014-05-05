@@ -57,6 +57,8 @@ import org.objectweb.asm.util.TraceClassVisitor;
  * @author mikael.brannstrom
  */
 class ByteCodeGenerator {
+    private static final String BASECLASS_INTERNALNAME = "com/cinnober/msgcodec/blink/GeneratedCodec";
+
     private static final String GENERATED_CLASS_INTERNALNAME = "com/cinnober/msgcodec/blink/GeneratedBlinkCodec";
     private static final String GENERATED_CLASS_NAME = "com.cinnober.msgcodec.blink.GeneratedBlinkCodec";
     private static final Logger log = Logger.getLogger(ByteCodeGenerator.class.getName());
@@ -296,9 +298,8 @@ class ByteCodeGenerator {
             Label notNullLabel = new Label();
             mv.visitJumpInsn(IFNONNULL, notNullLabel);
             mv.visitInsn(POP); // output stream
-            mv.visitVarInsn(ALOAD, 0);
             mv.visitLdcInsn(debugValueLabel);
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec", "missingRequiredValue",
+            mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "missingRequiredValue",
                     "(Ljava/lang/String;)Ljava/lang/IllegalArgumentException;", false);
             mv.visitInsn(ATHROW);
             mv.visitLabel(notNullLabel);
@@ -715,10 +716,9 @@ class ByteCodeGenerator {
                     mv.visitLdcInsn(symbol.getId());
                     mv.visitJumpInsn(GOTO, writeLabel);
                 } else {
-                    mv.visitVarInsn(ALOAD, 0);
                     mv.visitLdcInsn(debugValueLabel);
                     mv.visitVarInsn(ALOAD, symbolIdVar);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec", "unmappableEnumSymbolValue",
+                    mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unmappableEnumSymbolValue",
                             "(Ljava/lang/String;Ljava/lang/Enum;)Ljava/lang/IllegalArgumentException;", false);
                     mv.visitInsn(ATHROW);
                 }
@@ -1135,11 +1135,10 @@ class ByteCodeGenerator {
                             enumValue.name(),
                             Type.getDescriptor(javaClass));
                 } else {
-                    mv.visitVarInsn(ALOAD, 0);
                     mv.visitLdcInsn(debugValueLabel);
                     mv.visitLdcInsn(ids[i]);
                     mv.visitLdcInsn(Type.getType(javaClass));
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec", "unmappableEnumSymbolId",
+                    mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unmappableEnumSymbolId",
                             "(Ljava/lang/String;ILjava/lang/Class;)Lcom/cinnober/msgcodec/DecodeException;", false);
                     mv.visitInsn(ATHROW);
                     addGotoEnd = false;
@@ -1157,10 +1156,9 @@ class ByteCodeGenerator {
             }
         }
         mv.visitLabel(defaultLabel);
-        mv.visitVarInsn(ALOAD, 0);
         mv.visitLdcInsn(debugValueLabel);
         mv.visitVarInsn(ILOAD, symbolIdVar);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec", "illegalEnumSymbol",
+        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownEnumSymbol",
                 "(Ljava/lang/String;I)Lcom/cinnober/msgcodec/DecodeException;", false);
         mv.visitInsn(ATHROW);
 
@@ -1470,9 +1468,8 @@ class ByteCodeGenerator {
         }
         mv.visitLabel(unknownHashLabel);
         mv.visitFrame(F_SAME, 0, null, 0, null);
-        mv.visitVarInsn(ALOAD, 0); // this
         mv.visitVarInsn(ALOAD, classVariable);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", "unknownObjectType",
+        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownObjectType",
                 "(Ljava/lang/Class;)Ljava/lang/IllegalArgumentException;", false);
         mv.visitInsn(ATHROW);
 
@@ -1538,9 +1535,8 @@ class ByteCodeGenerator {
         // default case
         mv.visitLabel(unknownGroupIdLabel);
         mv.visitFrame(F_SAME, 0, null, 0, null);
-        mv.visitVarInsn(ALOAD, 0);
         mv.visitVarInsn(ILOAD, 1);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", "unknownGroupId", "(I)Lcom/cinnober/msgcodec/DecodeException;", false);
+        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownGroupId", "(I)Lcom/cinnober/msgcodec/DecodeException;", false);
         mv.visitInsn(ATHROW);
         mv.visitMaxs(2, nextVar); // PENDING: maxStack
         mv.visitEnd();
