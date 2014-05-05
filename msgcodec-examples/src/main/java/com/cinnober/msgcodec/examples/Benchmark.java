@@ -259,7 +259,7 @@ public class Benchmark {
          *
          * Determines if the position should be opened or closed. Note: Only open is currently supported.
          */
-        public boolean openOrClose;
+        public OpenOrClose openOrClose;
 
         public TradeDestination() {
         }
@@ -267,8 +267,12 @@ public class Benchmark {
         public TradeDestination(long accountId, BigDecimal quantity) {
             this.accountId = accountId;
             this.quantity = quantity;
-            this.openOrClose = true;
+            this.openOrClose = OpenOrClose.OPEN;
         }
 
+    }
+
+    public static enum OpenOrClose {
+        OPEN, CLOSE
     }
 }
