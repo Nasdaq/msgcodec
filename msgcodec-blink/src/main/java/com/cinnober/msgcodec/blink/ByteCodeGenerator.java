@@ -1007,7 +1007,7 @@ class ByteCodeGenerator {
                 }
                 break;
             case ENUM:
-                generateDecodeEnumValue(required, mv, blinkInput, type, nextVar, javaClass, genClassInternalName, debugValueLabel);
+                generateDecodeEnumValue(required, mv, blinkInput, type, nextVar, javaClass, debugValueLabel);
                 break;
             case TIME:
                 generateDecodeTimeValue(javaClass, required, mv, blinkInput, nextVar);
@@ -1051,7 +1051,7 @@ class ByteCodeGenerator {
         } else if (javaClass == Date.class) {
 
             // TODO: handle differences in UNIT and EPOCH
-            int timeVar = nextVar.next(); nextVar.next();
+            int timeVar = nextVar.next(); nextVar.next(); // note: 2 variable slots
             if (required) {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Ljava/io/InputStream;)J", false);
                 mv.visitVarInsn(LSTORE, timeVar);
@@ -1085,7 +1085,7 @@ class ByteCodeGenerator {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void generateDecodeEnumValue(boolean required, MethodVisitor mv, String blinkInput, TypeDef type,
-            LocalVariable nextVar, Class<?> javaClass, String genClassInternalName, String debugValueLabel)
+            LocalVariable nextVar, Class<?> javaClass, String debugValueLabel)
             throws IllegalArgumentException {
         
         Label endLabel = new Label();
