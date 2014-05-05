@@ -10,6 +10,8 @@ import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.CodingErrorAction;
+import javax.xml.ws.handler.MessageContext;
 
 /**
  * Base class for a dynamically generated codec for a specific dictionary.
@@ -130,6 +132,18 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
     }
     
     protected IllegalArgumentException missingRequiredValue(String valueName) {
-        return new IllegalArgumentException("Missing required value: " + valueName);
+        return new IllegalArgumentException(valueName + ": Missing required value");
+    }
+
+    protected DecodeException unmappableEnumSymbolId(String valueName, int symbolId, Class<? extends Enum> enumClass) {
+        return new DecodeException(valueName + ": Cannot map symbol id " + symbolId +
+                " to enum value of type " + enumClass);
+    }
+    protected DecodeException illegalEnumSymbol(String valueName, int symbolId) {
+        return new DecodeException(valueName + ": Illegal enum symbol id " + symbolId);
+    }
+
+    protected <E extends Enum<E>> IllegalArgumentException unmappableEnumSymbolValue(String valueName, E enumValue) {
+        return new IllegalArgumentException(valueName + ": Cannot map enum value to symbol " + enumValue);
     }
 }
