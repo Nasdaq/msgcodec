@@ -186,14 +186,14 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
     }
 
     /**
-     * Create an encode exception when trying to encode an object for an unknown Java class.
+     * Create an encode exception when trying to encode a group for an unknown group type.
      * This mean that the group is not present in the dictionary.
      * 
-     * @param javaClass the java class of the group to be encoded, not null.
+     * @param groupType the group type (e.g. a java class) of the group to be encoded, not null.
      * @return the exception to be thrown.
      */
-    protected static IllegalArgumentException unknownObjectType(Class<?> javaClass) {
-        return new IllegalArgumentException("Unknown object type: " + javaClass);
+    protected static IllegalArgumentException unknownGroupType(Object groupType) {
+        return new IllegalArgumentException("Unknown group type: " + groupType);
     }
 
     /**
