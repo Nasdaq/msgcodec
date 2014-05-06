@@ -57,11 +57,15 @@ import org.objectweb.asm.util.TraceClassVisitor;
  * @author mikael.brannstrom
  */
 class ByteCodeGenerator {
+    private static final Logger log = Logger.getLogger(ByteCodeGenerator.class.getName());
+    
+    private static final boolean JAVACLASS_CODEC = true;
+    private static final boolean GENERIC_CODEC = false;
+
     private static final String BASECLASS_INTERNALNAME = "com/cinnober/msgcodec/blink/GeneratedCodec";
 
     private static final String GENERATED_CLASS_INTERNALNAME = "com/cinnober/msgcodec/blink/GeneratedBlinkCodec";
     private static final String GENERATED_CLASS_NAME = "com.cinnober.msgcodec.blink.GeneratedBlinkCodec";
-    private static final Logger log = Logger.getLogger(ByteCodeGenerator.class.getName());
 
     public String getGeneratedClassName(int suffix) {
         return GENERATED_CLASS_NAME + suffix;
@@ -81,8 +85,9 @@ class ByteCodeGenerator {
         }
         cv = new CheckClassAdapter(cv);
         if (dict.getBinding().getGroupTypeAccessor() == JavaClassGroupTypeAccessor.INSTANCE) {
-            generateJCodec(cv, dict, suffix);
+            generateCodecJ(cv, dict, suffix);
         } else {
+            // TODO: implement this
             throw new UnsupportedOperationException("Non JavaClassGroupTypeAccessor is not supported");
         }
         byte[] bytes = classWriter.toByteArray();
@@ -100,32 +105,33 @@ class ByteCodeGenerator {
     }
 
     /**
-     * Generates a class that extends {@link GeneratedJavaClassCodec).
+     * Generates a codec class that uses the JavaClassGroupTypeAccessor.
      *
      * <p>Generated layout:
      * <pre>
      * // fields
      * Factory factory_MessageType1; // unless a ConstructorFactory
-     * Accessor accessor_MessageType1_field1; // unless a FieldAccessor or a IgnoreAccessor
+     * Accessor accessor_MessageType1_field1; // unless a FieldAccessor or an IgnoreAccessor
      * ...
      *
      * // methods
      * Constructor(BlinkCodec, ProtocolDictionary);
      *
      * Object readStaticGroup(int groupId, LimitInputStream); // switch on groupId
-     * void writeStaticGroup(OutputStream, Object); // switch on class
-     * 
-     * void readStaticGroup(LimitInputStream, MessageType1);
-     * void readStaticGroup(LimitInputStream, MessageType2);
      * ...
      * MessageType1 readStaticGroup_MessageType1(LimitInputStream);
      * MessageType2 readStaticGroup_MessageType2(LimitInputStream);
      * ...
-     * void writeStaticGroup(OutputStream, MessageType1);
-     * void writeStaticGroup(OutputStream, MessageType2);
+     * void readStaticGroup_MessageType1(LimitInputStream, MessageType1);
+     * void readStaticGroup_MessageType2(LimitInputStream, MessageType2);
      * ...
-     * void writeStaticGroupWithId(OutputStream, MessageType1);
-     * void writeStaticGroupWithId(OutputStream, MessageType2);
+     * void writeStaticGroup(OutputStream, Object); // switch on class
+     * ...
+     * void writeStaticGroupWithId_MessageType1(OutputStream, MessageType1);
+     * void writeStaticGroupWithId_MessageType2(OutputStream, MessageType2);
+     * ...
+     * void writeStaticGroup_MessageType1(OutputStream, MessageType1);
+     * void writeStaticGroup_MessageType2(OutputStream, MessageType2);
      * ...
      * </pre>
      *
@@ -133,31 +139,247 @@ class ByteCodeGenerator {
      * @param dict
      * @param suffix
      */
-    private void generateJCodec(ClassVisitor cv, ProtocolDictionary dict, int suffix) {
+    private void generateCodecJ(ClassVisitor cv, ProtocolDictionary dict, int suffix) {
 
         final String genClassInternalName = GENERATED_CLASS_INTERNALNAME + suffix;
-        cv.visit(V1_7, ACC_PUBLIC + ACC_FINAL, genClassInternalName, null,
-                "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", null);
+        cv.visit(V1_7, ACC_PUBLIC + ACC_FINAL, genClassInternalName, null, BASECLASS_INTERNALNAME, null);
 
-        generateJConstructorAndFields(dict, cv, genClassInternalName);
-        generateJReadStaticGroupNewInstance(dict, cv, genClassInternalName);
-        generateJReadStaticGroup(dict, cv, genClassInternalName);
-        generateJWriteStaticGroup(dict, cv, genClassInternalName);
-        generateJWriteStaticGroupWithId(dict, cv, genClassInternalName);
-        generateJWriteStaticGroupWithIdSwitch(dict, cv, genClassInternalName);
-        generateJReadStaticGroupSwitch(dict, cv, genClassInternalName);
+        generateConstructorAndFieldsJ(dict, cv, genClassInternalName);
+
+        generateReadStaticGroupJ(dict, cv, genClassInternalName);
+        generateReadStaticGroupForTypeAndCreateJ(dict, cv, genClassInternalName);
+        generateReadStaticGroupForTypeJ(dict, cv, genClassInternalName);
+
+        generateWriteStaticGroupJ(dict, cv, genClassInternalName);
+        generateWriteStaticGroupForTypeWithIdJ(dict, cv, genClassInternalName);
+        generateWriteStaticGroupForTypeJ(dict, cv, genClassInternalName);
 
         cv.visitEnd();
     }
 
-    private void generateJWriteStaticGroupWithId(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+    /**
+     * Generates a codec class that does NOT use the JavaClassGroupTypeAccessor.
+     *
+     * <p>Generated layout:
+     * <pre>
+     * // fields
+     * GroupTypeAccessor groupTypeAccessor;
+     * Factory factory_MessageType1;
+     * Accessor accessor_MessageType1_field1; // unless an IgnoreAccessor
+     * ...
+     *
+     * // methods
+     * Constructor(BlinkCodec, ProtocolDictionary);
+     *
+     * Object readStaticGroup(int groupId, LimitInputStream); // switch on groupId
+     * ...
+     * Object readStaticGroup_MessageType1(LimitInputStream);
+     * Object readStaticGroup_MessageType2(LimitInputStream);
+     * ...
+     * void readStaticGroup_MessageType1(LimitInputStream, Object);
+     * void readStaticGroup_MessageType2(LimitInputStream, Object);
+     * ...
+     * void writeStaticGroup(OutputStream, Object); // switch on group type
+     * ...
+     * void writeStaticGroupWithId_MessageType1(OutputStream, Object);
+     * void writeStaticGroupWithId_MessageType2(OutputStream, Object);
+     * ...
+     * void writeStaticGroup_MessageType1(OutputStream, Object);
+     * void writeStaticGroup_MessageType2(OutputStream, Object);
+     * ...
+     * </pre>
+     *
+     * @param cv
+     * @param dict
+     * @param suffix
+     */
+    private void generateCodecG(ClassVisitor cv, ProtocolDictionary dict, int suffix) {
+
+        final String genClassInternalName = GENERATED_CLASS_INTERNALNAME + suffix;
+        cv.visit(V1_7, ACC_PUBLIC + ACC_FINAL, genClassInternalName, null, BASECLASS_INTERNALNAME, null);
+
+        // TODO: implement "generic" flavors of the following:
+        
+        generateConstructorAndFieldsJ(dict, cv, genClassInternalName);
+
+        generateReadStaticGroupJ(dict, cv, genClassInternalName);
+        generateReadStaticGroupForTypeAndCreateJ(dict, cv, genClassInternalName);
+        generateReadStaticGroupForTypeJ(dict, cv, genClassInternalName);
+
+        generateWriteStaticGroupJ(dict, cv, genClassInternalName);
+        generateWriteStaticGroupForTypeWithIdJ(dict, cv, genClassInternalName);
+        generateWriteStaticGroupForTypeJ(dict, cv, genClassInternalName);
+
+        cv.visitEnd();
+    }
+
+    // --- GENERATE CONSTRUCTOR ETC ------------------------------------------------------------------------------------
+
+    private void generateConstructorAndFieldsJ(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+        MethodVisitor ctormv;
+        ctormv = cv.visitMethod(ACC_PUBLIC, "<init>", "(Lcom/cinnober/msgcodec/blink/BlinkCodec;Lcom/cinnober/msgcodec/ProtocolDictionary;)V", null, null);
+        int nextCtorVar = 3;
+        ctormv.visitCode();
+        ctormv.visitVarInsn(ALOAD, 0);
+        ctormv.visitVarInsn(ALOAD, 1);
+        ctormv.visitMethodInsn(INVOKESPECIAL, BASECLASS_INTERNALNAME, "<init>", "(Lcom/cinnober/msgcodec/blink/BlinkCodec;)V", false);
+
+        for (GroupDef group : dict.getGroups()) {
+            Class<?> groupType = (Class) group.getGroupType();
+            //String groupDescriptor = Type.getDescriptor(groupType);
+            //String groupInternalName = Type.getInternalName(groupType);
+
+            Factory<?> factory = group.getFactory();
+            if (!isPublicConstructorFactory(factory)) {
+                // field
+                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                        "factory_" + group.getName(),
+                        Type.getDescriptor(factory.getClass()), null, null);
+                fv.visitEnd();
+
+                // ctor, init field
+                ctormv.visitVarInsn(ALOAD, 0); // this
+                ctormv.visitVarInsn(ALOAD, 2); // dict
+                ctormv.visitLdcInsn(group.getName());
+                ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
+                        "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef", false);
+                ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getFactory",
+                        "()Lcom/cinnober/msgcodec/Factory;", false);
+                ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(factory.getClass()));
+                ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
+                        "factory_" + group.getName(),
+                        Type.getDescriptor(factory.getClass()));
+            }
+
+            for (FieldDef field : group.getFields()) {
+                Accessor<?,?> accessor = field.getAccessor();
+                if (isPublicFieldAccessor(accessor)) {
+                    // ok
+                } else if (accessor.getClass() == IgnoreAccessor.class) {
+                    // ok
+                } else {
+                    // field
+                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            Type.getDescriptor(accessor.getClass()), null, null);
+                    fv.visitEnd();
+
+                    // ctor, init field
+                    ctormv.visitVarInsn(ALOAD, 0); // this
+                    ctormv.visitVarInsn(ALOAD, 2); // dict
+                    ctormv.visitLdcInsn(group.getName());
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
+                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef;", false);
+                    ctormv.visitLdcInsn(field.getName());
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getField",
+                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/FieldDef;", false);
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/FieldDef", "getAccessor",
+                            "()Lcom/cinnober/msgcodec/Accessor;", false);
+                    ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(accessor.getClass()));
+                    ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            Type.getDescriptor(accessor.getClass()));
+                }
+
+            }
+
+        }
+
+        ctormv.visitInsn(RETURN);
+        ctormv.visitMaxs(3, nextCtorVar); // PENDING: maxStack
+        ctormv.visitEnd();
+    }
+    
+    // --- GENERATE WRITE ----------------------------------------------------------------------------------------------
+
+    private void generateWriteStaticGroupJ(ProtocolDictionary dict, ClassVisitor cv,
+            String genClassInternalName) {
+        // method writeStaticGroupWithId - switch
+        MethodVisitor mv = cv.visitMethod(ACC_PROTECTED, "writeStaticGroupWithId", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", null, new String[] { "java/io/IOException" });
+        int nextVar = 3;
+        mv.visitCode();
+
+        mv.visitVarInsn(ALOAD, 2);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+        int classVariable = nextVar++;
+        mv.visitInsn(DUP);
+        mv.visitVarInsn(ASTORE, classVariable);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I", false);
+
+        // switch on class.hashCode()
+        Map<Integer,ObjectHashCodeSwitchCase<Class<?>>> casesByHashCode = new TreeMap<>();
+        for (GroupDef group : dict.getGroups()) {
+            Class<?> groupType = (Class<?>) group.getGroupType();
+            int groupHash = groupType.hashCode();
+            ObjectHashCodeSwitchCase<Class<?>> hashCase = casesByHashCode.get(groupHash);
+            if (hashCase == null) {
+                hashCase = new ObjectHashCodeSwitchCase<>(groupHash);
+                casesByHashCode.put(hashCase.hashCode, hashCase);
+            }
+            hashCase.add(groupType);
+        }
+
+        Label unknownHashLabel = new Label();
+        {
+            int[] caseValues = new int[casesByHashCode.size()];
+            int i = 0;
+            for (int hashCode : casesByHashCode.keySet()) {
+                caseValues[i++] = hashCode;
+            }
+            Label[] caseLabels = new Label[casesByHashCode.size()];
+            i = 0;
+            for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
+                caseLabels[i++] = hashCase.label;
+            }
+            mv.visitLookupSwitchInsn(unknownHashLabel, caseValues, caseLabels);
+        }
+        for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
+            mv.visitLabel(hashCase.label);
+            mv.visitFrame(F_SAME, 0, null, 0, null);
+            for (ObjectSwitchCase<Class<?>> classCase : hashCase.cases) {
+                mv.visitVarInsn(ALOAD, classVariable);
+                mv.visitLdcInsn(Type.getType(classCase.object));
+                mv.visitJumpInsn(IF_ACMPEQ, classCase.label);
+            }
+        }
+        mv.visitLabel(unknownHashLabel);
+        mv.visitFrame(F_SAME, 0, null, 0, null);
+        mv.visitVarInsn(ALOAD, classVariable);
+        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownObjectType",
+                "(Ljava/lang/Class;)Ljava/lang/IllegalArgumentException;", false);
+        mv.visitInsn(ATHROW);
+
+
+        for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
+            for (ObjectSwitchCase<Class<?>> classCase : hashCase.cases) {
+                Class<?> groupType = classCase.object;
+                GroupDef group = dict.getGroup(groupType);
+                String groupDescriptor = Type.getDescriptor(groupType);
+                String groupInternalName = Type.getInternalName(groupType);
+                mv.visitLabel(classCase.label);
+                mv.visitFrame(F_SAME, 0, null, 0, null);
+                mv.visitVarInsn(ALOAD, 0); // this
+                mv.visitVarInsn(ALOAD, 1); // out
+                mv.visitVarInsn(ALOAD, 2); // obj
+                mv.visitTypeInsn(CHECKCAST, groupInternalName);
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroupWithId_" + group.getName(),
+                        "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
+                mv.visitInsn(RETURN);
+            }
+        }
+
+        mv.visitMaxs(3, nextVar);
+        mv.visitEnd();
+    }
+    
+    private void generateWriteStaticGroupForTypeWithIdJ(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
         for (GroupDef group : dict.getGroups()) {
             Class<?> groupType = (Class) group.getGroupType();
             String groupDescriptor = Type.getDescriptor(groupType);
             //String groupInternalName = Type.getInternalName(groupType);
             MethodVisitor mv = cv.visitMethod(
                     ACC_PRIVATE,
-                    "writeStaticGroupWithId",
+                    "writeStaticGroupWithId_" + group.getName(),
                     "(Ljava/io/OutputStream;" + groupDescriptor + ")V",
                     null,
                     new String[] { "java/io/IOException" });
@@ -172,7 +394,7 @@ class ByteCodeGenerator {
                 mv.visitVarInsn(ALOAD, 0); // this
                 mv.visitVarInsn(ALOAD, 1); // out
                 mv.visitVarInsn(ALOAD, 2); // obj
-                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup", "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + group.getName(), "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
                 mv.visitInsn(RETURN);
             } else {
                 // write with id
@@ -189,14 +411,14 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateJWriteStaticGroup(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+    private void generateWriteStaticGroupForTypeJ(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
         for (GroupDef group : dict.getGroups()) {
             Class<?> groupType = (Class) group.getGroupType();
             String groupDescriptor = Type.getDescriptor(groupType);
             //String groupInternalName = Type.getInternalName(groupType);
             MethodVisitor writemv = cv.visitMethod(
                     ACC_PRIVATE,
-                    "writeStaticGroup",
+                    "writeStaticGroup_" + group.getName(),
                     "(Ljava/io/OutputStream;" + groupDescriptor + ")V",
                     null,
                     new String[] { "java/io/IOException" });
@@ -213,7 +435,7 @@ class ByteCodeGenerator {
                 writemv.visitVarInsn(ALOAD, 2);
                 writemv.visitMethodInsn(INVOKEVIRTUAL,
                         genClassInternalName,
-                        "writeStaticGroup",
+                        "writeStaticGroup_" + superGroup.getName(),
                         "(Ljava/io/OutputStream;"+superGroupDescriptor+")V", false);
             }
 
@@ -248,7 +470,7 @@ class ByteCodeGenerator {
                 // the output stream and the value is now on the stack
                 generateEncodeValue(writemv, 1, nextWriteVar, field.isRequired(), field.getType(), javaClass,
                         field.getComponentJavaClass(), dict, genClassInternalName,
-                        group.getName() + "." + field.getName());
+                        group.getName() + "." + field.getName(), JAVACLASS_CODEC);
             }
 
             // end write
@@ -258,16 +480,182 @@ class ByteCodeGenerator {
         }
     }
 
-    private static boolean isPublicFieldAccessor(Accessor<?,?> accessor) {
-        return accessor.getClass() == FieldAccessor.class &&
-                Modifier.isPublic(((FieldAccessor)accessor).getField().getModifiers());
+    // --- GENERATE READ -----------------------------------------------------------------------------------------------
+
+    private void generateReadStaticGroupJ(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+        MethodVisitor mv = cv.visitMethod(ACC_PROTECTED, "readStaticGroup", "(ILcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", null, new String[] { "java/io/IOException" });
+        int nextVar = 3;
+        mv.visitCode();
+
+        Map<Integer,Label> labelsByGroupId = new TreeMap<>();
+        for (GroupDef group : dict.getGroups()) {
+            if (group.getId() != -1) {
+                labelsByGroupId.put(group.getId(), new Label());
+            }
+        }
+        mv.visitVarInsn(ILOAD, 1); // group id
+        Label unknownGroupIdLabel = new Label();
+        {
+            int[] caseValues = new int[labelsByGroupId.size()];
+            int i = 0;
+            for (int groupId : labelsByGroupId.keySet()) {
+                caseValues[i++] = groupId;
+            }
+            Label[] caseLabels = labelsByGroupId.values().toArray(new Label[labelsByGroupId.size()]);
+            mv.visitLookupSwitchInsn(unknownGroupIdLabel, caseValues, caseLabels);
+        }
+
+        for (Map.Entry<Integer, Label> caseEntry : labelsByGroupId.entrySet()) {
+            GroupDef group = dict.getGroup(caseEntry.getKey().intValue());
+            Class<?> groupType = (Class) group.getGroupType();
+            String groupDescriptor = Type.getDescriptor(groupType);
+            //String groupInternalName = Type.getInternalName(groupType);
+
+            mv.visitLabel(caseEntry.getValue());
+            mv.visitFrame(F_SAME, 0, null, 0, null);
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitVarInsn(ALOAD, 2);
+            mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(), "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor, false);
+            mv.visitInsn(ARETURN);
+        }
+        // default case
+        mv.visitLabel(unknownGroupIdLabel);
+        mv.visitFrame(F_SAME, 0, null, 0, null);
+        mv.visitVarInsn(ILOAD, 1);
+        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownGroupId", "(I)Lcom/cinnober/msgcodec/DecodeException;", false);
+        mv.visitInsn(ATHROW);
+        mv.visitMaxs(2, nextVar); // PENDING: maxStack
+        mv.visitEnd();
+    }
+    
+    private void generateReadStaticGroupForTypeAndCreateJ(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
+        for (GroupDef group : dict.getGroups()) {
+            Class<?> groupType = (Class) group.getGroupType();
+            String groupDescriptor = Type.getDescriptor(groupType);
+            String groupInternalName = Type.getInternalName(groupType);
+            MethodVisitor readmv = cv.visitMethod(
+                    ACC_PRIVATE,
+                    "readStaticGroup_" + group.getName(),
+                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor,
+                    null,
+                    new String[] { "java/io/IOException" });
+            readmv.visitCode();
+            int nextReadVar = 2;
+
+            Factory<?> factory = group.getFactory();
+            if (isPublicConstructorFactory(factory)) {
+                // read, create instance
+                readmv.visitTypeInsn(NEW, groupInternalName);
+                readmv.visitInsn(DUP);
+                readmv.visitMethodInsn(INVOKESPECIAL, groupInternalName, "<init>", "()V", false);
+            } else {
+                // read, create instance
+                readmv.visitVarInsn(ALOAD, 0); // this
+                readmv.visitFieldInsn(GETFIELD, genClassInternalName, 
+                        "factory_" + group.getName(),
+                        Type.getDescriptor(factory.getClass()));
+                readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Factory", "newInstance",
+                        "()Ljava/lang/Object;", true);
+                readmv.visitTypeInsn(CHECKCAST, groupInternalName);
+            }
+            final int readInstanceVar = nextReadVar++;
+            readmv.visitVarInsn(ASTORE, readInstanceVar);
+
+            readmv.visitVarInsn(ALOAD, 0);
+            readmv.visitVarInsn(ALOAD, 1);
+            readmv.visitVarInsn(ALOAD, readInstanceVar);
+            readmv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(),
+                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V", false);
+
+            // end read
+            readmv.visitVarInsn(ALOAD, readInstanceVar);
+            readmv.visitInsn(ARETURN);
+            readmv.visitMaxs(4, nextReadVar); // PENDING: maxStack
+            readmv.visitEnd();
+        }
+    }
+    private void generateReadStaticGroupForTypeJ(final ProtocolDictionary dict, ClassVisitor cv, final String genClassInternalName) {
+        for (final GroupDef group : dict.getGroups()) {
+            Class<?> groupType = (Class) group.getGroupType();
+            String groupDescriptor = Type.getDescriptor(groupType);
+            //String groupInternalName = Type.getInternalName(groupType);
+            final MethodVisitor mv = cv.visitMethod(
+                    ACC_PRIVATE,
+                    "readStaticGroup_" + group.getName(),
+                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V",
+                    null,
+                    new String[] { "java/io/IOException" });
+            mv.visitCode();
+            final LocalVariable nextVar = new LocalVariable(3);
+
+            // read fields of super group
+            if (group.getSuperGroup() != null) {
+                GroupDef superGroup = dict.getGroup(group.getSuperGroup());
+                Class<?> superGroupType = (Class) superGroup.getGroupType();
+                String superGroupDescriptor = Type.getDescriptor(superGroupType);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 1);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEVIRTUAL,
+                        genClassInternalName,
+                        "readStaticGroup_" + superGroup.getName(),
+                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+superGroupDescriptor+")V", false);
+            }
+
+            // fields
+            for (final FieldDef field : group.getFields()) {
+                final Class<?> javaClass = field.getJavaClass();
+
+                // "lambda" that can generate code for reading the value
+                Runnable readValue = new Runnable() {
+                    @Override
+                    public void run() {
+                        mv.visitVarInsn(ALOAD, 1); // input stream
+                        generateDecodeValue(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass,
+                                field.getComponentJavaClass(), dict, genClassInternalName,
+                                group.getName() + "." + field.getName(), JAVACLASS_CODEC);
+                    }
+                };
+
+                Accessor<?,?> accessor = field.getAccessor();
+                if (isPublicFieldAccessor(accessor)) {
+                    Field f = ((FieldAccessor)accessor).getField();
+                    mv.visitVarInsn(ALOAD, 2); // instance
+                    // value
+                    readValue.run();
+                    // store
+                    mv.visitFieldInsn(PUTFIELD, Type.getInternalName(f.getDeclaringClass()), f.getName(), Type.getDescriptor(f.getType()));
+                } else if(accessor.getClass() == IgnoreAccessor.class) {
+                    // value
+                    readValue.run();
+                    // discard
+                    mv.visitInsn(POP);
+                } else {
+                    // accessor
+                    mv.visitVarInsn(ALOAD, 0);
+                    mv.visitFieldInsn(GETFIELD, genClassInternalName,
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            Type.getDescriptor(accessor.getClass()));
+                    // instance
+                    mv.visitVarInsn(ALOAD, 2); // instance
+                    // value
+                    readValue.run();
+                    if (javaClass.isPrimitive()) {
+                        box(mv, javaClass);
+                    }
+                    // store
+                    mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(accessor.getClass()), "setValue",
+                            "(Ljava/lang/Object;Ljava/lang/Object;)V", false);
+                }
+            }
+
+            mv.visitInsn(RETURN);
+            mv.visitMaxs(6, nextVar.get()); // PENDING: maxStack
+            mv.visitEnd();
+        }
     }
 
-    public static boolean isPublicConstructorFactory(Factory<?> factory) {
-        return factory.getClass() == ConstructorFactory.class &&
-                Modifier.isPublic(((ConstructorFactory)factory).getConstructor().getModifiers());
-    }
-
+    // --- GENERATE ENCODE VALUE ---------------------------------------------------------------------------------------
 
     /**
      * Generate instructions to decode the specified value type.
@@ -284,9 +672,18 @@ class ByteCodeGenerator {
      * @param dict the protocol dictionary, not null
      * @param genClassInternalName the internal name of the generated class
      */
-    private void generateEncodeValue(MethodVisitor mv, int outputStreamVar, LocalVariable nextVar, 
-            boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, 
-            ProtocolDictionary dict, String genClassInternalName, String debugValueLabel) {
+    private void generateEncodeValue(
+            MethodVisitor mv,
+            int outputStreamVar,
+            LocalVariable nextVar,
+            boolean required,
+            TypeDef type,
+            Class<?> javaClass,
+            Class<?> componentJavaClass,
+            ProtocolDictionary dict,
+            String genClassInternalName,
+            String debugValueLabel,
+            boolean javaClassCodec) {
 
         type = dict.resolveToType(type, false);
         GroupDef refGroup = dict.resolveToGroup(type);
@@ -426,22 +823,34 @@ class ByteCodeGenerator {
                 generateEncodeTimeValue(javaClass, required, mv, blinkOutput);
                 break;
             case SEQUENCE:
-                generateEncodeSequenceValue(javaClass, nextVar, mv, required, blinkOutput, outputStreamVar,
-                        componentJavaClass, type, dict, genClassInternalName, debugValueLabel);
+                if (javaClassCodec) {
+                    generateEncodeSequenceValueJ(javaClass, nextVar, mv, required, blinkOutput, outputStreamVar,
+                            componentJavaClass, type, dict, genClassInternalName, debugValueLabel);
+                } else {
+                    throw new RuntimeException("Generic codec not implemented yet"); // FIXME
+                }
                 break;
             case REFERENCE:
-                generateEncodeRefValue(refGroup, required, nextVar, mv, genClassInternalName, blinkOutput,
-                        outputStreamVar, type);
+                if (javaClassCodec) {
+                    generateEncodeRefValueJ(refGroup, required, nextVar, mv, genClassInternalName, blinkOutput,
+                            outputStreamVar, (TypeDef.Reference) type);
+                } else {
+                    throw new RuntimeException("Generic codec not implemented yet"); // FIXME
+                }
                 break;
             case DYNAMIC_REFERENCE:
-                generateEncodeDynRefValue(nextVar, mv, required);
+                if (javaClassCodec) {
+                    generateEncodeDynRefValueJ(nextVar, mv, required);
+                } else {
+                    throw new RuntimeException("Generic codec not implemented yet"); // FIXME
+                }
                 break;
             default:
                 throw new RuntimeException("Unhandled case: " + type.getType());
         }
     }
 
-    private void generateEncodeDynRefValue(LocalVariable nextVar, MethodVisitor mv, boolean required) {
+    private void generateEncodeDynRefValueJ(LocalVariable nextVar, MethodVisitor mv, boolean required) {
         // PENDING: validate that the instance class is a subclass of refGroup (unless null)
         int instanceVar = nextVar.next();
         mv.visitVarInsn(ASTORE, instanceVar);
@@ -449,16 +858,16 @@ class ByteCodeGenerator {
         mv.visitInsn(SWAP); // this and out
         mv.visitVarInsn(ALOAD, instanceVar);
         if (required) {
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+            mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
                     "writeDynamicGroup", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
         } else {
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+            mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
                     "writeDynamicGroupNull", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
         }
     }
 
-    private void generateEncodeRefValue(GroupDef refGroup, boolean required, LocalVariable nextVar, MethodVisitor mv,
-            String genClassInternalName, String blinkOutput, int outputStreamVar, TypeDef type) throws
+    private void generateEncodeRefValueJ(GroupDef refGroup, boolean required, LocalVariable nextVar, MethodVisitor mv,
+            String genClassInternalName, String blinkOutput, int outputStreamVar, TypeDef.Reference type) throws
             IllegalArgumentException {
         if (refGroup != null) {
             if (required) {
@@ -469,7 +878,7 @@ class ByteCodeGenerator {
                 mv.visitVarInsn(ALOAD, instanceVar);
                 Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
                 String refGroupDescriptor = Type.getDescriptor(refGroupType);
-                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + refGroup.getName(),
                                                                                 "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
             } else {
                 int instanceVar = nextVar.next();
@@ -494,7 +903,7 @@ class ByteCodeGenerator {
                 mv.visitVarInsn(ALOAD, instanceVar);
                 Class<?> refGroupType = (Class<?>) refGroup.getGroupType();
                 String refGroupDescriptor = Type.getDescriptor(refGroupType);
-                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup",
+                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + refGroup.getName(),
                                                                                 "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
                 mv.visitLabel(endLabel);
                 // PENDING: mv.visitFrame
@@ -504,7 +913,7 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateEncodeSequenceValue(
+    private void generateEncodeSequenceValueJ(
             Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required, String blinkOutput,
             int outputStreamVar,
             Class<?> componentJavaClass, TypeDef type, ProtocolDictionary dict, String genClassInternalName,
@@ -570,14 +979,14 @@ class ByteCodeGenerator {
 
             // encode the element
             TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, 
-                    null, dict, genClassInternalName, debugValueLabel + ".component");
+            generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass,
+                    null, dict, genClassInternalName, debugValueLabel + ".component", JAVACLASS_CODEC);
 
             mv.visitIincInsn(loopVar, 1);
             mv.visitJumpInsn(GOTO, loopLabel);
             mv.visitLabel(endLabel);
             // PENDING: mv.visitFrame
-            
+
         } else if (javaClass == List.class) {
             int sequenceVar = nextVar.next();
             mv.visitInsn(DUP);
@@ -629,7 +1038,7 @@ class ByteCodeGenerator {
             // encode the element
             TypeDef.Sequence seqType = (TypeDef.Sequence) type;
             generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass,
-                    null, dict, genClassInternalName, debugValueLabel + ".component");
+                    null, dict, genClassInternalName, debugValueLabel + ".component", JAVACLASS_CODEC);
 
             mv.visitJumpInsn(GOTO, loopLabel);
             mv.visitLabel(endLabel);
@@ -682,7 +1091,6 @@ class ByteCodeGenerator {
             Class<?> javaClass, boolean required, MethodVisitor mv, String blinkOutput,
             String debugValueLabel) throws IllegalArgumentException {
         if (javaClass.isEnum()) {
-            // TODO: ordinal should not be used. Use symbol id instead!
             Label endLabel = new Label();
             if (!required) {
                 Label nonNullLabel = new Label();
@@ -747,131 +1155,7 @@ class ByteCodeGenerator {
         }
     }
 
-
-    private void generateJReadStaticGroupNewInstance(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
-        for (GroupDef group : dict.getGroups()) {
-            Class<?> groupType = (Class) group.getGroupType();
-            String groupDescriptor = Type.getDescriptor(groupType);
-            String groupInternalName = Type.getInternalName(groupType);
-            MethodVisitor readmv = cv.visitMethod(
-                    ACC_PRIVATE,
-                    "readStaticGroup_" + group.getName(),
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor,
-                    null,
-                    new String[] { "java/io/IOException" });
-            readmv.visitCode();
-            int nextReadVar = 2;
-
-            Factory<?> factory = group.getFactory();
-            if (isPublicConstructorFactory(factory)) {
-                // read, create instance
-                readmv.visitTypeInsn(NEW, groupInternalName);
-                readmv.visitInsn(DUP);
-                readmv.visitMethodInsn(INVOKESPECIAL, groupInternalName, "<init>", "()V", false);
-            } else {
-                // read, create instance
-                readmv.visitVarInsn(ALOAD, 0); // this
-                readmv.visitFieldInsn(GETFIELD, genClassInternalName, 
-                        "factory_" + group.getName(),
-                        Type.getDescriptor(factory.getClass()));
-                readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Factory", "newInstance",
-                        "()Ljava/lang/Object;", true);
-                readmv.visitTypeInsn(CHECKCAST, groupInternalName);
-            }
-            final int readInstanceVar = nextReadVar++;
-            readmv.visitVarInsn(ASTORE, readInstanceVar);
-
-            readmv.visitVarInsn(ALOAD, 0);
-            readmv.visitVarInsn(ALOAD, 1);
-            readmv.visitVarInsn(ALOAD, readInstanceVar);
-            readmv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup",
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V", false);
-
-            // end read
-            readmv.visitVarInsn(ALOAD, readInstanceVar);
-            readmv.visitInsn(ARETURN);
-            readmv.visitMaxs(4, nextReadVar); // PENDING: maxStack
-            readmv.visitEnd();
-        }
-    }
-    private void generateJReadStaticGroup(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
-        for (GroupDef group : dict.getGroups()) {
-            Class<?> groupType = (Class) group.getGroupType();
-            String groupDescriptor = Type.getDescriptor(groupType);
-            //String groupInternalName = Type.getInternalName(groupType);
-            MethodVisitor readmv = cv.visitMethod(
-                    ACC_PRIVATE,
-                    "readStaticGroup",
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V",
-                    null,
-                    new String[] { "java/io/IOException" });
-            readmv.visitCode();
-            LocalVariable nextReadVar = new LocalVariable(3);
-
-            // read fields of super group
-            if (group.getSuperGroup() != null) {
-                GroupDef superGroup = dict.getGroup(group.getSuperGroup());
-                Class<?> superGroupType = (Class) superGroup.getGroupType();
-                String superGroupDescriptor = Type.getDescriptor(superGroupType);
-                readmv.visitVarInsn(ALOAD, 0);
-                readmv.visitVarInsn(ALOAD, 1);
-                readmv.visitVarInsn(ALOAD, 2);
-                readmv.visitMethodInsn(INVOKEVIRTUAL,
-                        genClassInternalName,
-                        "readStaticGroup",
-                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+superGroupDescriptor+")V", false);
-            }
-
-            // fields
-            for (FieldDef field : group.getFields()) {
-                Class<?> javaClass = field.getJavaClass();
-
-                Accessor<?,?> accessor = field.getAccessor();
-                if (isPublicFieldAccessor(accessor)) {
-                    Field f = ((FieldAccessor)accessor).getField();
-                    readmv.visitVarInsn(ALOAD, 2); // instance
-                    // value
-                    readmv.visitVarInsn(ALOAD, 1); // input stream
-                    generateDecodeValue(readmv, 1, nextReadVar, field.isRequired(), field.getType(), javaClass,
-                            field.getComponentJavaClass(), dict, genClassInternalName,
-                            group.getName() + "." + field.getName());
-                    // store
-                    readmv.visitFieldInsn(PUTFIELD, Type.getInternalName(f.getDeclaringClass()), f.getName(), Type.getDescriptor(f.getType()));
-                } else if(accessor.getClass() == IgnoreAccessor.class) {
-                    // value
-                    readmv.visitVarInsn(ALOAD, 1); // input stream
-                    generateDecodeValue(readmv, 1, nextReadVar, field.isRequired(), field.getType(), javaClass,
-                            field.getComponentJavaClass(), dict, genClassInternalName,
-                            group.getName() + "." + field.getName());
-                    // discard
-                    readmv.visitInsn(POP);
-                } else {
-                    // accessor
-                    readmv.visitVarInsn(ALOAD, 0);
-                    readmv.visitFieldInsn(GETFIELD, genClassInternalName, 
-                            "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()));
-                    // instance
-                    readmv.visitVarInsn(ALOAD, 2); // instance
-                    // value
-                    readmv.visitVarInsn(ALOAD, 1); // input stream
-                    generateDecodeValue(readmv, 1, nextReadVar, field.isRequired(), field.getType(), javaClass,
-                            field.getComponentJavaClass(), dict, genClassInternalName,
-                            group.getName() + "." + field.getName());
-                    if (javaClass.isPrimitive()) {
-                        box(readmv, javaClass);
-                    }
-                    // store
-                    readmv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(accessor.getClass()), "setValue",
-                            "(Ljava/lang/Object;Ljava/lang/Object;)V", false);
-                }
-            }
-
-            readmv.visitInsn(RETURN);
-            readmv.visitMaxs(6, nextReadVar.get()); // PENDING: maxStack
-            readmv.visitEnd();
-        }
-    }
+    // --- GENERATE DECODE VALUE ---------------------------------------------------------------------------------------
 
     /**
      * Generate instructions to encode the specified value type.
@@ -880,7 +1164,7 @@ class ByteCodeGenerator {
      */
     private void generateDecodeValue(MethodVisitor mv, int inputStreamVar, LocalVariable nextVar,
             boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, ProtocolDictionary dict,
-            String genClassInternalName, String debugValueLabel) {
+            String genClassInternalName, String debugValueLabel, boolean javaClassCodec) {
         type = dict.resolveToType(type, false);
         GroupDef refGroup = dict.resolveToGroup(type);
 
@@ -979,7 +1263,7 @@ class ByteCodeGenerator {
                 break;
             case STRING:
                 mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, "com/cinnober/msgcodec/blink/GeneratedCodec", "codec",
+                mv.visitFieldInsn(GETFIELD, BASECLASS_INTERNALNAME, "codec",
                         "Lcom/cinnober/msgcodec/blink/BlinkCodec;");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize", "()I", false);
                 if (required) {
@@ -990,7 +1274,7 @@ class ByteCodeGenerator {
                 break;
             case BINARY:
                 mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, "com/cinnober/msgcodec/blink/GeneratedCodec", "codec",
+                mv.visitFieldInsn(GETFIELD, BASECLASS_INTERNALNAME, "codec",
                         "Lcom/cinnober/msgcodec/blink/BlinkCodec;");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize", "()I", false);
                 if (required) {
@@ -1013,15 +1297,27 @@ class ByteCodeGenerator {
                 generateDecodeTimeValue(javaClass, required, mv, blinkInput, nextVar);
                 break;
             case SEQUENCE:
-                generateDecodeSequenceValue(javaClass, nextVar, required, mv, blinkInput, componentJavaClass,
-                        inputStreamVar, type, dict, genClassInternalName, debugValueLabel);
+                if (javaClassCodec) {
+                    generateDecodeSequenceValueJ(javaClass, nextVar, required, mv, blinkInput, componentJavaClass,
+                            inputStreamVar, type, dict, genClassInternalName, debugValueLabel);
+                } else {
+                    throw new RuntimeException("Generic codec not implemented yet"); // FIXME
+                }
                 break;
             case REFERENCE:
-                generateDecodeRefValue(refGroup, required, mv, inputStreamVar, genClassInternalName, javaClass,
-                        blinkInput, type);
+                if (javaClassCodec) {
+                    generateDecodeRefValueJ(refGroup, required, mv, inputStreamVar, genClassInternalName, javaClass,
+                            blinkInput, type);
+                } else {
+                    throw new RuntimeException("Generic codec not implemented yet"); // FIXME
+                }
                 break;
             case DYNAMIC_REFERENCE:
-                generateDecodeDynRefValue(mv, required, refGroup, javaClass);
+                if (javaClassCodec) {
+                    generateDecodeDynRefValueJ(mv, required, refGroup, javaClass);
+                } else {
+                    throw new RuntimeException("Generic codec not implemented yet"); // FIXME
+                }
                 break;
             default:
                 throw new RuntimeException("Unhandled case: " + type.getType());        }
@@ -1034,7 +1330,7 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateDecodeTimeValue(Class<?> javaClass, boolean required, MethodVisitor mv, String blinkInput, 
+    private void generateDecodeTimeValue(Class<?> javaClass, boolean required, MethodVisitor mv, String blinkInput,
             LocalVariable nextVar) throws IllegalArgumentException {
         if (javaClass == long.class || javaClass == Long.class) {
             if (required) {
@@ -1087,7 +1383,7 @@ class ByteCodeGenerator {
     private void generateDecodeEnumValue(boolean required, MethodVisitor mv, String blinkInput, TypeDef type,
             LocalVariable nextVar, Class<?> javaClass, String debugValueLabel)
             throws IllegalArgumentException {
-        
+
         Label endLabel = new Label();
         if (required) {
             mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32",
@@ -1166,15 +1462,15 @@ class ByteCodeGenerator {
         mv.visitLabel(endLabel);
     }
 
-    private void generateDecodeDynRefValue(MethodVisitor mv, boolean required, GroupDef refGroup,
+    private void generateDecodeDynRefValueJ(MethodVisitor mv, boolean required, GroupDef refGroup,
             Class<?> javaClass) {
         mv.visitVarInsn(ALOAD, 0); // this
         mv.visitInsn(SWAP); // this and in
         if (required) {
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+            mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
                     "readDynamicGroup", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
         } else {
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/GeneratedCodec",
+            mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
                     "readDynamicGroupNull", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
         }
         if (refGroup != null) {
@@ -1182,7 +1478,7 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateDecodeRefValue(GroupDef refGroup, boolean required, MethodVisitor mv, int inputStreamVar,
+    private void generateDecodeRefValueJ(GroupDef refGroup, boolean required, MethodVisitor mv, int inputStreamVar,
             String genClassInternalName,
             Class<?> javaClass, String blinkInput, TypeDef type) throws IllegalArgumentException {
         if (refGroup != null) {
@@ -1220,7 +1516,7 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateDecodeSequenceValue(
+    private void generateDecodeSequenceValueJ(
             Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv, String blinkInput,
             Class<?> componentJavaClass, int inputStreamVar, TypeDef type, ProtocolDictionary dict,
             String genClassInternalName, String debugValueLabel) throws IllegalArgumentException {
@@ -1273,8 +1569,8 @@ class ByteCodeGenerator {
 
         // decode the element
         TypeDef.Sequence seqType = (TypeDef.Sequence) type;
-        generateDecodeValue(mv, inputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null, 
-                dict, genClassInternalName, debugValueLabel + ".component");
+        generateDecodeValue(mv, inputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null,
+                dict, genClassInternalName, debugValueLabel + ".component", JAVACLASS_CODEC);
 
         // store the value
         //mv.visitInsn(SWAP);
@@ -1294,6 +1590,18 @@ class ByteCodeGenerator {
         if (javaClass.isArray()) {
             mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
         }
+    }
+    
+    // --- UTILITIES ---------------------------------------------------------------------------------------------------
+
+    private static boolean isPublicFieldAccessor(Accessor<?,?> accessor) {
+        return accessor.getClass() == FieldAccessor.class &&
+                Modifier.isPublic(((FieldAccessor)accessor).getField().getModifiers());
+    }
+
+    public static boolean isPublicConstructorFactory(Factory<?> factory) {
+        return factory.getClass() == ConstructorFactory.class &&
+                Modifier.isPublic(((ConstructorFactory)factory).getConstructor().getModifiers());
     }
 
     private void generateArrayStore(MethodVisitor mv, Class<?> componentJavaClass) {
@@ -1316,7 +1624,7 @@ class ByteCodeGenerator {
 
     /**
      * Generate byte code for a new array.
-     * The length is expected to be on the stack. 
+     * The length is expected to be on the stack.
      * @param mv
      * @param componentJavaClass
      */
@@ -1339,209 +1647,7 @@ class ByteCodeGenerator {
             mv.visitTypeInsn(ANEWARRAY, Type.getInternalName(componentJavaClass));
         }
     }
-
-    private void generateJConstructorAndFields(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
-        MethodVisitor ctormv;
-        ctormv = cv.visitMethod(ACC_PUBLIC, "<init>", "(Lcom/cinnober/msgcodec/blink/BlinkCodec;Lcom/cinnober/msgcodec/ProtocolDictionary;)V", null, null);
-        int nextCtorVar = 3;
-        ctormv.visitCode();
-        ctormv.visitVarInsn(ALOAD, 0);
-        ctormv.visitVarInsn(ALOAD, 1);
-        ctormv.visitVarInsn(ALOAD, 2);
-        ctormv.visitMethodInsn(INVOKESPECIAL, "com/cinnober/msgcodec/blink/GeneratedJavaClassCodec", "<init>", "(Lcom/cinnober/msgcodec/blink/BlinkCodec;Lcom/cinnober/msgcodec/ProtocolDictionary;)V", false);
-
-        for (GroupDef group : dict.getGroups()) {
-            Class<?> groupType = (Class) group.getGroupType();
-            //String groupDescriptor = Type.getDescriptor(groupType);
-            //String groupInternalName = Type.getInternalName(groupType);
-
-            Factory<?> factory = group.getFactory();
-            if (!isPublicConstructorFactory(factory)) {
-                // field
-                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, 
-                        "factory_" + group.getName(),
-                        Type.getDescriptor(factory.getClass()), null, null);
-                fv.visitEnd();
-
-                // ctor, init field
-                ctormv.visitVarInsn(ALOAD, 0); // this
-                ctormv.visitVarInsn(ALOAD, 2); // dict
-                ctormv.visitLdcInsn(group.getName());
-                ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
-                        "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef", false);
-                ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getFactory",
-                        "()Lcom/cinnober/msgcodec/Factory;", false);
-                ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(factory.getClass()));
-                ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, 
-                        "factory_" + group.getName(),
-                        Type.getDescriptor(factory.getClass()));
-            }
-
-            for (FieldDef field : group.getFields()) {
-                Accessor<?,?> accessor = field.getAccessor();
-                if (isPublicFieldAccessor(accessor)) {
-                    // ok
-                } else if (accessor.getClass() == IgnoreAccessor.class) {
-                    // ok
-                } else {
-                    // field
-                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
-                            "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()), null, null);
-                    fv.visitEnd();
-
-                    // ctor, init field
-                    ctormv.visitVarInsn(ALOAD, 0); // this
-                    ctormv.visitVarInsn(ALOAD, 2); // dict
-                    ctormv.visitLdcInsn(group.getName());
-                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
-                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef;", false);
-                    ctormv.visitLdcInsn(field.getName());
-                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getField",
-                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/FieldDef;", false);
-                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/FieldDef", "getAccessor",
-                            "()Lcom/cinnober/msgcodec/Accessor;", false);
-                    ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(accessor.getClass()));
-                    ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
-                            "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()));
-                }
-
-            }
-
-        }
-
-        ctormv.visitInsn(RETURN);
-        ctormv.visitMaxs(3, nextCtorVar); // PENDING: maxStack
-        ctormv.visitEnd();
-    }
-
-    private void generateJWriteStaticGroupWithIdSwitch(ProtocolDictionary dict, ClassVisitor cv,
-            String genClassInternalName) {
-        // method writeStaticGroupWithId - switch
-        MethodVisitor mv = cv.visitMethod(ACC_PROTECTED, "writeStaticGroupWithId", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", null, new String[] { "java/io/IOException" });
-        int nextVar = 3;
-        mv.visitCode();
-
-        mv.visitVarInsn(ALOAD, 2);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-        int classVariable = nextVar++;
-        mv.visitInsn(DUP);
-        mv.visitVarInsn(ASTORE, classVariable);
-        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I", false);
-
-        // switch on class.hashCode()
-        Map<Integer,ObjectHashCodeSwitchCase<Class<?>>> casesByHashCode = new TreeMap<>();
-        for (GroupDef group : dict.getGroups()) {
-            Class<?> groupType = (Class<?>) group.getGroupType();
-            int groupHash = groupType.hashCode();
-            ObjectHashCodeSwitchCase<Class<?>> hashCase = casesByHashCode.get(groupHash);
-            if (hashCase == null) {
-                hashCase = new ObjectHashCodeSwitchCase<>(groupHash);
-                casesByHashCode.put(hashCase.hashCode, hashCase);
-            }
-            hashCase.add(groupType);
-        }
-
-        Label unknownHashLabel = new Label();
-        {
-            int[] caseValues = new int[casesByHashCode.size()];
-            int i = 0;
-            for (int hashCode : casesByHashCode.keySet()) {
-                caseValues[i++] = hashCode;
-            }
-            Label[] caseLabels = new Label[casesByHashCode.size()];
-            i = 0;
-            for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
-                caseLabels[i++] = hashCase.label;
-            }
-            mv.visitLookupSwitchInsn(unknownHashLabel, caseValues, caseLabels);
-        }
-        for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
-            mv.visitLabel(hashCase.label);
-            mv.visitFrame(F_SAME, 0, null, 0, null);
-            for (ObjectSwitchCase<Class<?>> classCase : hashCase.cases) {
-                mv.visitVarInsn(ALOAD, classVariable);
-                mv.visitLdcInsn(Type.getType(classCase.object));
-                mv.visitJumpInsn(IF_ACMPEQ, classCase.label);
-            }
-        }
-        mv.visitLabel(unknownHashLabel);
-        mv.visitFrame(F_SAME, 0, null, 0, null);
-        mv.visitVarInsn(ALOAD, classVariable);
-        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownObjectType",
-                "(Ljava/lang/Class;)Ljava/lang/IllegalArgumentException;", false);
-        mv.visitInsn(ATHROW);
-
-        
-        for (ObjectHashCodeSwitchCase<Class<?>> hashCase : casesByHashCode.values()) {
-            for (ObjectSwitchCase<Class<?>> classCase : hashCase.cases) {
-                Class<?> groupType = classCase.object;
-                GroupDef group = dict.getGroup(groupType);
-                String groupDescriptor = Type.getDescriptor(groupType);
-                String groupInternalName = Type.getInternalName(groupType);
-                mv.visitLabel(classCase.label);
-                mv.visitFrame(F_SAME, 0, null, 0, null);
-                mv.visitVarInsn(ALOAD, 0); // this
-                mv.visitVarInsn(ALOAD, 1); // out
-                mv.visitVarInsn(ALOAD, 2); // obj
-                mv.visitTypeInsn(CHECKCAST, groupInternalName);
-                mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroupWithId",
-                        "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
-                mv.visitInsn(RETURN);
-            }
-        }
-
-        mv.visitMaxs(3, nextVar);
-        mv.visitEnd();
-    } 
-
-    private void generateJReadStaticGroupSwitch(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName) {
-        MethodVisitor mv = cv.visitMethod(ACC_PROTECTED, "readStaticGroup", "(ILcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", null, new String[] { "java/io/IOException" });
-        int nextVar = 3;
-        mv.visitCode();
-
-        Map<Integer,Label> labelsByGroupId = new TreeMap<>();
-        for (GroupDef group : dict.getGroups()) {
-            if (group.getId() != -1) {
-                labelsByGroupId.put(group.getId(), new Label());
-            }
-        }
-        mv.visitVarInsn(ILOAD, 1); // group id
-        Label unknownGroupIdLabel = new Label();
-        {
-            int[] caseValues = new int[labelsByGroupId.size()];
-            int i = 0;
-            for (int groupId : labelsByGroupId.keySet()) {
-                caseValues[i++] = groupId;
-            }
-            Label[] caseLabels = labelsByGroupId.values().toArray(new Label[labelsByGroupId.size()]);
-            mv.visitLookupSwitchInsn(unknownGroupIdLabel, caseValues, caseLabels);
-        }
-
-        for (Map.Entry<Integer, Label> caseEntry : labelsByGroupId.entrySet()) {
-            GroupDef group = dict.getGroup(caseEntry.getKey().intValue());
-            Class<?> groupType = (Class) group.getGroupType();
-            String groupDescriptor = Type.getDescriptor(groupType);
-            //String groupInternalName = Type.getInternalName(groupType);
-
-            mv.visitLabel(caseEntry.getValue());
-            mv.visitFrame(F_SAME, 0, null, 0, null);
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitVarInsn(ALOAD, 2);
-            mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(), "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor, false);
-            mv.visitInsn(ARETURN);
-        }
-        // default case
-        mv.visitLabel(unknownGroupIdLabel);
-        mv.visitFrame(F_SAME, 0, null, 0, null);
-        mv.visitVarInsn(ILOAD, 1);
-        mv.visitMethodInsn(INVOKESTATIC, BASECLASS_INTERNALNAME, "unknownGroupId", "(I)Lcom/cinnober/msgcodec/DecodeException;", false);
-        mv.visitInsn(ATHROW);
-        mv.visitMaxs(2, nextVar); // PENDING: maxStack
-        mv.visitEnd();
-    }
-
+    
     private void unbox(MethodVisitor mv, Class<?> javaClass) {
         if (javaClass == Byte.class || javaClass == byte.class) {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Byte", "byteValue", "()B", false);
