@@ -1570,11 +1570,11 @@ class ByteCodeGenerator {
                     mv.visitInsn(ATHROW);
                     addGotoEnd = false;
                 }
-            } else if (javaClass == int.class) {
+            } else if (javaClass == int.class || javaClass == Integer.class) {
                 mv.visitLdcInsn(ids[i]);
-            } else if (javaClass == Integer.class) {
-                mv.visitLdcInsn(ids[i]);
-                box(mv, Integer.class);
+                if (!required) {
+                    box(mv, Integer.class);
+                }
             } else {
                 throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
             }

@@ -18,8 +18,6 @@
 package com.cinnober.msgcodec.blink;
 
 
-import com.cinnober.msgcodec.Annotations;
-import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.MsgObject;
@@ -31,13 +29,13 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Time;
 import static com.cinnober.msgcodec.blink.TestUtil.*;
+import com.cinnober.msgcodec.messages.MetaProtocol;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -213,6 +211,37 @@ public class BlinkCodecTest {
         // test that we can parse the object
         DateMsg d1Decoded = (DateMsg) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals("Decoded", d1, d1Decoded);
+    }
+
+    @Test
+    public void testMetaProtocolEncodeDecodeBytecode() throws IOException {
+        testMetaProtocolEncodeDecode(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testMetaProtocolEncodeDecodeInstruction() throws IOException {
+        testMetaProtocolEncodeDecode(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
+    private void testMetaProtocolEncodeDecode(CodecOption codecOption) throws IOException {
+        ProtocolDictionary classDict = MetaProtocol.getProtocolDictionary();
+        StreamCodec classCodec = new BlinkCodecFactory(classDict).setCodecOption(codecOption).createStreamCodec();
+
+        ProtocolDictionary groupDict = Group.bind(classDict.unbind());
+        StreamCodec groupCodec = new BlinkCodecFactory(groupDict).setCodecOption(codecOption).createStreamCodec();
+
+        Object classMsg = classDict.toMessage();
+
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        classCodec.encode(classMsg, bout);
+
+        Object decodedClassMsg = classCodec.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(classMsg, decodedClassMsg);
+
+        Group decodedGroupMsg = (Group) groupCodec.decode(new ByteArrayInputStream(bout.toByteArray()));
+        ByteArrayOutputStream bout2 = new ByteArrayOutputStream();
+        groupCodec.encode(decodedGroupMsg, bout2);
+
+        assertArrayEquals(bout.toByteArray(), bout2.toByteArray());
     }
 
     @Id(1)

@@ -48,6 +48,8 @@ public class EnumsMessage extends MsgObject {
     public Integer myIntCountry;
     @Enumeration(Country.class)
     public int myIntCountryReq;
+    @Enumeration(Country.class) @Required
+    public Integer myIntCountryObjReq;
 
     /**
      * Returns messages suitable for testing a codec. This includes border cases.
@@ -68,6 +70,7 @@ public class EnumsMessage extends MsgObject {
         msg.myCountryReq = Country.DENMARK;
         msg.myIntColorReq = 0;
         msg.myIntCountryReq = 208;
+        msg.myIntCountryObjReq = 208;
 
         msg = new EnumsMessage();
         messages.put("assigned", msg);
@@ -79,6 +82,7 @@ public class EnumsMessage extends MsgObject {
         msg.myCountry = Country.DENMARK;
         msg.myIntColor = 0;
         msg.myIntCountry = 208;
+        msg.myIntCountryObjReq = 208;
 
         return messages;
     }
