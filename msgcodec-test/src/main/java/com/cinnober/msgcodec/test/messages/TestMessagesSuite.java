@@ -107,7 +107,7 @@ public abstract class TestMessagesSuite extends Suite {
                 if (object == null) {
                     fail("Decoded message is null");
                 } else if (!object.getClass().equals(message.getClass())) {
-                    fail("Decodec message is not same type as encoded message");
+                    fail("Decoded message is not same type as encoded message");
                 }
                 Assert.assertEquals(message, object);
             } catch (Throwable e) {

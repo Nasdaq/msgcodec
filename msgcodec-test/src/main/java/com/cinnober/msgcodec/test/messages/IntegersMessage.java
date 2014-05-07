@@ -19,7 +19,10 @@ package com.cinnober.msgcodec.test.messages;
 
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Unsigned;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author mikael.brannstrom
@@ -71,4 +74,72 @@ public class IntegersMessage extends MsgObject {
     @Id(19)
     public Long myLongUObj;
 
+    @Id(20) @Required
+    public Byte myByteObjReq;
+    @Id(21) @Required
+    public Short myShortObjReq;
+    @Id(22) @Required
+    public Integer myIntegerObjReq;
+    @Id(23) @Required
+    public Long myLongObjReq;
+
+    @Unsigned
+    @Id(24) @Required
+    public Byte myByteUObjReq;
+    @Unsigned
+    @Id(25) @Required
+    public Short myShortUObjReq;
+    @Unsigned
+    @Id(26) @Required
+    public Integer myIntegerUObjReq;
+    @Unsigned
+    @Id(27) @Required
+    public Long myLongUObjReq;
+
+    /**
+     * Returns messages suitable for testing a codec. This includes border cases.
+     * Each message is labeled with a name, e.g. "zero" or "border1" that describes what
+     * the message tries to test.
+     *
+     * All messages are encodable, i.e. any required fields are set.
+     *
+     * @return a map from message label to message.
+     */
+    public static Map<String, IntegersMessage> createMessages() {
+        Map<String, IntegersMessage> messages = new LinkedHashMap<>();
+
+        IntegersMessage msg;
+
+        msg = new IntegersMessage();
+        messages.put("clean", msg);
+        msg.myByteObjReq = (byte)0;
+        msg.myByteUObjReq = (byte)0;
+        msg.myShortObjReq = (short)0;
+        msg.myShortUObjReq = (short)0;
+        msg.myIntegerObjReq = 0;
+        msg.myIntegerUObjReq = 0;
+        msg.myLongObjReq = 0L;
+        msg.myLongUObjReq = 0L;
+
+        messages.put("zero", msg);
+        msg.myByteObjReq = (byte)0;
+        msg.myByteUObjReq = (byte)0;
+        msg.myShortObjReq = (short)0;
+        msg.myShortUObjReq = (short)0;
+        msg.myIntegerObjReq = 0;
+        msg.myIntegerUObjReq = 0;
+        msg.myLongObjReq = 0L;
+        msg.myLongUObjReq = 0L;
+
+        msg.myByteObj = (byte)0;
+        msg.myByteUObj = (byte)0;
+        msg.myShortObj = (short)0;
+        msg.myShortUObj = (short)0;
+        msg.myIntegerObj = 0;
+        msg.myIntegerUObj = 0;
+        msg.myLongObj = 0L;
+        msg.myLongUObj = 0L;
+
+        return messages;
+    }
 }

@@ -22,16 +22,16 @@ import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
-import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Time;
 import java.util.List;
+
+import static com.cinnober.msgcodec.blink.DateUtil.*;
 
 /**
  * A field instruction can encode or decode a field in a group.
@@ -510,34 +510,6 @@ abstract class FieldInstruction<V> {
     }
 
     // --- TIME ---
-    private static long getTimeInMillis(TimeUnit unit) {
-        switch (unit) {
-        case MILLISECONDS:
-            return 1;
-        case SECONDS:
-            return 1000;
-        case MINUTES:
-            return 60*1000;
-        case HOURS:
-            return 60*60*1000;
-        case DAYS:
-            return 24*60*60*1000;
-        default:
-            throw new IllegalArgumentException("Date does not support " + unit);
-        }
-    }
-    private static long getEpochOffset(Epoch epoch) {
-        switch (epoch) {
-        case UNIX:
-            return 0;
-        case Y2K:
-            return 946706400000L;
-        case MIDNIGHT:
-            return 0;
-        default:
-            throw new IllegalArgumentException("Date does not support " + epoch);
-        }
-    }
     static class DateTime extends FieldInstruction<Date> {
         private final long timeUnitInMillis;
         private final long epochOffset;
@@ -587,104 +559,60 @@ abstract class FieldInstruction<V> {
         }
     }
     // --- STRING ---
-    private static int getMaxLength(FieldDef field) {
-        if (field == null) {
-            return -1;
-        }
-        String maxLengthStr = field.getAnnotation("maxLength");
-        if (maxLengthStr == null) {
-            return -1;
-        }
-        try {
-            return Integer.parseInt(maxLengthStr);
-        } catch (NumberFormatException e) {
-            return -1;
-        }
-    }
-    private static void validateMaxLength(String value, int maxLength) throws IllegalArgumentException {
-        if (value != null && maxLength >= 0 && value.length() > maxLength) {
-            throw new IllegalArgumentException("String length (" + value.length() + ") exceeds max length (" +
-                    maxLength + ")");
-        }
-    }
-    private static void validateMaxLength(byte[] value, int maxLength) throws IllegalArgumentException {
-        if (value != null && maxLength >= 0 && value.length > maxLength) {
-            throw new IllegalArgumentException("Binary length (" + value.length + ") exceeds max length (" +
-                    maxLength + ")");
-        }
-    }
-    private static void validateMaxLength(int length, int maxLength) throws IllegalArgumentException {
-        if (maxLength >= 0 && length > maxLength) {
-            throw new IllegalArgumentException("Sequence length (" + length + ") exceeds max length (" +
-                    maxLength + ")");
-        }
-    }
     static class StringUTF8 extends FieldInstruction<String> {
-        private final int maxLength;
         public StringUTF8(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(String value, BlinkOutputStream out) throws IOException {
             require(value);
-            validateMaxLength(value, maxLength);
             out.writeStringUTF8(value);
         }
         @Override
         public String decodeValue(BlinkInputStream in) throws IOException {
-            return in.readStringUTF8(maxLength);
+            return in.readStringUTF8();
         }
     }
     static class StringUTF8Null extends FieldInstruction<String> {
-        private final int maxLength;
         public StringUTF8Null(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(String value, BlinkOutputStream out) throws IOException {
-            validateMaxLength(value, maxLength);
             out.writeStringUTF8Null(value);
         }
         @Override
         public String decodeValue(BlinkInputStream in) throws IOException {
-            return in.readStringUTF8Null(maxLength);
+            return in.readStringUTF8Null();
         }
     }
 
     // --- BINARY ---
     static class Binary extends FieldInstruction<byte[]> {
-        private final int maxLength;
         public Binary(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(byte[] value, BlinkOutputStream out) throws IOException {
             require(value);
-            validateMaxLength(value, maxLength);
             out.writeBinary(value);
         }
         @Override
         public byte[] decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBinary(maxLength);
+            return in.readBinary();
         }
     }
     static class BinaryNull extends FieldInstruction<byte[]> {
-        private final int maxLength;
         public BinaryNull(FieldDef field) {
             super(field);
-            maxLength = getMaxLength(field);
         }
         @Override
         public void encodeValue(byte[] value, BlinkOutputStream out) throws IOException {
-            validateMaxLength(value, maxLength);
             out.writeBinaryNull(value);
         }
         @Override
         public byte[] decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBinaryNull(maxLength);
+            return in.readBinaryNull();
         }
     }
 
@@ -789,18 +717,15 @@ abstract class FieldInstruction<V> {
     @SuppressWarnings("rawtypes")
     static class ListSequence extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
-        private final int maxLength;
         public ListSequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
         public void encodeValue(List value, BlinkOutputStream out) throws IOException {
             require(value);
             int length = value.size();
-            validateMaxLength(length, maxLength);
             out.writeUInt32(length);
             for (Object element : value) {
                 elementInstruction.encodeValue(element, out);
@@ -814,7 +739,6 @@ abstract class FieldInstruction<V> {
             if (size < 0) {
                 throw new DecodeException("Sequence size overflow: " + size);
             }
-            validateMaxLength(size, maxLength);
             ArrayList value = new ArrayList(size);
             for (int i=0; i<size; i++) {
                 value.add(elementInstruction.decodeValue(in));
@@ -825,11 +749,9 @@ abstract class FieldInstruction<V> {
     @SuppressWarnings("rawtypes")
     static class ListSequenceNull extends FieldInstruction<List> {
         private final FieldInstruction elementInstruction;
-        private final int maxLength;
         public ListSequenceNull(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
@@ -838,7 +760,6 @@ abstract class FieldInstruction<V> {
                 out.writeUInt32Null(null);
             } else {
                 int length = value.size();
-                validateMaxLength(length, maxLength);
                 out.writeUInt32Null(length);
                 for (Object element : value) {
                     elementInstruction.encodeValue(element, out);
@@ -856,7 +777,6 @@ abstract class FieldInstruction<V> {
                 if (size < 0) {
                     throw new DecodeException("Sequence size overflow: " + size);
                 }
-                validateMaxLength(size, maxLength);
                 ArrayList value = new ArrayList(size);
                 for (int i=0; i<size; i++) {
                     value.add(elementInstruction.decodeValue(in));
@@ -869,19 +789,16 @@ abstract class FieldInstruction<V> {
     static class ArraySequence extends FieldInstruction<Object> { // actually <array>
         private final FieldInstruction elementInstruction;
         private final Class<?> componentType;
-        private final int maxLength;
         public ArraySequence(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
             this.componentType = field.getComponentJavaClass();
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
             require(value);
             int size = Array.getLength(value);
-            validateMaxLength(size, maxLength);
             out.writeUInt32(size);
             for (int i=0; i<size; i++) {
                 elementInstruction.encodeValue(Array.get(value, i), out);
@@ -893,7 +810,6 @@ abstract class FieldInstruction<V> {
             if (size < 0) {
                 throw new DecodeException("Sequence size overflow: " + size);
             }
-            validateMaxLength(size, maxLength);
             Object value = Array.newInstance(componentType, size);
             for (int i=0; i<size; i++) {
                 Array.set(value, i, elementInstruction.decodeValue(in));
@@ -905,12 +821,10 @@ abstract class FieldInstruction<V> {
     static class ArraySequenceNull extends FieldInstruction<Object> { // actually <array>
         private final FieldInstruction elementInstruction;
         private final Class<?> componentType;
-        private final int maxLength;
         public ArraySequenceNull(FieldDef field, FieldInstruction elementInstruction) {
             super(field);
             this.elementInstruction = elementInstruction;
             this.componentType = field.getComponentJavaClass();
-            maxLength = getMaxLength(field);
         }
         @SuppressWarnings("unchecked")
         @Override
@@ -919,7 +833,6 @@ abstract class FieldInstruction<V> {
                 out.writeUInt32Null(null);
             } else {
                 int size = Array.getLength(value);
-                validateMaxLength(size, maxLength);
                 out.writeUInt32Null(size);
                 for (int i=0; i<size; i++) {
                     elementInstruction.encodeValue(Array.get(value, i), out);
@@ -936,7 +849,6 @@ abstract class FieldInstruction<V> {
                 if (size < 0) {
                     throw new DecodeException("Sequence size overflow: " + size);
                 }
-                validateMaxLength(size, maxLength);
                 Object value = Array.newInstance(componentType, size);
                 for (int i=0; i<size; i++) {
                     Array.set(value, i, elementInstruction.decodeValue(in));
@@ -947,15 +859,15 @@ abstract class FieldInstruction<V> {
     }
     // --- GROUP ---
     static class DynamicGroup extends FieldInstruction<Object> {
-        private final BlinkCodec codec;
-        public DynamicGroup(FieldDef field, BlinkCodec codec) {
+        private final GeneratedCodec codec;
+        public DynamicGroup(FieldDef field, GeneratedCodec codec) {
             super(field);
             this.codec = codec;
         }
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
             require(value);
-            codec.writeDynamicGroup(value, out);
+            codec.writeDynamicGroup(out, value);
         }
         @Override
         public Object decodeValue(BlinkInputStream in) throws IOException {
@@ -963,14 +875,14 @@ abstract class FieldInstruction<V> {
         }
     }
     static class DynamicGroupNull extends FieldInstruction<Object> {
-        private final BlinkCodec codec;
-        public DynamicGroupNull(FieldDef field, BlinkCodec codec) {
+        private final GeneratedCodec codec;
+        public DynamicGroupNull(FieldDef field, GeneratedCodec codec) {
             super(field);
             this.codec = codec;
         }
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
-            codec.writeDynamicGroupNull(value, out);
+            codec.writeDynamicGroupNull(out, value);
         }
         @Override
         public Object decodeValue(BlinkInputStream in) throws IOException {

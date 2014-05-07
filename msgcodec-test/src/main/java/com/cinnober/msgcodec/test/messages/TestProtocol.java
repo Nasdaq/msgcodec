@@ -17,8 +17,6 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -63,6 +61,8 @@ public class TestProtocol {
         putAll(messages, "Dates.", DatesMessage.createMessages());
         putAll(messages, "Decimals.", DecimalsMessage.createMessages());
         putAll(messages, "Sequences.", SequencesMessage.createMessages());
+        putAll(messages, "Enums.", EnumsMessage.createMessages());
+        putAll(messages, "Integers.", IntegersMessage.createMessages());
 
         return messages;
     }

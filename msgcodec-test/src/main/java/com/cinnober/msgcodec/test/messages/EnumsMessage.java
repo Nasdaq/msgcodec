@@ -21,6 +21,9 @@ import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author mikael.brannstrom
@@ -31,9 +34,56 @@ public class EnumsMessage extends MsgObject {
     public Color myColor;
     @Required
     public Color myColorReq;
-
+    
     @Enumeration(Color.class)
     public Integer myIntColor;
     @Enumeration(Color.class)
     public int myIntColorReq;
+
+    public Country myCountry;
+    @Required
+    public Country myCountryReq;
+
+    @Enumeration(Country.class)
+    public Integer myIntCountry;
+    @Enumeration(Country.class)
+    public int myIntCountryReq;
+    @Enumeration(Country.class) @Required
+    public Integer myIntCountryObjReq;
+
+    /**
+     * Returns messages suitable for testing a codec. This includes border cases.
+     * Each message is labeled with a name, e.g. "zero" or "border1" that describes what
+     * the message tries to test.
+     *
+     * All messages are encodable, i.e. any required fields are set.
+     *
+     * @return a map from message label to message.
+     */
+    public static Map<String, EnumsMessage> createMessages() {
+        Map<String, EnumsMessage> messages = new LinkedHashMap<>();
+        EnumsMessage msg;
+
+        msg = new EnumsMessage();
+        messages.put("clean", msg);
+        msg.myColorReq = Color.RED;
+        msg.myCountryReq = Country.DENMARK;
+        msg.myIntColorReq = 0;
+        msg.myIntCountryReq = 208;
+        msg.myIntCountryObjReq = 208;
+
+        msg = new EnumsMessage();
+        messages.put("assigned", msg);
+        msg.myColorReq = Color.RED;
+        msg.myCountryReq = Country.DENMARK;
+        msg.myIntColorReq = 0;
+        msg.myIntCountryReq = 208;
+        msg.myColor = Color.RED;
+        msg.myCountry = Country.DENMARK;
+        msg.myIntColor = 0;
+        msg.myIntCountry = 208;
+        msg.myIntCountryObjReq = 208;
+
+        return messages;
+    }
 }

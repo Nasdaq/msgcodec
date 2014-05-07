@@ -22,6 +22,9 @@ public class BlinkCodecFactory implements StreamCodecFactory {
 
     private final ProtocolDictionary dictionary;
     private Pool<byte[]> bufferPool;
+    private int maxBinarySize = 10 * 1_048_576; // 10 MB
+    private int maxSequenceLength = 1_000_000;
+    private CodecOption codecOption;
 
     /**
      * Create a Blink codec factory.
@@ -34,6 +37,7 @@ public class BlinkCodecFactory implements StreamCodecFactory {
         }
         this.dictionary = dictionary;
         this.bufferPool = new ConcurrentBufferPool(8192, 10);
+        this.codecOption = CodecOption.AUTOMATIC;
     }
 
     /**
@@ -46,10 +50,37 @@ public class BlinkCodecFactory implements StreamCodecFactory {
         this.bufferPool = Objects.requireNonNull(bufferPool);
         return this;
     }
-    
+
+    /**
+     * Set the maxiumum binary size allowed while decoding.
+     * 
+     * @param maxBinarySize the maximum binary size (including strings) allowed while decoding, or -1 for no limit.
+     * @return this factory.
+     */
+    public BlinkCodecFactory setMaxBinarySize(int maxBinarySize) {
+        this.maxBinarySize = maxBinarySize;
+        return this;
+    }
+
+    /**
+     * Set the maxium sequence length allowed while decoding.
+     * 
+     * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
+     * @return this factory.
+     */
+    public BlinkCodecFactory setMaxSequenceLength(int maxSequenceLength) {
+        this.maxSequenceLength = maxSequenceLength;
+        return this;
+    }
+
+    BlinkCodecFactory setCodecOption(CodecOption codecOption) {
+        this.codecOption = Objects.requireNonNull(codecOption);
+        return this;
+    }
+
     @Override
     public BlinkCodec createStreamCodec() throws StreamCodecInstantiationException {
-        return new BlinkCodec(dictionary, bufferPool);
+        return new BlinkCodec(dictionary, bufferPool, maxBinarySize, maxSequenceLength, codecOption);
     }
     
 }

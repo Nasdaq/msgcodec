@@ -324,7 +324,7 @@ public class BlinkInputStream extends LimitInputStream  {
     }
     /**
      * Read a unicode string.
-     * @param maxLength the maximum string length (characters) that is allowed, or -1 for no limit.
+     * @param maxLength the maximum string length (bytes) that is allowed, or -1 for no limit.
      * @return the value, not null.
      * @throws IOException if the value could not be parsed, or if the underlying stream throws an exception.
      */

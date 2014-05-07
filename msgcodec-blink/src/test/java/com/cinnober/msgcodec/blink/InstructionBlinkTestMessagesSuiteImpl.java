@@ -27,14 +27,15 @@ import com.cinnober.msgcodec.test.messages.TestProtocol;
  * @author mikael.brannstrom
  *
  */
-public class BlinkTestMessagesSuiteImpl extends TestMessagesSuite {
+public class InstructionBlinkTestMessagesSuiteImpl extends TestMessagesSuite {
 
-    public BlinkTestMessagesSuiteImpl(Class<?> rootClass)
+    public InstructionBlinkTestMessagesSuiteImpl(Class<?> rootClass)
             throws InitializationError {
         super(rootClass, createCodec());
     }
 
     private static StreamCodec createCodec() {
-        return new BlinkCodec(TestProtocol.getProtocolDictionary());
+        return new BlinkCodecFactory(TestProtocol.getProtocolDictionary()).
+                setCodecOption(CodecOption.INSTRUCTION_CODEC_ONLY).createStreamCodec();
     }
 }

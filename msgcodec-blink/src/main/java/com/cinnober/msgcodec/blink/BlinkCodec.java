@@ -18,36 +18,27 @@
 package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.StreamCodecInstantiationException;
-import com.cinnober.msgcodec.DecodeException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Stack;
 
-import com.cinnober.msgcodec.FieldDef;
-import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.GroupTypeAccessor;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.StreamCodec;
-import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
+import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
 import com.cinnober.msgcodec.util.TempOutputStream;
-import java.util.List;
+import java.lang.reflect.Constructor;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The Blink codec can serialize and deserialize Java objects according to
  * the Blink compact binary encoding format.
  *
  * Null values are supported in encode and decode.
- *
- * <p>The Blink Codec understands the annotation named "maxLength" for strings, binaries and sequences.
- * If present, this limit will be used as the maximum number of chars, bytes and elements for
- * strings, binaries and sequences respectively.
  *
  * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta2.pdf">Blink Specification beta2 - 2013-02-05.</a>
  *
@@ -56,12 +47,9 @@ import java.util.List;
  *
  */
 public class BlinkCodec implements StreamCodec {
+    private static final Logger log = Logger.getLogger(BlinkCodec.class.getName());
 
-    private final GroupTypeAccessor groupTypeAccessor;
-    /** The compiled static groups by group type. */
-    private final Map<Object, StaticGroupInstruction> groupInstructionsByGroupType;
-    /** The compiled static groups by group id. */
-    private final Map<Integer, StaticGroupInstruction> groupInstructionsById;
+    private final GeneratedCodec generatedCodec;
 
     /** The size preambles. The top of the stack refers to the
      * dynamic group that is currently being encoded.
@@ -76,20 +64,37 @@ public class BlinkCodec implements StreamCodec {
     /** Blink output stream wrapped around the {@link #internalBuffer}. */
     private final BlinkOutputStream internalStream;
 
+    private final int maxBinarySize;
+    private final int maxSequenceLength;
 
-    /** Create a Blink codec, with an internal buffer pool of 8192 bytes.
+    /**
+     * Create a Blink codec, with an internal buffer pool of 8192 bytes.
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      */
     BlinkCodec(ProtocolDictionary dictionary) throws StreamCodecInstantiationException {
         this(dictionary, new ConcurrentBufferPool(8192, 1));
     }
-    /** Create a Blink codec.
+    /**
+     * Create a Blink codec.
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      */
-    BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) throws StreamCodecInstantiationException {
+    public BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) throws StreamCodecInstantiationException {
+        this(dictionary, bufferPool, 10 * 1048576, 1_000_000, CodecOption.AUTOMATIC);
+    }
+    /**
+     * Create a Blink codec.
+     *
+     * @param dictionary the definition of the messages to be understood by the codec.
+     * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
+     * @param maxBinarySize the maximum binary size (including strings) allowed while decoding, or -1 for no limit.
+     * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
+     * @param codecOption controls which kind of underlying codec to use, not null.
+     */
+    BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool,
+            int maxBinarySize, int maxSequenceLength, CodecOption codecOption) throws StreamCodecInstantiationException {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
@@ -100,342 +105,79 @@ public class BlinkCodec implements StreamCodec {
             this.internalBuffer = null;
             this.internalStream = null;
         }
-        groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
-        groupInstructionsByGroupType = new HashMap<>(dictionary.getGroups().size() * 2);
-        groupInstructionsById = new HashMap<>(dictionary.getGroups().size() * 2);
-        // first store place holders for group instructions,
-        // since they might be needed when creating field instructions
-        for (GroupDef groupDef : dictionary.getGroups()) {
-            StaticGroupInstruction superGroupInstruction = null;
-            if (groupDef.getSuperGroup() != null) {
-                GroupDef superGroup = dictionary.getGroup(groupDef.getSuperGroup());
-                superGroupInstruction = groupInstructionsByGroupType.get(superGroup.getGroupType());
-                if (superGroupInstruction == null) {
-                    throw new RuntimeException("I think I found a bug in ProtocolDictionary");
-                }
-            }
+        Objects.requireNonNull(codecOption);
 
-            StaticGroupInstruction groupInstruction = new StaticGroupInstruction(groupDef, superGroupInstruction);
-            groupInstructionsByGroupType.put(groupDef.getGroupType(), groupInstruction);
-            groupInstructionsById.put(groupDef.getId(), groupInstruction);
-        }
-        // create field instructions for all groups
-        for (GroupDef groupDef : dictionary.getGroups()) {
-            StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupDef.getGroupType());
-            int index = 0;
-            for (FieldDef fieldDef : groupDef.getFields()) {
-                @SuppressWarnings("rawtypes")
-                FieldInstruction fieldInstruction = createFieldInstruction(dictionary, fieldDef, fieldDef.getType(),
-                        fieldDef.getJavaClass(), fieldDef.getComponentJavaClass());
-                groupInstruction.initFieldInstruction(index++, fieldInstruction);
+        this.maxBinarySize = maxBinarySize;
+        this.maxSequenceLength = maxSequenceLength;
+
+        GeneratedCodec generatedCodecTmp = null;
+        if (codecOption != CodecOption.INSTRUCTION_CODEC_ONLY) {
+            try {
+                Class<GeneratedCodec> generatedCodecClass =
+                        GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(dictionary);
+                Constructor<GeneratedCodec> constructor =
+                        generatedCodecClass.getConstructor(new Class<?>[]{ BlinkCodec.class, ProtocolDictionary.class });
+                generatedCodecTmp = constructor.newInstance(this, dictionary);
+            } catch (Exception e) {
+                log.log(Level.WARNING,
+                        "Could instantiate generated codec for dictionary UID " + dictionary.getUID(), e);
+                if (codecOption == CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY) {
+                    throw new StreamCodecInstantiationException(e);
+                }
+                log.log(Level.INFO, "Fallback to (slower) instruction based codec for dictionary UID {0}",
+                        dictionary.getUID());
             }
         }
+        if (generatedCodecTmp == null) {
+            generatedCodecTmp = new InstructionCodec(this, dictionary);
+        }
+        generatedCodec = generatedCodecTmp;
     }
 
-    @SuppressWarnings("rawtypes")
-    private FieldInstruction createFieldInstruction(ProtocolDictionary dictionary, FieldDef field, TypeDef type,
-            Class<?> javaClass, Class<?> componentJavaClass) {
-        type = dictionary.resolveToType(type, true);
-        GroupDef typeGroup = dictionary.resolveToGroup(type);
-        boolean required = field == null || field.isRequired();
-        if (type instanceof TypeDef.Sequence) {
-            // --- SEQUENCE ---
-            FieldInstruction elementInstruction =
-                    createFieldInstruction(dictionary, null, ((TypeDef.Sequence) type).getComponentType(),
-                            componentJavaClass, null);
-            if (javaClass.isArray()) {
-                if (required) {
-                    return new FieldInstruction.ArraySequence(field, elementInstruction);
-                } else {
-                    return new FieldInstruction.ArraySequenceNull(field, elementInstruction);
-                }
-            } else if (List.class.equals(javaClass)) {
-                if (required) {
-                    return new FieldInstruction.ListSequence(field, elementInstruction);
-                } else {
-                    return new FieldInstruction.ListSequenceNull(field, elementInstruction);
-                }
-            } else {
-                throw new RuntimeException("Unhandled sequence type: " + javaClass.getName());
-            }
-        } else {
-            // --- SIMPLE TYPE ---
-            switch (type.getType()) {
-            case INT8:
-                if (required) {
-                    return new FieldInstruction.Int8(field);
-                } else {
-                    return new FieldInstruction.Int8Null(field);
-                }
-            case INT16:
-                if (required) {
-                    return new FieldInstruction.Int16(field);
-                } else {
-                    return new FieldInstruction.Int16Null(field);
-                }
-            case INT32:
-                if (required) {
-                    return new FieldInstruction.Int32(field);
-                } else {
-                    return new FieldInstruction.Int32Null(field);
-                }
-            case INT64:
-                if (required) {
-                    return new FieldInstruction.Int64(field);
-                } else {
-                    return new FieldInstruction.Int64Null(field);
-                }
-            case UINT8:
-                if (required) {
-                    return new FieldInstruction.UInt8(field);
-                } else {
-                    return new FieldInstruction.UInt8Null(field);
-                }
-            case UINT16:
-                if (required) {
-                    return new FieldInstruction.UInt16(field);
-                } else {
-                    return new FieldInstruction.UInt16Null(field);
-                }
-            case UINT32:
-                if (required) {
-                    return new FieldInstruction.UInt32(field);
-                } else {
-                    return new FieldInstruction.UInt32Null(field);
-                }
-            case UINT64:
-                if (required) {
-                    return new FieldInstruction.UInt64(field);
-                } else {
-                    return new FieldInstruction.UInt64Null(field);
-                }
-            case FLOAT32:
-                if (required) {
-                    return new FieldInstruction.Float32(field);
-                } else {
-                    return new FieldInstruction.Float32Null(field);
-                }
-            case FLOAT64:
-                if (required) {
-                    return new FieldInstruction.Float64(field);
-                } else {
-                    return new FieldInstruction.Float64Null(field);
-                }
-            case DECIMAL:
-                if (required) {
-                    return new FieldInstruction.Decimal(field);
-                } else {
-                    return new FieldInstruction.DecimalNull(field);
-                }
-            case BIGDECIMAL:
-                if (required) {
-                    return new FieldInstruction.BigDecimal(field);
-                } else {
-                    return new FieldInstruction.BigDecimalNull(field);
-                }
-            case BIGINT:
-                if (required) {
-                    return new FieldInstruction.BigInt(field);
-                } else {
-                    return new FieldInstruction.BigIntNull(field);
-                }
-            case BOOLEAN:
-                if (required) {
-                    return new FieldInstruction.Boolean(field);
-                } else {
-                    return new FieldInstruction.BooleanNull(field);
-                }
-            case STRING:
-                if (required) {
-                    return new FieldInstruction.StringUTF8(field);
-                } else {
-                    return new FieldInstruction.StringUTF8Null(field);
-                }
-            case BINARY:
-                if (required) {
-                    return new FieldInstruction.Binary(field);
-                } else {
-                    return new FieldInstruction.BinaryNull(field);
-                }
-            case ENUM:
-                if (javaClass.isEnum()) {
-                    if (required) {
-                        return new FieldInstruction.Enumeration(field, (Enum) type);
-                    } else {
-                        return new FieldInstruction.EnumerationNull(field, (Enum) type);
-                    }
-                } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
-                    if (required) {
-                        return new FieldInstruction.IntEnumeration(field);
-                    } else {
-                        return new FieldInstruction.IntEnumerationNull(field);
-                    }
-                } else {
-                    throw new RuntimeException("Unhandled ENUM java type: " + javaClass);
-                }
-            case TIME:
-                if (javaClass.equals(Date.class)) {
-                    if (required) {
-                        return new FieldInstruction.DateTime(field);
-                    } else {
-                        return new FieldInstruction.DateTimeNull(field);
-                    }
-                } else if (javaClass.equals(long.class) || javaClass.equals(Long.class)) {
-                    if (required) {
-                        return new FieldInstruction.Int64(field);
-                    } else {
-                        return new FieldInstruction.Int64Null(field);
-                    }
-                } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
-                    if (required) {
-                        return new FieldInstruction.Int32(field);
-                    } else {
-                        return new FieldInstruction.Int32Null(field);
-                    }
-                } else {
-                    throw new RuntimeException("Unhandled time type: "+javaClass.getName());
-                }
-            case REFERENCE: // static group
-                if (required) {
-                    return new FieldInstruction.StaticGroup(field, groupInstructionsByGroupType.get(typeGroup.getGroupType()));
-                } else {
-                    return new FieldInstruction.StaticGroupNull(field, groupInstructionsByGroupType.get(typeGroup.getGroupType()));
-                }
-            case DYNAMIC_REFERENCE: // dynamic group
-                if (required) {
-                    return new FieldInstruction.DynamicGroup(field, this);
-                } else {
-                    return new FieldInstruction.DynamicGroupNull(field, this);
-                }
-            default:
-                throw new RuntimeException("Unhandled type: " + type.getType());
-            }
-        }
+    // PENDING: this method should be package private. For some reason the generated codec cannot access package private stuff...
+    public int getMaxBinarySize() {
+        return maxBinarySize;
+    }
+
+    int getMaxSequenceLength() {
+        return maxSequenceLength;
     }
 
     @Override
     public void encode(Object group, OutputStream out) throws IOException {
-        if (out instanceof BlinkOutputStream) {
-            writeDynamicGroup(group, (BlinkOutputStream)out);
-        } else {
-            writeDynamicGroup(group, new BlinkOutputStream(out));
-        }
+        generatedCodec.writeDynamicGroup(out, group);
     }
     @Override
     public Object decode(InputStream in) throws IOException {
-        if (in instanceof BlinkInputStream) {
-            return readDynamicGroup((BlinkInputStream)in);
+        if (in instanceof LimitInputStream) {
+            return generatedCodec.readDynamicGroupNull((LimitInputStream)in);
         } else {
-            return readDynamicGroup(new BlinkInputStream(in));
+            return generatedCodec.readDynamicGroupNull(new BlinkInputStream(in));
         }
     }
 
-    public void encode(Object group, BlinkOutputStream out) throws IOException {
-        writeDynamicGroupNull(group, out);
-    }
-    public Object decode(BlinkInputStream in) throws IOException {
-        return readDynamicGroupNull(in);
-    }
-
-    /**
-     * @param value
-     * @param out
-     * @throws IOException
-     */
-    void writeDynamicGroup(Object value, BlinkOutputStream out) throws IOException {
-        if (internalBuffer == null) {
-            throw new UnsupportedOperationException("Encoding is disabled!");
-        }
-        writeDynamicGroup(value, out, false);
-    }
-    /**
-     * @param value
-     * @param out
-     * @throws IOException
-     */
-    void writeDynamicGroupNull(Object value, BlinkOutputStream out) throws IOException {
-        if (value == null) {
-            out.writeUInt32Null(null);
-        } else {
-            writeDynamicGroup(value, out, true);
-        }
-    }
-    private void writeDynamicGroup(Object value, BlinkOutputStream out, boolean nullable) throws IOException {
-        Object groupType = groupTypeAccessor.getGroupType(value);
-        StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupType);
-        if (groupInstruction == null) {
-            throw new IllegalArgumentException("Cannot encode group. Group type not found in protocol dictionary: " +
-                    groupType);
-        }
-        Preamble preamble = new Preamble(nullable);
+    OutputStream preambleBegin() {
+        Preamble preamble = new Preamble();
         if (!preambleStack.isEmpty()) {
             preambleStack.peek().startChild(preamble);
         }
         preambleStack.push(preamble);
-        groupInstruction.encodeGroupId(internalStream);
-        groupInstruction.encodeGroup(value, internalStream);
-        preambleStack.pop();
+        return internalStream;
+    }
+
+    void preambleEnd(OutputStream out) throws IOException {
+        Preamble preamble = preambleStack.pop();
         preamble.end();
         if (preambleStack.isEmpty()) {
             preamble.flush(out);
         }
     }
 
-
-    /** Read a dynamic group.
-     * @param in the stream to read from.
-     * @return the group, not null.
-     * @throws IOException
-     */
-    Object readDynamicGroup(BlinkInputStream in) throws IOException {
-        int size = in.readUInt32();
-        return readDynamicGroup(size, in);
-    }
-    /** Read a nullable dynamic group.
-     * @param in the stream to read from.
-     * @return the group, or null.
-     * @throws IOException
-     */
-    Object readDynamicGroupNull(BlinkInputStream in) throws IOException {
-        Integer sizeObj = in.readUInt32Null();
-        if (sizeObj == null) {
-            return null;
-        }
-        int size = sizeObj.intValue();
-        return readDynamicGroup(size, in);
-    }
-
-    private Object readDynamicGroup(int size, BlinkInputStream in) throws IOException {
-        int limit = in.limit();
-        if (limit >= 0) {
-            if (size > limit) {
-                // there is already a limit that is smaller than this message size
-                throw new DecodeException("Dynamic group size preamble (" + size +
-                        ") goes beyond current stream limit (" + limit + ").");
-            } else {
-                limit -= size;
-                in.limit(size);
-            }
-        }
-        int groupId = in.readUInt32();
-        StaticGroupInstruction groupInstruction = groupInstructionsById.get(groupId);
-        if (groupInstruction == null) {
-            throw new DecodeException("Unknown group id: " + groupId);
-        }
-
-        Object group = groupInstruction.decodeGroup(in);
-        in.skip(in.limit());
-        in.limit(limit); // restore old limit
-        return group;
-    }
-
-    private int sizeOfPreamble(int size, boolean nullable) {
+    private int sizeOfPreamble(int size) {
         return BlinkOutputStream.sizeOfUnsignedVLC(size);
     }
 
     private class Preamble {
-        /** True iff this group is nullable (optional). */
-        private final boolean nullable;
         /** Linked list stuff. */
         private Preamble firstChild;
         /** Linked list stuff. */
@@ -453,8 +195,7 @@ public class BlinkCodec implements StreamCodec {
         /** The number of bytes added by the preamble(s) of this group and all child groups. */
         private int addedSize;
 
-        public Preamble(boolean nullable) {
-            this.nullable = nullable;
+        public Preamble() {
             startPosition = internalBuffer.position();
         }
         void startChild(Preamble preamble) {
@@ -480,15 +221,11 @@ public class BlinkCodec implements StreamCodec {
                 addedSize += child.getAddedSize();
             }
             size += addedSize;
-            addedSize += sizeOfPreamble(size, nullable);
+            addedSize += sizeOfPreamble(size);
         }
-        private void copyTo(BlinkOutputStream out) throws IOException {
+        private void copyTo(OutputStream out) throws IOException {
             // write size preamble
-            if (nullable) {
-                out.writeUInt32Null(size);
-            } else {
-                out.writeUInt32(size);
-            }
+            BlinkOutput.writeUInt32(out, size);
             int position = startPosition;
             for (Preamble child = firstChild; child != null; child = child.nextSibling) {
                 internalBuffer.copyTo(out, position, child.startPosition);
@@ -500,7 +237,7 @@ public class BlinkCodec implements StreamCodec {
         /**
          * Flush the temporary encoded group, add size preambles and finally reset the internal buffer.
          */
-        public void flush(BlinkOutputStream out) throws IOException {
+        public void flush(OutputStream out) throws IOException {
             calculateSize();
             copyTo(out);
             internalBuffer.reset();

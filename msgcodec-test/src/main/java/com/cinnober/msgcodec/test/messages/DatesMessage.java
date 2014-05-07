@@ -47,6 +47,9 @@ public class DatesMessage extends MsgObject {
     @Id(35)
     @Time(epoch=Epoch.MIDNIGHT, timeZone="")
     public long localTimeMillis;
+    @Id(36)
+    @Time(unit=TimeUnit.DAYS, timeZone="")
+    public Date dateDate;
 
 
     /**
@@ -69,6 +72,7 @@ public class DatesMessage extends MsgObject {
         msg = new DatesMessage();
         messages.put("zero", msg);
         msg.dateTimestamp = new Date(0L);
+        msg.dateDate = new Date(0L);
 
         msg = new DatesMessage();
         messages.put("border1", msg);
@@ -84,8 +88,9 @@ public class DatesMessage extends MsgObject {
         msg.dateTimestamp = new Date(1381856400123L);
         msg.utcMillis = 1381856400123L;
         msg.utcNanos = 1381856400123456789L;
-        msg.businessDate = 1381856400L / (24 * 3600);
+        msg.businessDate = 15993L;
         msg.localTimeMillis = 12 * 3600 * 1000 + 123;
+        msg.dateDate = new Date(1381795200000L);
 
         return messages;
     }
