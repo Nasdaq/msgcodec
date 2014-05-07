@@ -218,9 +218,8 @@ class ByteCodeGenerator {
             // store the group type accessor
 
             // field
-            GroupTypeAccessor groupTypeAccessor = dict.getBinding().getGroupTypeAccessor();
             FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "groupTypeAccessor",
-                    Type.getDescriptor(groupTypeAccessor.getClass()), null, null);
+                    "Lcom/cinnober/msgcodec/GroupTypeAccessor;", null, null);
             fv.visitEnd();
 
             // ctor, init field
@@ -230,19 +229,16 @@ class ByteCodeGenerator {
                     "()Lcom/cinnober/msgcodec/ProtocolDictionaryBinding;", false);
             ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionaryBinding", 
                     "getGroupTypeAccessor", "()Lcom/cinnober/msgcodec/GroupTypeAccessor;", false);
-            ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(groupTypeAccessor.getClass()));
             ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, "groupTypeAccessor",
-                    Type.getDescriptor(groupTypeAccessor.getClass()));
+                    "Lcom/cinnober/msgcodec/GroupTypeAccessor;");
         }
 
         for (GroupDef group : dict.getGroups()) {
             if (!javaClassCodec) {
                 // store the group type
-                Object groupType = group.getGroupType();
-
                 // field
                 FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "groupType_" + group.getName(),
-                        Type.getDescriptor(groupType.getClass()), null, null);
+                        "Ljava/lang/Object;", null, null);
                 fv.visitEnd();
 
                 // ctor, init field
@@ -250,13 +246,12 @@ class ByteCodeGenerator {
                 ctormv.visitVarInsn(ALOAD, 2); // dict
                 ctormv.visitLdcInsn(group.getName());
                 ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
-                        "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef", false);
+                        "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef;", false);
                 ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getGroupType",
                         "()Ljava/lang/Object;", false);
-                ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(groupType.getClass()));
                 ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
                         "groupType_" + group.getName(),
-                        Type.getDescriptor(groupType.getClass()));
+                        "Ljava/lang/Object;");
             }
 
             Factory<?> factory = group.getFactory();
@@ -266,7 +261,7 @@ class ByteCodeGenerator {
                 // field
                 FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
                         "factory_" + group.getName(),
-                        Type.getDescriptor(factory.getClass()), null, null);
+                        "Lcom/cinnober/msgcodec/Factory;", null, null);
                 fv.visitEnd();
 
                 // ctor, init field
@@ -274,13 +269,12 @@ class ByteCodeGenerator {
                 ctormv.visitVarInsn(ALOAD, 2); // dict
                 ctormv.visitLdcInsn(group.getName());
                 ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/ProtocolDictionary", "getGroup",
-                        "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef", false);
+                        "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef;", false);
                 ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getFactory",
                         "()Lcom/cinnober/msgcodec/Factory;", false);
-                ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(factory.getClass()));
                 ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
                         "factory_" + group.getName(),
-                        Type.getDescriptor(factory.getClass()));
+                        "Lcom/cinnober/msgcodec/Factory;");
             }
 
             for (FieldDef field : group.getFields()) {
@@ -293,7 +287,7 @@ class ByteCodeGenerator {
                     // field
                     FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
                             "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()), null, null);
+                            "Lcom/cinnober/msgcodec/Accessor;", null, null);
                     fv.visitEnd();
 
                     // ctor, init field
@@ -307,10 +301,9 @@ class ByteCodeGenerator {
                             "(Ljava/lang/String;)Lcom/cinnober/msgcodec/FieldDef;", false);
                     ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/FieldDef", "getAccessor",
                             "()Lcom/cinnober/msgcodec/Accessor;", false);
-                    ctormv.visitTypeInsn(CHECKCAST, Type.getInternalName(accessor.getClass()));
                     ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
                             "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()));
+                            "Lcom/cinnober/msgcodec/Accessor;");
                 }
 
             }
@@ -336,13 +329,12 @@ class ByteCodeGenerator {
         if (javaClassCodec) {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
         } else {
-            GroupTypeAccessor groupTypeAccessor = dict.getBinding().getGroupTypeAccessor();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitFieldInsn(GETFIELD, genClassInternalName, "groupTypeAccessor",
-                    Type.getDescriptor(groupTypeAccessor.getClass()));
+                    "Lcom/cinnober/msgcodec/GroupTypeAccessor;");
             mv.visitVarInsn(ALOAD, 2);
-            mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(groupTypeAccessor.getClass()),
-                    "getGroupType", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+            mv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/GroupTypeAccessor",
+                    "getGroupType", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
         }
         int groupTypeVar = nextVar++;
         mv.visitInsn(DUP);
@@ -388,7 +380,7 @@ class ByteCodeGenerator {
                     GroupDef group = dict.getGroup(classCase.object);
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, genClassInternalName, "groupType_" + group.getName(),
-                            Type.getDescriptor(classCase.object.getClass()));
+                            "Ljava/lang/Object;");
                     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object",
                             "equals", "(Ljava/lang/Object;)Z", false);
                     mv.visitJumpInsn(IFNE, classCase.label); // IFNE = if not false
@@ -423,7 +415,7 @@ class ByteCodeGenerator {
             }
         }
 
-        mv.visitMaxs(3, nextVar);
+        mv.visitMaxs(4, nextVar);
         mv.visitEnd();
     }
     
@@ -516,10 +508,10 @@ class ByteCodeGenerator {
                     writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
                             "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()));
+                            "Lcom/cinnober/msgcodec/Accessor;");
                     writemv.visitVarInsn(ALOAD, 2); // instance
-                    writemv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(accessor.getClass()), "getValue",
-                            "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    writemv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "getValue",
+                            "(Ljava/lang/Object;)Ljava/lang/Object;", true);
                     if (javaClass.isPrimitive()) {
                         writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(javaClass)));
                         unbox(writemv, javaClass);
@@ -570,8 +562,8 @@ class ByteCodeGenerator {
 
         for (Map.Entry<Integer, Label> caseEntry : labelsByGroupId.entrySet()) {
             GroupDef group = dict.getGroup(caseEntry.getKey().intValue());
-            Class<?> groupType = (Class) group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor(groupType) : "Ljava/lang/Object;";
+            Object groupType = group.getGroupType();
+            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
 
             mv.visitLabel(caseEntry.getValue());
             mv.visitFrame(F_SAME, 0, null, 0, null);
@@ -618,7 +610,7 @@ class ByteCodeGenerator {
                 readmv.visitVarInsn(ALOAD, 0); // this
                 readmv.visitFieldInsn(GETFIELD, genClassInternalName, 
                         "factory_" + group.getName(),
-                        Type.getDescriptor(factory.getClass()));
+                        "Lcom/cinnober/msgcodec/Factory;");
                 readmv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Factory", "newInstance",
                         "()Ljava/lang/Object;", true);
                 if (javaClassCodec) {
@@ -704,7 +696,7 @@ class ByteCodeGenerator {
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, genClassInternalName,
                             "accessor_" + group.getName() + "_" + field.getName(),
-                            Type.getDescriptor(accessor.getClass()));
+                            "Lcom/cinnober/msgcodec/Accessor;");
                     // instance
                     mv.visitVarInsn(ALOAD, 2); // instance
                     // value
@@ -713,8 +705,8 @@ class ByteCodeGenerator {
                         box(mv, javaClass);
                     }
                     // store
-                    mv.visitMethodInsn(INVOKEVIRTUAL, Type.getInternalName(accessor.getClass()), "setValue",
-                            "(Ljava/lang/Object;Ljava/lang/Object;)V", false);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "setValue",
+                            "(Ljava/lang/Object;Ljava/lang/Object;)V", true);
                 }
             }
 
@@ -1480,6 +1472,7 @@ class ByteCodeGenerator {
                 mv.visitTypeInsn(CHECKCAST, "java/util/Date");
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
+                mv.visitLabel(nonNullLabel);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
                 mv.visitVarInsn(LSTORE, timeVar);
                 mv.visitTypeInsn(NEW, "java/util/Date");

@@ -20,7 +20,6 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.ProtocolDictionary;
 import java.util.WeakHashMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -50,11 +49,7 @@ class GeneratedCodecClassLoader extends ClassLoader {
             final Object uid = dictionary.getUID();
             Class<GeneratedCodec> codecClass = codecClassesByDictionaryUID.get(uid);
             if (codecClass == null && !codecClassesByDictionaryUID.containsKey(uid)) {
-                try {
-                    codecClass = generateCodecClass(dictionary, nextClassSuffix++);
-                } catch (Exception e) {
-                    log.log(Level.INFO, "Could not generate codec class for dictionary uid " + uid, e);
-                }
+                codecClass = generateCodecClass(dictionary, nextClassSuffix++);
                 codecClassesByDictionaryUID.put(uid, codecClass);
             }
             return codecClass;

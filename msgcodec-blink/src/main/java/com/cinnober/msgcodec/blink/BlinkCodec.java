@@ -30,7 +30,7 @@ import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
 import com.cinnober.msgcodec.util.TempOutputStream;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -82,7 +82,7 @@ public class BlinkCodec implements StreamCodec {
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      */
     public BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) throws StreamCodecInstantiationException {
-        this(dictionary, bufferPool, 10 * 1048576, 1_000_000);
+        this(dictionary, bufferPool, 10 * 1048576, 1_000_000, CodecOption.AUTOMATIC);
     }
     /**
      * Create a Blink codec.
@@ -91,9 +91,10 @@ public class BlinkCodec implements StreamCodec {
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      * @param maxBinarySize the maximum binary size (including strings) allowed while decoding, or -1 for no limit.
      * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
+     * @param codecOption controls which kind of underlying codec to use, not null.
      */
     BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool,
-            int maxBinarySize, int maxSequenceLength) throws StreamCodecInstantiationException {
+            int maxBinarySize, int maxSequenceLength, CodecOption codecOption) throws StreamCodecInstantiationException {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
@@ -104,26 +105,30 @@ public class BlinkCodec implements StreamCodec {
             this.internalBuffer = null;
             this.internalStream = null;
         }
+        Objects.requireNonNull(codecOption);
 
         this.maxBinarySize = maxBinarySize;
         this.maxSequenceLength = maxSequenceLength;
 
-        GeneratedCodec generatedCodecTmp;
-        Class<GeneratedCodec> generatedCodecClass = null;
-        generatedCodecClass = GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(dictionary);
-
-        if (generatedCodecClass != null) {
+        GeneratedCodec generatedCodecTmp = null;
+        if (codecOption != CodecOption.INSTRUCTION_CODEC_ONLY) {
             try {
+                Class<GeneratedCodec> generatedCodecClass =
+                        GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(dictionary);
                 Constructor<GeneratedCodec> constructor =
                         generatedCodecClass.getConstructor(new Class<?>[]{ BlinkCodec.class, ProtocolDictionary.class });
                 generatedCodecTmp = constructor.newInstance(this, dictionary);
-            } catch (NoSuchMethodException | InstantiationException | IllegalAccessException |
-                    IllegalArgumentException | InvocationTargetException e) {
-                log.log(Level.WARNING, "Could instantiate generated codec", e);
-                generatedCodecTmp = new InstructionCodec(this, dictionary);
+            } catch (Exception e) {
+                log.log(Level.WARNING,
+                        "Could instantiate generated codec for dictionary UID " + dictionary.getUID(), e);
+                if (codecOption == CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY) {
+                    throw new StreamCodecInstantiationException(e);
+                }
+                log.log(Level.INFO, "Fallback to (slower) instruction based codec for dictionary UID {0}",
+                        dictionary.getUID());
             }
-        } else {
-            log.info("Fallback to (slower) instruction based codec");
+        }
+        if (generatedCodecTmp == null) {
             generatedCodecTmp = new InstructionCodec(this, dictionary);
         }
         generatedCodec = generatedCodecTmp;

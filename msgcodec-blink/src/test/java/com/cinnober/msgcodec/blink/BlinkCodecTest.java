@@ -44,14 +44,22 @@ import org.junit.Ignore;
  */
 public class BlinkCodecTest {
 
+    @Test
+    public void testHelloExampleBytecode() throws IOException {
+        testHelloExample(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testHelloExampleInstruction() throws IOException {
+        testHelloExample(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
      */
-    @Test
-    public void testHelloExample() throws IOException {
+    public void testHelloExample(CodecOption codecOption) throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        StreamCodec codec = new BlinkCodec(dictionary);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec.encode(new Hello("Hello World"), bout);
         assertEquals("Encoded Hello World", expected, bout.toByteArray());
@@ -61,16 +69,24 @@ public class BlinkCodecTest {
         assertEquals("Hello greeting", "Hello World", msg.getGreeting());
     }
 
+    @Test
+    public void testHelloExample2Bytecode() throws IOException {
+        testHelloExample2(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testHelloExample2Instruction() throws IOException {
+        testHelloExample2(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
      * Here the dictionary is bound to Group objects.
      */
-    @Test
-    public void testHelloExample2() throws IOException {
+    public void testHelloExample2(CodecOption codecOption) throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
         dictionary = Group.bind(dictionary);
-        StreamCodec codec = new BlinkCodec(dictionary);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         Group hello = new Group(dictionary, "Hello");
         hello.set("greeting", "Hello World");
@@ -83,10 +99,18 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testDynamicGroups() throws IOException {
+    public void testDynamicGroupsBytecode() throws IOException {
+        testDynamicGroups(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testDynamicGroupsInstruction() throws IOException {
+        testDynamicGroups(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+    
+    public void testDynamicGroups(CodecOption codecOption) throws IOException {
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Foo.class, Bar.class);
         System.out.println("Dictionary:\n" + dictionary);
-        StreamCodec codec = new BlinkCodec(dictionary);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
         Foo foo1 = new Foo(1);
