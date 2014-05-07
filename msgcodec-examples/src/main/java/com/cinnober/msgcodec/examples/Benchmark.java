@@ -29,6 +29,7 @@ import com.cinnober.msgcodec.anot.SmallDecimal;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
 import com.cinnober.msgcodec.blink.BlinkCodec;
+import com.cinnober.msgcodec.blink.BlinkCodecFactory;
 import com.cinnober.msgcodec.util.ByteBufferInputStream;
 import com.cinnober.msgcodec.util.ByteBufferOutputStream;
 import com.cinnober.msgcodec.util.LimitInputStream;
@@ -122,7 +123,7 @@ public class Benchmark {
         ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(EnterDoubleSidedTrade.class);
         System.out.println("dict: \n" + dict);
 
-        BlinkCodec codec = new BlinkCodec(dict);
+        BlinkCodec codec = new BlinkCodecFactory(dict).createStreamCodec();
 
         Benchmark benchmark = new Benchmark(codec, messages);
 

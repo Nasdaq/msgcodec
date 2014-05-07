@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -42,6 +43,7 @@ import java.util.logging.Logger;
  * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta2.pdf">Blink Specification beta2 - 2013-02-05.</a>
  *
  * @author mikael.brannstrom
+ * @see BlinkCodecFactory
  *
  */
 public class BlinkCodec implements StreamCodec {
@@ -70,7 +72,7 @@ public class BlinkCodec implements StreamCodec {
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      */
-    public BlinkCodec(ProtocolDictionary dictionary) {
+    BlinkCodec(ProtocolDictionary dictionary) throws StreamCodecInstantiationException {
         this(dictionary, new ConcurrentBufferPool(8192, 1));
     }
     /**
@@ -79,7 +81,7 @@ public class BlinkCodec implements StreamCodec {
      * @param dictionary the definition of the messages to be understood by the codec.
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      */
-    public BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) {
+    public BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) throws StreamCodecInstantiationException {
         this(dictionary, bufferPool, 10 * 1048576, 1_000_000);
     }
     /**
@@ -91,7 +93,7 @@ public class BlinkCodec implements StreamCodec {
      * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
      */
     BlinkCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool,
-            int maxBinarySize, int maxSequenceLength) {
+            int maxBinarySize, int maxSequenceLength) throws StreamCodecInstantiationException {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }

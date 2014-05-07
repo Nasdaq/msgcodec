@@ -17,21 +17,23 @@
  */
 package com.cinnober.msgcodec.examples;
 
+import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.examples.messages.Carpenter;
+import com.cinnober.msgcodec.examples.messages.Numbers;
+import com.cinnober.msgcodec.examples.messages.Person;
+import com.cinnober.msgcodec.json.JsonCodec;
+import com.cinnober.msgcodec.json.JsonCodecFactory;
+import com.cinnober.msgcodec.xml.XmlCodec;
+import com.cinnober.msgcodec.xml.XmlCodecFactory;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.StreamCodec;
-import com.cinnober.msgcodec.examples.messages.Person;
-import com.cinnober.msgcodec.examples.messages.Numbers;
-import com.cinnober.msgcodec.examples.messages.Carpenter;
-import com.cinnober.msgcodec.json.JsonCodec;
-import com.cinnober.msgcodec.xml.XmlCodec;
-
-/** Basic example of message codec. Create a dictionary from java messages, encode and decode using the
- * JSON and XML codecs.
+/**
+ * Basic example of message codec.
+ * Create a dictionary from java messages, encode and decode using the JSON and XML codecs.
  *
  * @author Mikael Brannstrom
  *
@@ -66,8 +68,8 @@ public class MessagesExample {
         charlie.dad = bob;
         
         // Create a codec, the codec can be reused
-        StreamCodec jsonCodec = new JsonCodec(dictionary);
-        StreamCodec xmlCodec = new XmlCodec(dictionary);
+        StreamCodec jsonCodec = new JsonCodecFactory(dictionary).createStreamCodec();
+        StreamCodec xmlCodec = new XmlCodecFactory(dictionary).createStreamCodec();
 
         // encode to system out
         System.out.println("\n* JSON *");

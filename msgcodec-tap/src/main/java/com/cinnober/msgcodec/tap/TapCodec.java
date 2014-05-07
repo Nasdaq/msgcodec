@@ -17,14 +17,8 @@
  */
 package com.cinnober.msgcodec.tap;
 
+import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.DecodeException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
@@ -36,7 +30,13 @@ import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
 import com.cinnober.msgcodec.util.TempOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Stack;
 
 /**
  * The TAP codec can serialize and deserialize Java objects according to the internal Cinnober TAP message format,
@@ -99,19 +99,21 @@ public class TapCodec implements StreamCodec {
     private final TapOutputStream internalStream;
 
 
-    /** Create a Blink codec, with an internal buffer pool of 8192 bytes.
+    /**
+     * Create a TAP codec, with an internal buffer pool of 8192 bytes.
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      */
-    public TapCodec(ProtocolDictionary dictionary) {
+    TapCodec(ProtocolDictionary dictionary) throws StreamCodecInstantiationException {
         this(dictionary, new ConcurrentBufferPool(8192, 1));
     }
-    /** Create a Blink codec.
+    /** 
+     * Create a TAP codec.
      *
      * @param dictionary the definition of the messages to be understood by the codec.
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      */
-    public TapCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) {
+    TapCodec(ProtocolDictionary dictionary, Pool<byte[]> bufferPool) throws StreamCodecInstantiationException {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }

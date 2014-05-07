@@ -134,7 +134,7 @@ public class XmlCodec implements StreamCodec {
     private final XmlDocumentHandler saxHandler;
     private final SAXParser saxParser;
 
-    public XmlCodec(ProtocolDictionary dictionary) throws ParserConfigurationException, SAXException {
+    XmlCodec(ProtocolDictionary dictionary) throws ParserConfigurationException, SAXException {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }

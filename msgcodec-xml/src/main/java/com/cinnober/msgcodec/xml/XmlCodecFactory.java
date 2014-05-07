@@ -6,14 +6,9 @@
 
 package com.cinnober.msgcodec.xml;
 
+import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.StreamCodecFactory;
-import com.cinnober.msgcodec.util.ConcurrentBufferPool;
-import com.cinnober.msgcodec.util.Pool;
-import java.util.Objects;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
@@ -32,15 +27,18 @@ public class XmlCodecFactory implements StreamCodecFactory {
      * @param dictionary the protocol dictionary to be used by all codec instances, not null.
      */
     public XmlCodecFactory(ProtocolDictionary dictionary) {
-        this.dictionary = Objects.requireNonNull(dictionary);
+        if (!dictionary.isBound()) {
+            throw new IllegalArgumentException("Dictionary must be bound");
+        }
+        this.dictionary = dictionary;
     }
 
     @Override
-    public XmlCodec createStreamCodec() {
+    public XmlCodec createStreamCodec() throws StreamCodecInstantiationException {
         try {
             return new XmlCodec(dictionary);
         } catch (ParserConfigurationException | SAXException e) {
-            throw new RuntimeException("Could not create codec", e);
+            throw new StreamCodecInstantiationException("Could not create codec", e);
         }
     }
     

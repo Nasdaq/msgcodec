@@ -18,7 +18,7 @@
  *                                                       MyPongMessage.class,
  *                                                       SomeOtherMessage.class,
  *                                                       ...);
- * StreamCodec codec = new XxxStreamCodec(protocolDictionary);
+ * StreamCodec codec = new XxxStreamCodecFactory(protocolDictionary).createStreamCodec();
  * OutputStream out = ...;
  * InputStrem in = ...;
  * Object message = codec.decode(in);

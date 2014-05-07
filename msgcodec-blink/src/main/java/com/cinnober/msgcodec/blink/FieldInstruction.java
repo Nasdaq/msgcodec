@@ -662,7 +662,7 @@ abstract class FieldInstruction<V> {
             if (symbol == null) {
                 throw new IllegalArgumentException("Value is not a valid enumeration symbol: " + value);
             }
-            out.writeInt32Null(symbol.getId());
+            out.writeInt32(symbol.getId());
         }
         @Override
         public Enum decodeValue(BlinkInputStream in) throws IOException {
