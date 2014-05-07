@@ -17,23 +17,26 @@
  */
 package com.cinnober.msgcodec.examples;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
-
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.blink.BlinkCodec;
+import com.cinnober.msgcodec.blink.BlinkCodecFactory;
 import com.cinnober.msgcodec.examples.messages.Hello;
 import com.cinnober.msgcodec.json.JsonCodec;
+import com.cinnober.msgcodec.json.JsonCodecFactory;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
 import com.cinnober.msgcodec.tap.TapCodec;
+import com.cinnober.msgcodec.tap.TapCodecFactory;
 import com.cinnober.msgcodec.util.ByteArrays;
 import com.cinnober.msgcodec.xml.XmlCodec;
+import com.cinnober.msgcodec.xml.XmlCodecFactory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 
 /** This is a somewhat advanced example, that demonstrates the dynamic binding feature of msgcodec,
  * as well as the encoding the protocol dictionary itself.
@@ -106,13 +109,13 @@ public class HelloWorldDynamic {
     private static StreamCodec createCodec(String format, ProtocolDictionary dictionary) throws Exception {
         switch (format) {
         case XML:
-            return new XmlCodec(dictionary);
+            return new XmlCodecFactory(dictionary).createStreamCodec();
         case JSON:
-            return new JsonCodec(dictionary);
+            return new JsonCodecFactory(dictionary).createStreamCodec();
         case BLINK:
-            return new BlinkCodec(dictionary);
+            return new BlinkCodecFactory(dictionary).createStreamCodec();
         case TAP:
-            return new TapCodec(dictionary);
+            return new TapCodecFactory(dictionary).createStreamCodec();
         default:
             throw new Error("Unhandled format: " + format);
         }

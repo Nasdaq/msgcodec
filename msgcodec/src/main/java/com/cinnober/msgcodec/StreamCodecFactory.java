@@ -13,7 +13,8 @@ package com.cinnober.msgcodec;
  * <pre>
  * // init (once)
  * ProtocolDictionary dictionary = ...
- * StreamCodecFactory codecFactory = new XxxCodecFactory(dictionary, ...);
+ * StreamCodecFactory codecFactory = new XxxCodecFactory(dictionary);
+ * codecFactory.setSomeParameter(...); // optionally configure
  * 
  * // create codec (for each socket, thread, etc)
  * StreamCodec codec = codecFactory.createStreamCodec();
@@ -25,13 +26,21 @@ package com.cinnober.msgcodec;
  * codec.encode(message, out);
  * Object obj = codec.decode(in);
  * </pre>
- * 
+ *
+ * <p>It is recommended that implementations have parameter setter methods that returns the
+ * instance itself to allow for method chaining. For example:
+ * <pre>
+ * StreamCodec codec = new XxxCodecFactory(dictionary).setFoo(a).setBar(b).createStreamCodec();
+ * </pre>
+ *
  * @author mikael.brannstrom
  */
 public interface StreamCodecFactory {
     /**
      * Create a new stream codec.
      * @return a stream codec, not null.
+     * @throws StreamCodecInstantiationException if the codec could not be instantiated,
+     * for example due to a factory configuration error.
      */
-    StreamCodec createStreamCodec();
+    StreamCodec createStreamCodec() throws StreamCodecInstantiationException;
 }

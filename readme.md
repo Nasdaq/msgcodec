@@ -20,7 +20,7 @@ Given a POJO:
 We can generate a Blink message like this:
 
     ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-    StreamCodec codec = new BlinkCodec(dictionary);
+    StreamCodec codec = new BlinkCodecFactory(dictionary).createStreamCodec();
 
     Hello msg = new Hello("hello world");
     ByteArrayOutputStream bout = new ByteArrayOutputStream();

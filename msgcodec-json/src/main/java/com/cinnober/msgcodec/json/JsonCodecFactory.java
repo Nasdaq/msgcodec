@@ -6,9 +6,9 @@
 
 package com.cinnober.msgcodec.json;
 
+import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.StreamCodecFactory;
-import java.util.Objects;
 
 /**
  * Factory for JsonCodec.
@@ -25,11 +25,14 @@ public class JsonCodecFactory implements StreamCodecFactory {
      * @param dictionary the protocol dictionary to be used by all codec instances, not null.
      */
     public JsonCodecFactory(ProtocolDictionary dictionary) {
-        this.dictionary = Objects.requireNonNull(dictionary);
+        if (!dictionary.isBound()) {
+            throw new IllegalArgumentException("Dictionary must be bound");
+        }
+        this.dictionary = dictionary;
     }
 
     @Override
-    public JsonCodec createStreamCodec() {
+    public JsonCodec createStreamCodec() throws StreamCodecInstantiationException {
         return new JsonCodec(dictionary);
     }
     

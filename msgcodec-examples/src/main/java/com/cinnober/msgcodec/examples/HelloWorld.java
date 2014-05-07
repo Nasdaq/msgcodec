@@ -17,22 +17,26 @@
  */
 package com.cinnober.msgcodec.examples;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
-
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.blink.BlinkCodec;
+import com.cinnober.msgcodec.blink.BlinkCodecFactory;
 import com.cinnober.msgcodec.examples.messages.Hello;
 import com.cinnober.msgcodec.json.JsonCodec;
+import com.cinnober.msgcodec.json.JsonCodecFactory;
 import com.cinnober.msgcodec.tap.TapCodec;
+import com.cinnober.msgcodec.tap.TapCodecFactory;
 import com.cinnober.msgcodec.util.ByteArrays;
 import com.cinnober.msgcodec.xml.XmlCodec;
+import com.cinnober.msgcodec.xml.XmlCodecFactory;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 
-/** Basic example of message codec. Create a dictionary from java messages, encode and decode using the
- * codecs blink, xml, json and tap.
+/**
+ * Basic example of message codec. 
+ * Create a dictionary from java messages, encode and decode using the codecs blink, xml, json and tap.
  *
  * @author Mikael Brannstrom
  *
@@ -48,10 +52,10 @@ public class HelloWorld {
         System.out.println(dictionary.toString());
 
         // create a bunch of codecs, they can be reused
-        StreamCodec blinkCodec = new BlinkCodec(dictionary);
-        StreamCodec jsonCodec = new JsonCodec(dictionary);
-        StreamCodec xmlCodec = new XmlCodec(dictionary);
-        StreamCodec tapCodec = new TapCodec(dictionary);
+        StreamCodec blinkCodec = new BlinkCodecFactory(dictionary).createStreamCodec();
+        StreamCodec jsonCodec = new JsonCodecFactory(dictionary).createStreamCodec();
+        StreamCodec xmlCodec = new XmlCodecFactory(dictionary).createStreamCodec();
+        StreamCodec tapCodec = new TapCodecFactory(dictionary).createStreamCodec();
 
         System.out.println("\n* Blink *");
         encodeAndDecodeSome(blinkCodec, true);

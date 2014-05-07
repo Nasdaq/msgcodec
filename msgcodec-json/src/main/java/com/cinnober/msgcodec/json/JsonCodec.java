@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.json;
 
+import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
@@ -71,6 +72,7 @@ import java.util.Map;
  * <p><b>Note:</b> required fields are currently not checked (TODO)
  *
  * @author mikael.brannstrom
+ * @see JsonCodecFactory
  *
  */
 public class JsonCodec implements StreamCodec {
@@ -82,7 +84,7 @@ public class JsonCodec implements StreamCodec {
     private final DynamicGroupHandler dynamicGroupHandler;
 
     @SuppressWarnings("rawtypes")
-    public JsonCodec(ProtocolDictionary dictionary) {
+    JsonCodec(ProtocolDictionary dictionary) {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
