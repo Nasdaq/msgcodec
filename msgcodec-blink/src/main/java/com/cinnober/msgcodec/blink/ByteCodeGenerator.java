@@ -1794,6 +1794,8 @@ class ByteCodeGenerator {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Float", "floatValue", "()F", false);
         } else if (javaClass == Double.class || javaClass == double.class) {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
+        } else if (javaClass == Boolean.class || javaClass == boolean.class) {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
         }
     }
     private void box(MethodVisitor mv, Class<?> javaClass) {
@@ -1809,6 +1811,8 @@ class ByteCodeGenerator {
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Float", "valueOf", "(F)Ljava/lang/Float;", false);
         } else if (javaClass == Double.class || javaClass == double.class) {
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+        } else if (javaClass == Boolean.class || javaClass == boolean.class) {
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
         }
     }
 
@@ -1825,6 +1829,8 @@ class ByteCodeGenerator {
             return float.class;
         } else if (javaClass == Double.class) {
             return double.class;
+        } else if (javaClass == Boolean.class) {
+            return boolean.class;
         }
         return javaClass;
     }
@@ -1841,6 +1847,8 @@ class ByteCodeGenerator {
             return Float.class;
         } else if (javaClass == double.class) {
             return Double.class;
+        } else if (javaClass == boolean.class) {
+            return Boolean.class;
         }
         return javaClass;
     }
