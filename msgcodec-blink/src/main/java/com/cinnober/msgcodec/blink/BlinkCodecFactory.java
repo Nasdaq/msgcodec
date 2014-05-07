@@ -37,6 +37,7 @@ public class BlinkCodecFactory implements StreamCodecFactory {
         }
         this.dictionary = dictionary;
         this.bufferPool = new ConcurrentBufferPool(8192, 10);
+        this.codecOption = CodecOption.AUTOMATIC;
     }
 
     /**
