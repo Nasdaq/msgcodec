@@ -17,17 +17,10 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import static org.junit.Assert.*;
-import static com.cinnober.msgcodec.blink.TestUtil.*;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import org.junit.Test;
 
 import com.cinnober.msgcodec.Annotations;
 import com.cinnober.msgcodec.DecodeException;
+import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.ProtocolDictionary;
@@ -36,7 +29,16 @@ import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Time;
+import static com.cinnober.msgcodec.blink.TestUtil.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import static org.junit.Assert.*;
 import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * @author mikael.brannstrom
@@ -55,7 +57,7 @@ public class BlinkCodecTest {
 
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
      */
-    public void testHelloExample(CodecOption codecOption) throws IOException {
+    private void testHelloExample(CodecOption codecOption) throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
@@ -81,7 +83,7 @@ public class BlinkCodecTest {
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
      * Here the dictionary is bound to Group objects.
      */
-    public void testHelloExample2(CodecOption codecOption) throws IOException {
+    private void testHelloExample2(CodecOption codecOption) throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
@@ -107,7 +109,7 @@ public class BlinkCodecTest {
         testDynamicGroups(CodecOption.INSTRUCTION_CODEC_ONLY);
     }
     
-    public void testDynamicGroups(CodecOption codecOption) throws IOException {
+    private void testDynamicGroups(CodecOption codecOption) throws IOException {
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Foo.class, Bar.class);
         System.out.println("Dictionary:\n" + dictionary);
         StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
@@ -175,6 +177,44 @@ public class BlinkCodecTest {
 
     }
 
+    @Test
+    public void testDates1Bytecode() throws IOException {
+        testDates1(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testDates1Instruction() throws IOException {
+        testDates1(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
+    private void testDates1(CodecOption codecOption) throws IOException {
+        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(DateMsg.class);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+
+        long dayInMillis = 24 * 3600 * 1000;
+
+        DateMsg d1 = new DateMsg();
+        d1.days1970 = new Date(9 * dayInMillis);
+
+        byte[] exp1 = new byte[] {
+            // DateMsg
+            0x05, // size
+            0x04, // Msg type: DateMsg has ID 4
+            0x09, // days1970=9
+            (byte)0xc0, // days2000=null
+            (byte)0xc0, // seconds1970=null
+            (byte)0xc0, // seconds2000=null
+        };
+
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        codec.encode(d1, bout);
+        System.out.println("HEX:\n" + TestUtil.toHex(bout.toByteArray()));
+        assertEquals(exp1, bout.toByteArray());
+
+        // test that we can parse the object
+        DateMsg d1Decoded = (DateMsg) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals("Decoded", d1, d1Decoded);
+    }
+
     @Id(1)
     public static class Hello {
         @Required
@@ -232,6 +272,24 @@ public class BlinkCodecTest {
         }
     }
 
+    @Id(4)
+    public static class DateMsg extends MsgObject {
+        @Id(1)
+        @Time(unit = TimeUnit.DAYS, epoch = Epoch.UNIX, timeZone = "")
+        public Date days1970;
+
+        @Id(2)
+        @Time(unit = TimeUnit.DAYS, epoch = Epoch.Y2K, timeZone = "")
+        public Date days2000;
+
+        @Id(3)
+        @Time(unit = TimeUnit.SECONDS, epoch = Epoch.UNIX, timeZone = "")
+        public Date seconds1970;
+
+        @Id(4)
+        @Time(unit = TimeUnit.SECONDS, epoch = Epoch.Y2K, timeZone = "")
+        public Date seconds2000;
+    }
 
 
 }

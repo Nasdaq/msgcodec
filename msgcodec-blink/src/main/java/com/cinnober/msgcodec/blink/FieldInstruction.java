@@ -22,16 +22,16 @@ import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
-import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Time;
 import java.util.List;
+
+import static com.cinnober.msgcodec.blink.DateUtil.*;
 
 /**
  * A field instruction can encode or decode a field in a group.
@@ -510,34 +510,6 @@ abstract class FieldInstruction<V> {
     }
 
     // --- TIME ---
-    private static long getTimeInMillis(TimeUnit unit) {
-        switch (unit) {
-        case MILLISECONDS:
-            return 1;
-        case SECONDS:
-            return 1000;
-        case MINUTES:
-            return 60*1000;
-        case HOURS:
-            return 60*60*1000;
-        case DAYS:
-            return 24*60*60*1000;
-        default:
-            throw new IllegalArgumentException("Date does not support " + unit);
-        }
-    }
-    private static long getEpochOffset(Epoch epoch) {
-        switch (epoch) {
-        case UNIX:
-            return 0;
-        case Y2K:
-            return 946706400000L;
-        case MIDNIGHT:
-            return 0;
-        default:
-            throw new IllegalArgumentException("Date does not support " + epoch);
-        }
-    }
     static class DateTime extends FieldInstruction<Date> {
         private final long timeUnitInMillis;
         private final long epochOffset;

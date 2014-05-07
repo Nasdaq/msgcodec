@@ -25,7 +25,6 @@ import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldAccessor;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.GroupTypeAccessor;
 import com.cinnober.msgcodec.IgnoreAccessor;
 import com.cinnober.msgcodec.JavaClassGroupTypeAccessor;
 import com.cinnober.msgcodec.ProtocolDictionary;
@@ -914,7 +913,7 @@ class ByteCodeGenerator {
                         debugValueLabel);
                 break;
             case TIME:
-                generateEncodeTimeValue(javaClass, required, mv, blinkOutput);
+                generateEncodeTimeValue((TypeDef.Time) type, javaClass, required, mv, blinkOutput);
                 break;
             case SEQUENCE:
                 generateEncodeSequenceValue(javaClass, nextVar, mv, required, blinkOutput, outputStreamVar,
@@ -1129,7 +1128,7 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateEncodeTimeValue(
+    private void generateEncodeTimeValue(TypeDef.Time type,
             Class<?> javaClass, boolean required, MethodVisitor mv, String blinkOutput) throws RuntimeException {
         if (javaClass == long.class || javaClass == Long.class) {
             if (required) {
@@ -1146,18 +1145,31 @@ class ByteCodeGenerator {
                         "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
             }
         } else if (javaClass == Date.class) {
-            // TODO: handle differences in UNIT and EPOCH
-            if (required) {
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/Date", "getTime", "()J", false);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
-            } else {
+
+            Label nullLabel = new Label();
+            Label endLabel = new Label();
+            if (!required) {
                 mv.visitInsn(DUP);
-                Label nullLabel = new Label();
-                Label endLabel = new Label();
                 mv.visitJumpInsn(IFNULL, nullLabel);
-                // not null
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/Date", "getTime", "()J", false);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+            }
+            
+            // not null
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/Date", "getTime", "()J", false);
+            // handle differences in UNIT and EPOCH
+            long epochOffset = DateUtil.getEpochOffset(type.getEpoch());
+            long timeInMillis = DateUtil.getTimeInMillis(type.getUnit());
+            // wireTime = (dateTime - epochOffset) / timeUnitInMillis);
+            if (epochOffset != 0) {
+                mv.visitLdcInsn(epochOffset);
+                mv.visitInsn(LSUB);
+            }
+            if (timeInMillis != 1) {
+                mv.visitLdcInsn(timeInMillis);
+                mv.visitInsn(LDIV);
+            }
+            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+
+            if (!required) {
                 mv.visitJumpInsn(GOTO, endLabel);
                 mv.visitLabel(nullLabel);
                 mv.visitInsn(POP);
@@ -1410,7 +1422,7 @@ class ByteCodeGenerator {
                 generateDecodeEnumValue(required, mv, blinkInput, type, nextVar, javaClass, debugValueLabel);
                 break;
             case TIME:
-                generateDecodeTimeValue(javaClass, required, mv, blinkInput, nextVar);
+                generateDecodeTimeValue((TypeDef.Time) type, javaClass, required, mv, blinkInput, nextVar);
                 break;
             case SEQUENCE:
                 generateDecodeSequenceValue(javaClass, nextVar, required, mv, blinkInput, componentJavaClass,
@@ -1434,8 +1446,8 @@ class ByteCodeGenerator {
         }
     }
 
-    private void generateDecodeTimeValue(Class<?> javaClass, boolean required, MethodVisitor mv, String blinkInput,
-            LocalVariable nextVar) throws IllegalArgumentException {
+    private void generateDecodeTimeValue(TypeDef.Time type, Class<?> javaClass, boolean required, MethodVisitor mv,
+            String blinkInput, LocalVariable nextVar) throws IllegalArgumentException {
         if (javaClass == long.class || javaClass == Long.class) {
             if (required) {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Ljava/io/InputStream;)J", false);
@@ -1452,20 +1464,14 @@ class ByteCodeGenerator {
             }
         } else if (javaClass == Date.class) {
 
-            // TODO: handle differences in UNIT and EPOCH
             int timeVar = nextVar.next(); nextVar.next(); // note: 2 variable slots
+            Label endLabel = new Label();
             if (required) {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Ljava/io/InputStream;)J", false);
-                mv.visitVarInsn(LSTORE, timeVar);
-                mv.visitTypeInsn(NEW, "java/util/Date");
-                mv.visitInsn(DUP);
-                mv.visitVarInsn(LLOAD, timeVar);
-                mv.visitMethodInsn(INVOKESPECIAL, "java/util/Date", "<init>", "(J)V", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64Null",
                         "(Ljava/io/InputStream;)Ljava/lang/Long;", false);
                 mv.visitInsn(DUP);
-                Label endLabel = new Label();
                 Label nonNullLabel = new Label();
                 mv.visitJumpInsn(IFNONNULL, nonNullLabel);
                 // null
@@ -1474,11 +1480,28 @@ class ByteCodeGenerator {
                 // not null
                 mv.visitLabel(nonNullLabel);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Long", "longValue", "()J", false);
-                mv.visitVarInsn(LSTORE, timeVar);
-                mv.visitTypeInsn(NEW, "java/util/Date");
-                mv.visitInsn(DUP);
-                mv.visitVarInsn(LLOAD, timeVar);
-                mv.visitMethodInsn(INVOKESPECIAL, "java/util/Date", "<init>", "(J)V", false);
+            }
+            
+            mv.visitVarInsn(LSTORE, timeVar);
+            mv.visitTypeInsn(NEW, "java/util/Date");
+            mv.visitInsn(DUP);
+            mv.visitVarInsn(LLOAD, timeVar);
+            // handle differences in UNIT and EPOCH
+            long epochOffset = DateUtil.getEpochOffset(type.getEpoch());
+            long timeInMillis = DateUtil.getTimeInMillis(type.getUnit());
+            // dateTime = wireTime * timeUnitInMillis + epochOffset;
+            if (timeInMillis != 1) {
+                mv.visitLdcInsn(timeInMillis);
+                mv.visitInsn(LMUL);
+            }
+            if (epochOffset != 0) {
+                mv.visitLdcInsn(epochOffset);
+                mv.visitInsn(LADD);
+            }
+
+            mv.visitMethodInsn(INVOKESPECIAL, "java/util/Date", "<init>", "(J)V", false);
+
+            if (!required) {
                 // end
                 mv.visitLabel(endLabel);
             }
