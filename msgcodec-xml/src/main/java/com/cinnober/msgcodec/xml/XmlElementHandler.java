@@ -511,7 +511,7 @@ public class XmlElementHandler {
             Object array = Array.newInstance(componentType, list.size());
             int i=0;
             for (Object value : list) {
-                Array.set(array, i, value);
+                Array.set(array, i++, value);
             }
             ctx.pushValue(array);
             super.endElement(ctx, text);
@@ -533,6 +533,149 @@ public class XmlElementHandler {
                 for (int i=0; i<length; i++) {
                     Object item = Array.get(array, i);
                     valueHandler.writeElementValue(item, valueHandler.getNsName(), appendTo);
+                }
+                appendTo.append("</");
+                appendElementName(appendTo, name);
+                appendTo.println('>');
+            }
+        }
+    }
+
+    static class ListSequenceSimpleField extends FieldHandler {
+        @SuppressWarnings("rawtypes")
+        protected final XmlFormat valueFormat;
+
+        /**
+         * @param nsName
+         * @param accessor
+         * @param valueHandler
+         */
+        public ListSequenceSimpleField(NsName nsName, FieldDef field,
+                XmlFormat<?> valueHandler) {
+            super(nsName, field);
+            this.valueFormat = valueHandler;
+        }
+
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public void endElement(XmlContext ctx, String text) {
+            ArrayList list = new ArrayList();
+            String[] split = text.split("\\s+");
+            for (String str : split) {
+                if (!str.isEmpty()) {
+                    try {
+                        list.add(valueFormat.parse(str));
+                    } catch (FormatException e) {
+                        throw new RuntimeException(e); // TODO: exception type
+                    }
+                }
+            }
+            accessor.setValue(ctx.peekValue(), list);
+        }
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        @Override
+        public void writeElement(Object value, NsName name, PrintWriter appendTo)
+                throws IOException {
+            if (value == null) {
+                return;
+            }
+            appendTo.append('<');
+            appendElementName(appendTo, name);
+            List list = (List)value;
+            if (list.isEmpty()) {
+                appendTo.println("/>");
+            } else {
+                appendTo.println('>');
+                boolean whitespace = false;
+                for (Object item : list) {
+                    if (whitespace) {
+                        appendTo.append(' ');
+                    } else {
+                        whitespace = true;
+                    }
+                    try {
+                        appendTo.append(valueFormat.format(item));
+                    } catch (FormatException e) {
+                        throw new RuntimeException(e); // TODO: exception type
+                    }
+                }
+                appendTo.append("</");
+                appendElementName(appendTo, name);
+                appendTo.println('>');
+            }
+        }
+    }
+
+    static class ArraySequenceSimpleField extends FieldHandler {
+        @SuppressWarnings("rawtypes")
+        protected final XmlFormat valueFormat;
+        private final Class<?> componentType;
+
+        /**
+         * @param nsName
+         * @param accessor
+         * @param valueHandler
+         */
+        public ArraySequenceSimpleField(NsName nsName, FieldDef field,
+                XmlFormat<?> valueHandler, Class<?> componentType) {
+            super(nsName, field);
+            this.valueFormat = valueHandler;
+            this.componentType = componentType;
+        }
+
+        @Override
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        public void endElement(XmlContext ctx, String text) {
+            ArrayList list = new ArrayList();
+            String[] split = text.split("\\s+");
+            for (String str : split) {
+                if (!str.isEmpty()) {
+                    try {
+                        list.add(valueFormat.parse(str));
+                    } catch (FormatException e) {
+                        throw new RuntimeException(e); // TODO: exception type
+                    }
+                }
+            }
+            // convert list to array
+            Object array = Array.newInstance(componentType, list.size());
+            int i=0;
+            for (Object value : list) {
+                Array.set(array, i++, value);
+            }
+
+            accessor.setValue(ctx.peekValue(), array);
+        }
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        @Override
+        public void writeElement(Object value, NsName name, PrintWriter appendTo)
+                throws IOException {
+            if (value == null) {
+                return;
+            }
+            appendTo.append('<');
+            appendElementName(appendTo, name);
+            Object array = value;
+            int length = Array.getLength(array);
+            if (length == 0) {
+                appendTo.println("/>");
+            } else {
+                appendTo.print('>');
+                boolean whitespace = false;
+                for (int i=0; i<length; i++) {
+                    Object item = Array.get(array, i);
+                    if (whitespace) {
+                        appendTo.append(' ');
+                    } else {
+                        whitespace = true;
+                    }
+                    try {
+                        appendTo.append(valueFormat.format(item));
+                    } catch (FormatException e) {
+                        throw new RuntimeException(e); // TODO: exception type
+                    }
                 }
                 appendTo.append("</");
                 appendElementName(appendTo, name);

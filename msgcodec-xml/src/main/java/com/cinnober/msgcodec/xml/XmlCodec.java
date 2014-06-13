@@ -17,24 +17,6 @@
  */
 package com.cinnober.msgcodec.xml;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
-import org.xml.sax.SAXException;
-
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
@@ -43,18 +25,35 @@ import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.util.TimeFormat;
+import com.cinnober.msgcodec.xml.XmlElementHandler.ArraySequenceSimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ArraySequenceValueField;
-import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.DynamicGroupField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.DynamicGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ElementValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.FieldHandler;
 import com.cinnober.msgcodec.xml.XmlElementHandler.InlineElementValueField;
+import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceSimpleField;
+import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.SimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StaticGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StringItemValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import org.xml.sax.SAXException;
 
 /**
  * The XML codec can serialize and deserialize Java objects to/from XML.
@@ -236,18 +235,16 @@ public class XmlCodec implements StreamCodec {
                     putElement(elementFields, fieldInstr);
                 }
             } else {
-                //XmlFormat format = getXmlFormat(type, field.getComponentJavaClass());
-                throw new RuntimeException("Sequence of simple type not implemented yet"); // TODO
-                // TODO: implement this (uncomment the following)
-//                if (field.getJavaClass().isArray()) {
-//                    ArraySequenceSimpleField fieldInstr = new ArraySequenceSimpleField(nsName, field, valueInstr,
-//                            field.getJavaClass().getComponentType());
-//                    putElement(elementFields, fieldInstr);
-//                } else {
-//                    CollectionSequenceSimpleField fieldInstr =
-//                            new CollectionSequenceSimpleField(nsName, field, valueInstr);
-//                    putElement(elementFields, fieldInstr);
-//                }
+                XmlFormat format = getXmlFormat(componentType, field.getComponentJavaClass());
+                if (field.getJavaClass().isArray()) {
+                    ArraySequenceSimpleField fieldInstr = new ArraySequenceSimpleField(nsName, field, format,
+                            field.getJavaClass().getComponentType());
+                    putElement(elementFields, fieldInstr);
+                } else {
+                    ListSequenceSimpleField fieldInstr =
+                            new ListSequenceSimpleField(nsName, field, format);
+                    putElement(elementFields, fieldInstr);
+                }
             }
 
 
