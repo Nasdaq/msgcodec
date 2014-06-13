@@ -366,8 +366,9 @@ abstract class MsgObjectValueHandler<T> {
     static class GroupHandler extends MsgObjectValueHandler<Object> {
         private final String name;
         private FieldHandler[] fields;
-        GroupHandler(Class groupType) {
-            this.name = groupType.getSimpleName();
+        GroupHandler(Class<?> groupType) {
+            Name nameAnot = groupType.getAnnotation(Name.class);
+            this.name = nameAnot != null ? nameAnot.value() : groupType.getSimpleName();
         }
 
         void init(FieldHandler[] fields) {
