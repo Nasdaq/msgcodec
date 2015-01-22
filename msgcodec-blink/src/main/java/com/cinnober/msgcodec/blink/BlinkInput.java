@@ -612,7 +612,8 @@ public class BlinkInput {
             for (int i=0; i<size; i++) {
                 value |= (0xffL & read(in)) << (i * 8);
             }
-            if (((value >> ((size-1) * 8)) & 0x80) != 0) {
+            if (((value >> ((size-1) * 8)) & 0x80) != 0 && // value should be negative
+                value > 0) { // but value is not already negative
                 // negative
                 value |= -1L << (size * 8);
             }

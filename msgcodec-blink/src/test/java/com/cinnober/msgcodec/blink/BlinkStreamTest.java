@@ -50,6 +50,30 @@ public class BlinkStreamTest {
         testEncodeDecodeSignedVLC(-2147483648, new byte[] { (byte)0xc4, 0x00, 0x00, 0x00, (byte)0x80 });
     }
 
+    /**
+     * Testcases that triggers bug TEDEV-13982.
+     * @throws IOException
+     */
+    @Test
+    public void testLargeNegativeSignedVLC() throws IOException {
+        testEncodeDecodeSignedVLC(-1L<<55,
+                new byte[] {(byte)0xc7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0x80});
+        testEncodeDecodeSignedVLC(-1L<<56,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xff});
+        testEncodeDecodeSignedVLC(-1L<<57,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xfe});
+        testEncodeDecodeSignedVLC(-1L<<58,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xfc});
+        testEncodeDecodeSignedVLC(-1L<<59,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xf8});
+        testEncodeDecodeSignedVLC(-1L<<60,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xf0});
+        testEncodeDecodeSignedVLC(-1L<<61,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xe0});
+        testEncodeDecodeSignedVLC(-1L<<62,
+                new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xc0});
+    }
+
     /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.2.
      * @throws IOException
      */
