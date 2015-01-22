@@ -621,9 +621,8 @@ abstract class FieldInstruction<V> {
     static class Enumeration extends FieldInstruction<Enum> {
         private final EnumSymbols enumSymbols;
         @SuppressWarnings("unchecked")
-        public Enumeration(FieldDef field, TypeDef.Enum enumDef) {
+        public Enumeration(FieldDef field, TypeDef.Enum enumDef, Class enumType) {
             super(field);
-            Class enumType = field.getJavaClass();
             this.enumSymbols = new EnumSymbols<>(enumDef, enumType);
         }
         @SuppressWarnings("unchecked")
@@ -650,9 +649,8 @@ abstract class FieldInstruction<V> {
     static class EnumerationNull extends FieldInstruction<Enum> {
         private final EnumSymbols enumSymbols;
         @SuppressWarnings("unchecked")
-        public EnumerationNull(FieldDef field, TypeDef.Enum enumDef) {
+        public EnumerationNull(FieldDef field, TypeDef.Enum enumDef, Class enumType) {
             super(field);
-            Class enumType = field.getJavaClass();
             this.enumSymbols = new EnumSymbols<>(enumDef, enumType);
         }
         @SuppressWarnings("unchecked")

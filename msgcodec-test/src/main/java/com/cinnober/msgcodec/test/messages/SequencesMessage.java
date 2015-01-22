@@ -25,6 +25,7 @@ import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -75,6 +76,11 @@ public class SequencesMessage extends MsgObject {
 
     public Employee[] arrayEmployees;
 
+    @Sequence(Color.class)
+    public List<Color> listColors;
+    public Color[] arrayColors;
+
+
     /**
      * Returns messages suitable for testing a codec. This includes border cases.
      * Each message is labeled with a name, e.g. "zero" or "border1" that describes what
@@ -106,6 +112,36 @@ public class SequencesMessage extends MsgObject {
         msg.arrayTime = new long[]{};
         msg.arrayEmployees = new Employee[] { createEmployee("Bob", 123), createEmployee("Alice", 456) };
 
+        msg = new SequencesMessage();
+        messages.put("enums0", msg);
+        msg.arrayBytesReq = new byte[]{};
+        msg.arrayShortsReq = new short[]{};
+        msg.arrayIntsReq = new int[]{};
+        msg.arrayLongsReq = new long[]{};
+        msg.arrayTime = new long[]{};
+        msg.arrayColors = new Color[]{};
+        msg.listColors = Arrays.asList();
+
+        msg = new SequencesMessage();
+        messages.put("enums1", msg);
+        msg.arrayBytesReq = new byte[]{};
+        msg.arrayShortsReq = new short[]{};
+        msg.arrayIntsReq = new int[]{};
+        msg.arrayLongsReq = new long[]{};
+        msg.arrayTime = new long[]{};
+        msg.arrayColors = new Color[]{ Color.RED };
+        msg.listColors = Arrays.asList(Color.RED);
+
+        msg = new SequencesMessage();
+        messages.put("enums2", msg);
+        msg.arrayBytesReq = new byte[]{};
+        msg.arrayShortsReq = new short[]{};
+        msg.arrayIntsReq = new int[]{};
+        msg.arrayLongsReq = new long[]{};
+        msg.arrayTime = new long[]{};
+        msg.arrayColors = new Color[]{ Color.GREEN, Color.BLUE };
+        msg.listColors = Arrays.asList(Color.GREEN, Color.BLUE);
+        
         return messages;
     }
 

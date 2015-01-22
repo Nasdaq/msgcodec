@@ -205,9 +205,9 @@ class InstructionCodec extends GeneratedCodec {
             case ENUM:
                 if (javaClass.isEnum()) {
                     if (required) {
-                        return new FieldInstruction.Enumeration(field, (TypeDef.Enum) type);
+                        return new FieldInstruction.Enumeration(field, (TypeDef.Enum) type, javaClass);
                     } else {
-                        return new FieldInstruction.EnumerationNull(field, (TypeDef.Enum) type);
+                        return new FieldInstruction.EnumerationNull(field, (TypeDef.Enum) type, javaClass);
                     }
                 } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
                     if (required) {
