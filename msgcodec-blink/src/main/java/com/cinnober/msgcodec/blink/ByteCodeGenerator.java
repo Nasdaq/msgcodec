@@ -501,6 +501,10 @@ class ByteCodeGenerator {
                     writemv.visitVarInsn(ALOAD, 2);
                     writemv.visitFieldInsn(GETFIELD, Type.getInternalName(f.getDeclaringClass()), f.getName(),
                             Type.getDescriptor(f.getType()));
+                    if (!f.getType().equals(field.getJavaClass())) {
+                        // this can happen when the field is a generic type variable in a super-class.
+                        writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+                    }
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
                     writemv.visitInsn(NULL);
                 } else {
@@ -718,7 +722,7 @@ class ByteCodeGenerator {
     // --- GENERATE ENCODE VALUE ---------------------------------------------------------------------------------------
 
     /**
-     * Generate instructions to decode the specified value type.
+     * Generate instructions to encode the specified value type.
      * The values on the stack are; the output stream and the value to be encoded.
      * After this call these values are expected to be consumed.
      *
