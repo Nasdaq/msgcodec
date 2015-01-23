@@ -42,6 +42,7 @@ public class TestProtocol {
                 MiscMessage.class,
                 SequencesMessage.class,
                 StringsMessage.class,
+                GenericEmployeeMessage.class,
             });
     }
 
@@ -63,6 +64,7 @@ public class TestProtocol {
         putAll(messages, "Sequences.", SequencesMessage.createMessages());
         putAll(messages, "Enums.", EnumsMessage.createMessages());
         putAll(messages, "Integers.", IntegersMessage.createMessages());
+        putAll(messages, "GenericEmployees.", GenericEmployeeMessage.createMessages());
 
         return messages;
     }
