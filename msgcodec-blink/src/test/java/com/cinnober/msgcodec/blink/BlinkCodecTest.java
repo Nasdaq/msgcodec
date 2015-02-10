@@ -28,14 +28,24 @@ import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Time;
+
 import static com.cinnober.msgcodec.blink.TestUtil.*;
+
 import com.cinnober.msgcodec.messages.MetaProtocol;
+import com.cinnober.msgcodec.util.ByteBufferInputStream;
+import com.cinnober.msgcodec.util.ByteBufferOutputStream;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+
 import static org.junit.Assert.*;
+
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -242,6 +252,72 @@ public class BlinkCodecTest {
         groupCodec.encode(decodedGroupMsg, bout2);
 
         assertArrayEquals(bout.toByteArray(), bout2.toByteArray());
+    }
+    
+    @Test
+    @Ignore
+    public void testBlinkCodecNullRequiredField() throws IOException {
+    	ProtocolDictionary dictionary = TestProtocol.dictionary;
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(CodecOption.AUTOMATIC).createStreamCodec();
+        StreamCodec codec2 = new BlinkCodecFactory(dictionary).setCodecOption(CodecOption.AUTOMATIC).createStreamCodec();
+
+        TestMessage t = new TestMessage();
+        t.theOtherArray = new double[10];
+        
+        ByteBufferOutputStream bufOut = new ByteBufferOutputStream(ByteBuffer.allocate(1024*1024));
+        BlinkOutputStream blinkOut = new BlinkOutputStream(bufOut);
+        
+        try {
+            ByteBuffer buffer = bufOut.getBuffer();
+            buffer.clear();
+            codec.encode(t, blinkOut);
+            buffer.flip();
+        }
+        catch (IllegalArgumentException e) {
+            //This is expected as the message don't have the required field theArray set.
+            e.printStackTrace();
+        }
+        
+        //Now the internal state of the BlinkCodec is bad. The next message encoded will not be ok.
+        t = new TestMessage();
+        t.theOtherArray = new double[10];
+        t.theArray = new int[10];        
+        
+        ByteBuffer buffer = bufOut.getBuffer();
+        buffer.clear(); 
+        codec.encode(t, blinkOut);
+        buffer.flip();
+        try {
+            InputStream in = new ByteBufferInputStream(buffer);
+            TestMessage t2 = (TestMessage) codec2.decode(in);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    
+    public static class TestProtocol {
+        private static final ProtocolDictionary dictionary = createProtocolDictionary();
+
+        private static ProtocolDictionary createProtocolDictionary() {
+            final ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(
+                    new Class<?>[] {
+                            TestMessage.class
+                    }).assignGroupIds();
+            return dict;
+        }
+
+    }
+
+    public static class TestMessage extends MsgObject{
+        @Required
+        public int[] theArray;
+        @Required
+        public double[] theOtherArray;
+        
+        public TestMessage(){}
     }
 
     @Id(1)
