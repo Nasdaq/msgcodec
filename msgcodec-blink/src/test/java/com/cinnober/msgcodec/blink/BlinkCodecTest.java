@@ -99,6 +99,37 @@ public class BlinkCodecTest {
     }
 
     @Test
+    public void testBrokenHelloBytecode() throws Exception {
+        testBrokenHello(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testBrokenHelloInstruction() throws Exception {
+        testBrokenHello(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
+    private void testBrokenHello(CodecOption codecOption) throws Exception {
+        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        
+        Hello msg1 = new Hello(); // missing required field
+        IllegalArgumentException msg1Error = null;
+        try {
+            codec.encode(msg1, bout);
+        } catch (IllegalArgumentException e) {
+            msg1Error = e;
+        }
+        assertNotNull("Msg1 encoding error", msg1Error);
+        bout.reset();
+
+        Hello msg2 = new Hello("123");
+        codec.encode(msg2, bout);
+
+        Hello msg2dec = (Hello) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(new Hello("123"), msg2dec);
+    }
+
+    @Test
     public void testDynamicGroupsBytecode() throws IOException {
         testDynamicGroups(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
     }
@@ -245,7 +276,7 @@ public class BlinkCodecTest {
     }
 
     @Id(1)
-    public static class Hello {
+    public static class Hello extends MsgObject {
         @Required
         private String greeting;
         public Hello() {}

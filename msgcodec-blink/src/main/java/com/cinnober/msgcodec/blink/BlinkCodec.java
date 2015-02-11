@@ -145,7 +145,13 @@ public class BlinkCodec implements StreamCodec {
 
     @Override
     public void encode(Object group, OutputStream out) throws IOException {
-        generatedCodec.writeDynamicGroup(out, group);
+        try {
+             generatedCodec.writeDynamicGroup(out, group);
+        } catch (Throwable t) {
+            preambleStack.clear();
+            internalBuffer.reset();
+            throw t;
+        }
     }
     @Override
     public Object decode(InputStream in) throws IOException {
