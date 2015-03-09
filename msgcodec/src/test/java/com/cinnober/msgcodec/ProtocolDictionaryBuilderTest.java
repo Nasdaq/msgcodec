@@ -36,9 +36,22 @@ public class ProtocolDictionaryBuilderTest {
         System.out.println(dict.toString());
     }
     @Test
+    public void testFooWithAddMessageStep() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.addMessages(FooMessage.class).build();
+        System.out.println(dict.toString());
+    }
+    @Test
     public void testBar() {
         ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
         ProtocolDictionary dict = builder.build(BarMessage.class, Thing.class);
+        System.out.println(dict.toString());
+    }
+    @Test
+    public void testFooBarWithAddMessageStep() {
+        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
+        ProtocolDictionary dict = builder.addMessages(BarMessage.class, Thing.class)
+                .addMessages(FooMessage.class).build();
         System.out.println(dict.toString());
     }
     @Test

@@ -108,6 +108,7 @@ public class ProtocolDictionaryBuilder {
     private boolean strict;
     @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Annotation>, AnnotationMapper> annotationMappers = new HashMap<>();
+    private Collection<Class<?>> messageTypes = new ArrayList<Class<?>>();
 
     /**
      * Create a protocol dictionary builder with default behaviour.
@@ -166,11 +167,8 @@ public class ProtocolDictionaryBuilder {
      * E.g. wrong annotations etc.
      */
     public ProtocolDictionary build(Class<?> ... messageTypes) throws IllegalArgumentException {
-        Map<Class<?>, GroupMeta> groups = new HashMap<>(messageTypes.length * 2);
-        for (Class<?> messageType : messageTypes) {
-            groups.put(messageType, new GroupMeta(messageType));
-        }
-        return internalBuild(groups);
+        addMessages(messageTypes);
+        return build();
     }
 
     /** Build a protocol dictionary from the specified Java classes.
@@ -184,6 +182,28 @@ public class ProtocolDictionaryBuilder {
      * E.g. wrong annotations etc.
      */
     public ProtocolDictionary build(Collection<Class<?>> messageTypes) throws IllegalArgumentException {
+        addMessages(messageTypes);
+        return build();
+    }
+
+    /** Adds a set of message types to this builder. 
+     * @param messageTypes the Java classes that should be included in the protocol dictionary
+     * @return the builder, with the message types added
+     */
+    public ProtocolDictionaryBuilder addMessages(Class<?> ... messageTypes) {
+        return addMessages(Arrays.asList(messageTypes));
+    }
+    
+    /** Adds a set of message types to this builder. 
+     * @param messageTypes the Java classes that should be included in the protocol dictionary
+     * @return the builder, with the message types added
+     */
+    public ProtocolDictionaryBuilder addMessages(Collection<Class<?>>  messageTypes) {
+        this.messageTypes.addAll(messageTypes);
+        return this;
+    }
+
+    public ProtocolDictionary build(){
         Map<Class<?>, GroupMeta> groups = new HashMap<>(messageTypes.size() * 2);
         for (Class<?> messageType : messageTypes) {
             groups.put(messageType, new GroupMeta(messageType));
