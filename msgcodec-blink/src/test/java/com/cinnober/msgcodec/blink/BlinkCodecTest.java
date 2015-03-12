@@ -18,6 +18,7 @@
 package com.cinnober.msgcodec.blink;
 
 
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.MsgObject;
@@ -99,15 +100,15 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testBrokenHelloBytecode() throws Exception {
-        testBrokenHello(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    public void testBrokenHelloEncodeBytecode() throws Exception {
+        testBrokenHelloEncode(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
     }
     @Test
-    public void testBrokenHelloInstruction() throws Exception {
-        testBrokenHello(CodecOption.INSTRUCTION_CODEC_ONLY);
+    public void testBrokenHelloEncodeInstruction() throws Exception {
+        testBrokenHelloEncode(CodecOption.INSTRUCTION_CODEC_ONLY);
     }
 
-    private void testBrokenHello(CodecOption codecOption) throws Exception {
+    private void testBrokenHelloEncode(CodecOption codecOption) throws Exception {
         ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
         StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -127,6 +128,67 @@ public class BlinkCodecTest {
 
         Hello msg2dec = (Hello) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(new Hello("123"), msg2dec);
+    }
+
+    @Test
+    public void testBrokenHelloDecodeNullBytecode() throws Exception {
+        testBrokenHelloDecodeNull(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testBrokenHelloDecodeNullInstruction() throws Exception {
+        testBrokenHelloDecodeNull(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
+    private void testBrokenHelloDecodeNull(CodecOption codecOption) throws Exception {
+        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+
+        byte[] dataNull = new byte[]
+                { 0x0d, // length
+            0x01, // group id
+            (byte)0xc0 // null, i.e. missing required value
+        };
+
+        ByteArrayInputStream in = new ByteArrayInputStream(dataNull);
+
+        DecodeException decodeError = null;
+        try {
+            codec.decode(in);
+        } catch (DecodeException e) {
+            decodeError = e;
+            //e.printStackTrace(System.out);
+        }
+        assertNotNull("Decoding error", decodeError);
+    }
+
+    @Test
+    public void testBrokenHelloDecodeEofBytecode() throws Exception {
+        testBrokenHelloDecodeEof(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
+    }
+    @Test
+    public void testBrokenHelloDecodeEofInstruction() throws Exception {
+        testBrokenHelloDecodeEof(CodecOption.INSTRUCTION_CODEC_ONLY);
+    }
+
+    private void testBrokenHelloDecodeEof(CodecOption codecOption) throws Exception {
+        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
+        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+
+        byte[] dataNull = new byte[]
+                { 0x0d, // length
+            0x01 // group id
+        };
+
+        ByteArrayInputStream in = new ByteArrayInputStream(dataNull);
+
+        DecodeException decodeError = null;
+        try {
+            codec.decode(in);
+        } catch (DecodeException e) {
+            decodeError = e;
+            //e.printStackTrace(System.out);
+        }
+        assertNotNull("Decoding error", decodeError);
     }
 
     @Test

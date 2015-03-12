@@ -7,6 +7,7 @@
 package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.DecodeException;
+import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -128,7 +129,17 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
                 }
             }
             int groupId = BlinkInput.readUInt32(in);
-            Object group = readStaticGroup(groupId, in);
+            Object group;
+            try {
+                group = readStaticGroup(groupId, in);
+            } catch (Exception e) {
+                GroupDef groupDef = codec.getDictionary().getGroup(groupId);
+                if (groupDef != null) {
+                    throw new GroupDecodeException(groupDef.getName(), e);
+                } else {
+                    throw e;
+                }
+            }
             in.skip(in.limit());
             return group;
         } finally {

@@ -81,7 +81,16 @@ abstract class FieldInstruction<V> {
      */
     @SuppressWarnings("unchecked")
     public void decodeField(Object group, BlinkInputStream in) throws IOException {
-        Object value = decodeValue(in);
+        Object value;
+        try {
+            value = decodeValue(in);
+        } catch (Exception e) {
+            if (field != null) {
+                throw new FieldDecodeException(field.getName(), e);
+            } else {
+                throw e;
+            }
+        }
         accessor.setValue(group, value);
     }
 

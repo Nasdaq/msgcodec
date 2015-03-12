@@ -17,20 +17,20 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.StreamCodecInstantiationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Stack;
-
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import com.cinnober.msgcodec.util.Pool;
 import com.cinnober.msgcodec.util.TempOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.util.Objects;
+import java.util.Stack;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,6 +50,7 @@ public class BlinkCodec implements StreamCodec {
     private static final Logger log = Logger.getLogger(BlinkCodec.class.getName());
 
     private final GeneratedCodec generatedCodec;
+    private final ProtocolDictionary dictionary;
 
     /** The size preambles. The top of the stack refers to the
      * dynamic group that is currently being encoded.
@@ -109,6 +110,7 @@ public class BlinkCodec implements StreamCodec {
 
         this.maxBinarySize = maxBinarySize;
         this.maxSequenceLength = maxSequenceLength;
+        this.dictionary = dictionary;
 
         GeneratedCodec generatedCodecTmp = null;
         if (codecOption != CodecOption.INSTRUCTION_CODEC_ONLY) {
@@ -143,6 +145,10 @@ public class BlinkCodec implements StreamCodec {
         return maxSequenceLength;
     }
 
+    ProtocolDictionary getDictionary() {
+        return dictionary;
+    }
+
     @Override
     public void encode(Object group, OutputStream out) throws IOException {
         try {
@@ -155,10 +161,26 @@ public class BlinkCodec implements StreamCodec {
     }
     @Override
     public Object decode(InputStream in) throws IOException {
-        if (in instanceof LimitInputStream) {
-            return generatedCodec.readDynamicGroupNull((LimitInputStream)in);
-        } else {
-            return generatedCodec.readDynamicGroupNull(new BlinkInputStream(in));
+        try {
+            if (in instanceof LimitInputStream) {
+                return generatedCodec.readDynamicGroupNull((LimitInputStream)in);
+            } else {
+                return generatedCodec.readDynamicGroupNull(new BlinkInputStream(in));
+            }
+        } catch(GroupDecodeException|FieldDecodeException e) {
+            Throwable t = e;
+            StringBuilder str = new StringBuilder();
+            for (;;) {
+                if (t instanceof GroupDecodeException) {
+                    str.append('(').append(((GroupDecodeException)t).getGroupName()).append(')');
+                    t = t.getCause();
+                } else if(t instanceof FieldDecodeException) {
+                    str.append('.').append(((FieldDecodeException)t).getFieldName());
+                    t = t.getCause();
+                } else {
+                    throw new DecodeException("Could not decode field "+str.toString(), t);
+                }
+            }
         }
     }
 
