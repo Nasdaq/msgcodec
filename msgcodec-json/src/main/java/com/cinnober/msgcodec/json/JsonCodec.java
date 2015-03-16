@@ -69,7 +69,10 @@ import java.util.Map;
  * </tr>
  * </table>
  * 
- * <p><b>Note:</b> required fields are currently not checked (TODO)
+ * <p><b>TODO:</b> required fields are currently not checked
+ * <p><b>TODO:</b> add option to encode/decode large integers as strings (JavaScript interop)
+ * <p><b>TODO:</b> add option to encode/decode non-integer (non-safe) decimals as strings (JavaScript interop)
+ * <p><b>TODO:</b> do not enforce the $type field to appear first (only optimize performance when it is first)
  *
  * @author mikael.brannstrom
  * @see JsonCodecFactory
