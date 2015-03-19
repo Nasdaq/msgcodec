@@ -2,9 +2,19 @@ description = 'Blink format support for msgcodec.'
 apply plugin: 'cinnober-java'
 sourceCompatibility = "1.7"
 
+apply plugin: 'me.champeau.gradle.jmh'
+
+jmh {
+    jmhVersion = '1.6.3'
+    humanOutputFile=null
+}
+
+
 dependencies {
+    jmh group: 'org.openjdk.jmh', name:'jmh-core', version:jmh.jmhVersion
     compile project(':msgcodec')
     compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.1'
     testCompile project(':msgcodec-test')
     testCompile group: 'junit', name: 'junit', version: '4.11'
+
 }
