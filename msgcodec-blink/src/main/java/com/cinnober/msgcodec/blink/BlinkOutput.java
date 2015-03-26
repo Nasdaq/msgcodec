@@ -420,6 +420,23 @@ public class BlinkOutput {
      * @throws NullPointerException if value is null
      */
     public static void writeStringUTF8(OutputStream out, String value) throws IOException {
+        int len = value.length();
+        if (len < 128) {
+            boolean ascii = true;
+            for (int i=0; i<len; i++) {
+                if (value.charAt(i) >= 0x80) {
+                    ascii = false;
+                    break;
+                }
+            }
+            if (ascii) {
+                writeUInt32(out, len);
+                for (int i=0; i<len; i++) {
+                    out.write(value.charAt(i));
+                }
+                return;
+            }
+        }
         byte[] bytes = value.getBytes(UTF8);
         writeUInt32(out, bytes.length);
         out.write(bytes);
