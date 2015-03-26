@@ -34,33 +34,33 @@ import com.cinnober.msgcodec.anot.Unsigned;
 public class Ouch42EnterOrder extends MsgObject {
     @Annotate("maxLength=14")
     @Required
-    String token;
+    public String token;
     @Unsigned
-    byte buySell;
+    public byte buySell;
     @Unsigned
-    int shares;
+    public int shares;
     @Annotate("maxLength=8")
     @Required
-    String stock;
+    public String stock;
     @Unsigned
-    int price;
+    public int price;
     @Unsigned
-    int timeInForce;
+    public int timeInForce;
     @Annotate("maxLength=4")
     @Required
-    String firm;
+    public String firm;
     @Unsigned
-    byte display;
+    public byte display;
     @Unsigned
-    byte capacity;
+    public byte capacity;
     @Unsigned
-    byte intermarketSweep;
+    public byte intermarketSweep;
     @Unsigned
-    int minimumQuantity;
+    public int minimumQuantity;
     @Unsigned
-    byte crossType;
+    public byte crossType;
     @Unsigned
-    byte customerType;
+    public byte customerType;
 
 
 }
