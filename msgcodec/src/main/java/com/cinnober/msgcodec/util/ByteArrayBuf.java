@@ -91,6 +91,26 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public String readStringUtf8(int len) throws IOException {
+        if (len < 128) {
+            boolean ascii = true;
+            int end = pos+len;
+            for (int i=pos; i<end; i++) {
+                if(data[i] >= 0x80) {
+                    ascii = false;
+                    break;
+                }
+            }
+            if (ascii) {
+                char[] chars = new char[len];
+                for (int i=0; i<len; i++) {
+                    chars[i] = (char) data[pos+i];
+                }
+                pos += len;
+                return new String(chars);
+            }
+        }
+
+
         String s = new String(data, pos, pos+len, UTF8);
         pos += len;
         return s;
