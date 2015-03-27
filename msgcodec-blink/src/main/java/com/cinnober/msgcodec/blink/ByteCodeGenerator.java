@@ -67,6 +67,9 @@ class ByteCodeGenerator {
     private static final String GENERATED_CLASS_INTERNALNAME = "com/cinnober/msgcodec/blink/GeneratedBlinkCodec";
     private static final String GENERATED_CLASS_NAME = "com.cinnober.msgcodec.blink.GeneratedBlinkCodec";
 
+    private static final String blinkOutput = "com/cinnober/msgcodec/blink/BlinkOutput"; // internal name
+    private static final String blinkInput = "com/cinnober/msgcodec/blink/BlinkInput"; // internal name
+
     public String getGeneratedClassName(int suffix) {
         return GENERATED_CLASS_NAME + suffix;
     }
@@ -320,7 +323,7 @@ class ByteCodeGenerator {
             String genClassInternalName, boolean javaClassCodec) {
         // method writeStaticGroupWithId - switch
         MethodVisitor mv = cv.visitMethod(ACC_PROTECTED, "writeStaticGroupWithId",
-                "(Ljava/io/OutputStream;Ljava/lang/Object;)V", null, new String[] { "java/io/IOException" });
+                "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Object;)V", null, new String[] { "java/io/IOException" });
         int nextVar = 3;
         mv.visitCode();
 
@@ -409,7 +412,7 @@ class ByteCodeGenerator {
                     mv.visitTypeInsn(CHECKCAST, Type.getInternalName((Class<?>)groupType));
                 }
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroupWithId_" + group.getName(),
-                        "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;" + groupDescriptor + ")V", false);
                 mv.visitInsn(RETURN);
             }
         }
@@ -426,7 +429,7 @@ class ByteCodeGenerator {
             MethodVisitor mv = cv.visitMethod(
                     ACC_PRIVATE,
                     "writeStaticGroupWithId_" + group.getName(),
-                    "(Ljava/io/OutputStream;" + groupDescriptor + ")V",
+                    "(Lcom/cinnober/msgcodec/ByteSink;" + groupDescriptor + ")V",
                     null,
                     new String[] { "java/io/IOException" });
             mv.visitCode();
@@ -436,13 +439,13 @@ class ByteCodeGenerator {
                 // write with id
                 mv.visitVarInsn(ALOAD, 1); // out
                 mv.visitLdcInsn(group.getId());
-                mv.visitMethodInsn(INVOKESTATIC, "com/cinnober/msgcodec/blink/BlinkOutput", "writeUInt32",
-                        "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32",
+                        "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
                 mv.visitVarInsn(ALOAD, 0); // this
                 mv.visitVarInsn(ALOAD, 1); // out
                 mv.visitVarInsn(ALOAD, 2); // obj
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + group.getName(),
-                        "(Ljava/io/OutputStream;" + groupDescriptor + ")V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;" + groupDescriptor + ")V", false);
                 mv.visitInsn(RETURN);
             } else {
                 // write with id
@@ -468,7 +471,7 @@ class ByteCodeGenerator {
             MethodVisitor writemv = cv.visitMethod(
                     ACC_PRIVATE,
                     "writeStaticGroup_" + group.getName(),
-                    "(Ljava/io/OutputStream;" + groupDescriptor + ")V",
+                    "(Lcom/cinnober/msgcodec/ByteSink;" + groupDescriptor + ")V",
                     null,
                     new String[] { "java/io/IOException" });
             writemv.visitCode();
@@ -486,7 +489,7 @@ class ByteCodeGenerator {
                 writemv.visitMethodInsn(INVOKEVIRTUAL,
                         genClassInternalName,
                         "writeStaticGroup_" + superGroup.getName(),
-                        "(Ljava/io/OutputStream;"+superGroupDescriptor+")V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;"+superGroupDescriptor+")V", false);
             }
 
             // fields
@@ -540,7 +543,7 @@ class ByteCodeGenerator {
     private void generateReadStaticGroup(ProtocolDictionary dict, ClassVisitor cv, String genClassInternalName,
             boolean javaClassCodec) {
         MethodVisitor mv = cv.visitMethod(ACC_PROTECTED, "readStaticGroup",
-                "(ILcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", null,
+                "(ILcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Object;", null,
                 new String[] { "java/io/IOException" });
         int nextVar = 3;
         mv.visitCode();
@@ -573,7 +576,7 @@ class ByteCodeGenerator {
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 2);
             mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(),
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor, false);
+                    "(Lcom/cinnober/msgcodec/ByteSource;)" + groupDescriptor, false);
             mv.visitInsn(ARETURN);
         }
         // default case
@@ -596,7 +599,7 @@ class ByteCodeGenerator {
             MethodVisitor readmv = cv.visitMethod(
                     ACC_PRIVATE,
                     "readStaticGroup_" + group.getName(),
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor,
+                    "(Lcom/cinnober/msgcodec/ByteSource;)" + groupDescriptor,
                     null,
                     new String[] { "java/io/IOException" });
             readmv.visitCode();
@@ -627,7 +630,7 @@ class ByteCodeGenerator {
             readmv.visitVarInsn(ALOAD, 1);
             readmv.visitVarInsn(ALOAD, readInstanceVar);
             readmv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + group.getName(),
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V", false);
+                    "(Lcom/cinnober/msgcodec/ByteSource;"+groupDescriptor+")V", false);
 
             // end read
             readmv.visitVarInsn(ALOAD, readInstanceVar);
@@ -644,7 +647,7 @@ class ByteCodeGenerator {
             final MethodVisitor mv = cv.visitMethod(
                     ACC_PRIVATE,
                     "readStaticGroup_" + group.getName(),
-                    "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+groupDescriptor+")V",
+                    "(Lcom/cinnober/msgcodec/ByteSource;"+groupDescriptor+")V",
                     null,
                     new String[] { "java/io/IOException" });
             mv.visitCode();
@@ -662,7 +665,7 @@ class ByteCodeGenerator {
                 mv.visitMethodInsn(INVOKEVIRTUAL,
                         genClassInternalName,
                         "readStaticGroup_" + superGroup.getName(),
-                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;"+superGroupDescriptor+")V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSource;"+superGroupDescriptor+")V", false);
             }
 
             // fields
@@ -786,165 +789,164 @@ class ByteCodeGenerator {
             mv.visitLabel(notNullLabel);
             unbox(mv, javaClass);
         }
-        String blinkOutput = "com/cinnober/msgcodec/blink/BlinkOutput";
         switch (type.getType()) {
             case INT8:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt8",
-                            "(Ljava/io/OutputStream;B)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;B)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt8Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Byte;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Byte;)V", false);
                 }
                 break;
             case UINT8:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt8",
-                            "(Ljava/io/OutputStream;B)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;B)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt8Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Byte;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Byte;)V", false);
                 }
                 break;
             case INT16:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt16",
-                            "(Ljava/io/OutputStream;S)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;S)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt16Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Short;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Short;)V", false);
                 }
                 break;
             case UINT16:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt16",
-                            "(Ljava/io/OutputStream;S)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;S)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt16Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Short;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Short;)V", false);
                 }
                 break;
             case INT32:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32",
-                            "(Ljava/io/OutputStream;I)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Integer;)V", false);
                 }
                 break;
             case UINT32:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32",
-                            "(Ljava/io/OutputStream;I)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Integer;)V", false);
                 }
                 break;
             case INT64:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64",
-                            "(Ljava/io/OutputStream;J)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;J)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Long;)V", false);
                 }
                 break;
             case UINT64:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt64",
-                            "(Ljava/io/OutputStream;J)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;J)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt64Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Long;)V", false);
                 }
                 break;
             case FLOAT32:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeFloat32",
-                            "(Ljava/io/OutputStream;F)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;F)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeFloat32Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Float;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Float;)V", false);
                 }
                 break;
             case FLOAT64:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeFloat64",
-                            "(Ljava/io/OutputStream;D)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;D)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeFloat64Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/Double;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Double;)V", false);
                 }
                 break;
             case BIGINT:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBigInt",
-                            "(Ljava/io/OutputStream;Ljava/math/BigInteger;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/math/BigInteger;)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBigIntNull",
-                            "(Ljava/io/OutputStream;Ljava/math/BigInteger;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/math/BigInteger;)V", false);
                 }
                 break;
             case DECIMAL:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeDecimal",
-                            "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/math/BigDecimal;)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeDecimalNull",
-                            "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/math/BigDecimal;)V", false);
                 }
                 break;
             case BIGDECIMAL:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBigDecimal",
-                            "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/math/BigDecimal;)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBigDecimalNull",
-                            "(Ljava/io/OutputStream;Ljava/math/BigDecimal;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/math/BigDecimal;)V", false);
                 }
                 break;
             case STRING:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeStringUTF8",
-                            "(Ljava/io/OutputStream;Ljava/lang/String;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/String;)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeStringUTF8Null",
-                            "(Ljava/io/OutputStream;Ljava/lang/String;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/String;)V", false);
                 }
                 break;
             case BINARY:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBinary",
-                            "(Ljava/io/OutputStream;[B)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;[B)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBinaryNull",
-                            "(Ljava/io/OutputStream;[B)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;[B)V", false);
                 }
                 break;
             case BOOLEAN:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean",
-                            "(Ljava/io/OutputStream;Z)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Z)V", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBooleanNull",
-                            "(Ljava/io/OutputStream;Ljava/lang/Boolean;)V", false);
+                            "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Boolean;)V", false);
                 }
                 break;
             case ENUM:
-                generateEncodeEnumValue((TypeDef.Enum) type, nextVar, javaClass, required, mv, blinkOutput,
+                generateEncodeEnumValue((TypeDef.Enum) type, nextVar, javaClass, required, mv,
                         debugValueLabel);
                 break;
             case TIME:
-                generateEncodeTimeValue((TypeDef.Time) type, javaClass, required, mv, blinkOutput);
+                generateEncodeTimeValue((TypeDef.Time) type, javaClass, required, mv);
                 break;
             case SEQUENCE:
-                generateEncodeSequenceValue(javaClass, nextVar, mv, required, blinkOutput, outputStreamVar,
+                generateEncodeSequenceValue(javaClass, nextVar, mv, required, outputStreamVar,
                         componentJavaClass, type, dict, genClassInternalName, debugValueLabel, javaClassCodec);
                 break;
             case REFERENCE:
-                generateEncodeRefValue(refGroup, required, nextVar, mv, genClassInternalName, blinkOutput,
+                generateEncodeRefValue(refGroup, required, nextVar, mv, genClassInternalName,
                         outputStreamVar, (TypeDef.Reference) type, javaClassCodec);
                 break;
             case DYNAMIC_REFERENCE:
@@ -964,15 +966,15 @@ class ByteCodeGenerator {
         mv.visitVarInsn(ALOAD, instanceVar);
         if (required) {
             mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
-                    "writeDynamicGroup", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
+                    "writeDynamicGroup", "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Object;)V", false);
         } else {
             mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
-                    "writeDynamicGroupNull", "(Ljava/io/OutputStream;Ljava/lang/Object;)V", false);
+                    "writeDynamicGroupNull", "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Object;)V", false);
         }
     }
 
     private void generateEncodeRefValue(GroupDef refGroup, boolean required, LocalVariable nextVar, MethodVisitor mv,
-            String genClassInternalName, String blinkOutput, int outputStreamVar, TypeDef.Reference type,
+            String genClassInternalName, int outputStreamVar, TypeDef.Reference type,
             boolean javaClassCodec) throws IllegalArgumentException {
         if (refGroup != null) {
             Object refGroupType = refGroup.getGroupType();
@@ -985,7 +987,7 @@ class ByteCodeGenerator {
                 mv.visitInsn(SWAP); // this and out
                 mv.visitVarInsn(ALOAD, instanceVar);
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + refGroup.getName(),
-                        "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;" + refGroupDescriptor + ")V", false);
             } else {
                 int instanceVar = nextVar.next();
                 mv.visitInsn(DUP);
@@ -995,7 +997,7 @@ class ByteCodeGenerator {
                 // null
                 mv.visitInsn(POP);
                 mv.visitInsn(ICONST_0); // false
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Lcom/cinnober/msgcodec/ByteSink;Z)V", false);
                 mv.visitJumpInsn(GOTO, endLabel);
 
                 // not null
@@ -1003,12 +1005,12 @@ class ByteCodeGenerator {
                 // PENDING: mv.visitFrame
                 mv.visitVarInsn(ASTORE, instanceVar);
                 mv.visitInsn(ICONST_1); // true
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Ljava/io/OutputStream;Z)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeBoolean", "(Lcom/cinnober/msgcodec/ByteSink;Z)V", false);
                 mv.visitVarInsn(ALOAD, 0); // this
                 mv.visitVarInsn(ALOAD, outputStreamVar);
                 mv.visitVarInsn(ALOAD, instanceVar);
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + refGroup.getName(),
-                        "(Ljava/io/OutputStream;" + refGroupDescriptor + ")V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;" + refGroupDescriptor + ")V", false);
                 mv.visitLabel(endLabel);
                 // PENDING: mv.visitFrame
             }
@@ -1018,7 +1020,7 @@ class ByteCodeGenerator {
     }
 
     private void generateEncodeSequenceValue(
-            Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required, String blinkOutput,
+            Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required,
             int outputStreamVar,
             Class<?> componentJavaClass, TypeDef type, ProtocolDictionary dict, String genClassInternalName,
             String debugValueLabel, boolean javaClassCodec) throws IllegalArgumentException {
@@ -1034,14 +1036,14 @@ class ByteCodeGenerator {
                 mv.visitInsn(ARRAYLENGTH);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ISTORE, lengthVar);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             } else {
                 Label nonNullLabel = new Label();
                 mv.visitInsn(DUP);
                 mv.visitJumpInsn(IFNONNULL, nonNullLabel);
                 // null
                 mv.visitInsn(POP);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Lcom/cinnober/msgcodec/ByteSink;)V", false);
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
                 mv.visitLabel(nonNullLabel);
@@ -1049,7 +1051,7 @@ class ByteCodeGenerator {
                 mv.visitInsn(ARRAYLENGTH);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ISTORE, lengthVar);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             }
             // for loop
             int loopVar = nextVar.next();
@@ -1101,14 +1103,14 @@ class ByteCodeGenerator {
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ISTORE, lengthVar);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             } else {
                 Label nonNullLabel = new Label();
                 mv.visitInsn(DUP);
                 mv.visitJumpInsn(IFNONNULL, nonNullLabel);
                 // null
                 mv.visitInsn(POP);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Lcom/cinnober/msgcodec/ByteSink;)V", false);
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
                 mv.visitLabel(nonNullLabel);
@@ -1116,7 +1118,7 @@ class ByteCodeGenerator {
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ISTORE, lengthVar);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             }
             // for loop, using iterator
             int iteratorVar = nextVar.next();
@@ -1153,20 +1155,20 @@ class ByteCodeGenerator {
     }
 
     private void generateEncodeTimeValue(TypeDef.Time type,
-            Class<?> javaClass, boolean required, MethodVisitor mv, String blinkOutput) throws RuntimeException {
+            Class<?> javaClass, boolean required, MethodVisitor mv) throws RuntimeException {
         if (javaClass == long.class || javaClass == Long.class) {
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Lcom/cinnober/msgcodec/ByteSink;J)V", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64Null",
-                        "(Ljava/io/OutputStream;Ljava/lang/Long;)V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Long;)V", false);
             }
         } else if (javaClass == int.class || javaClass == Integer.class) {
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32Null",
-                        "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Integer;)V", false);
             }
         } else if (javaClass == Date.class) {
 
@@ -1191,13 +1193,13 @@ class ByteCodeGenerator {
                 mv.visitLdcInsn(timeInMillis);
                 mv.visitInsn(LDIV);
             }
-            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Ljava/io/OutputStream;J)V", false);
+            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt64", "(Lcom/cinnober/msgcodec/ByteSink;J)V", false);
 
             if (!required) {
                 mv.visitJumpInsn(GOTO, endLabel);
                 mv.visitLabel(nullLabel);
                 mv.visitInsn(POP);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Lcom/cinnober/msgcodec/ByteSink;)V", false);
                 mv.visitLabel(endLabel);
             }
         } else {
@@ -1207,7 +1209,7 @@ class ByteCodeGenerator {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void generateEncodeEnumValue(TypeDef.Enum enumType, LocalVariable nextVar,
-            Class<?> javaClass, boolean required, MethodVisitor mv, String blinkOutput,
+            Class<?> javaClass, boolean required, MethodVisitor mv,
             String debugValueLabel) throws IllegalArgumentException {
         if (javaClass.isEnum()) {
             Label endLabel = new Label();
@@ -1217,7 +1219,7 @@ class ByteCodeGenerator {
                 mv.visitJumpInsn(IFNONNULL, nonNullLabel);
                 // null
                 mv.visitInsn(POP);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Ljava/io/OutputStream;)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeNull", "(Lcom/cinnober/msgcodec/ByteSink;)V", false);
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
                 mv.visitLabel(nonNullLabel);
@@ -1259,16 +1261,16 @@ class ByteCodeGenerator {
 
             // write
             mv.visitLabel(writeLabel);
-            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             // end
             mv.visitLabel(endLabel);
         } else if (javaClass == int.class || javaClass == Integer.class) {
             // PENDING: validate that the value is a correct enum value?
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Lcom/cinnober/msgcodec/ByteSink;I)V", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32Null",
-                        "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
+                        "(Lcom/cinnober/msgcodec/ByteSink;Ljava/lang/Integer;)V", false);
             }
         } else {
             throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
@@ -1288,123 +1290,122 @@ class ByteCodeGenerator {
         type = dict.resolveToType(type, false);
         GroupDef refGroup = dict.resolveToGroup(type);
 
-        String blinkInput = "com/cinnober/msgcodec/blink/BlinkInput";
         switch (type.getType()) {
             case INT8:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt8",
-                            "(Ljava/io/InputStream;)B", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)B", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt8Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Byte;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Byte;", false);
                 }
                 break;
             case UINT8:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt8",
-                            "(Ljava/io/InputStream;)B", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)B", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt8Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Byte;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Byte;", false);
                 }
                 break;
             case INT16:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt16",
-                            "(Ljava/io/InputStream;)S", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)S", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt16Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Short;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Short;", false);
                 }
                 break;
             case UINT16:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt16",
-                            "(Ljava/io/InputStream;)S", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)S", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt16Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Short;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Short;", false);
                 }
                 break;
             case INT32:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32",
-                            "(Ljava/io/InputStream;)I", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)I", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Integer;", false);
                 }
                 break;
             case UINT32:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32",
-                            "(Ljava/io/InputStream;)I", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)I", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Integer;", false);
                 }
                 break;
             case INT64:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64",
-                            "(Ljava/io/InputStream;)J", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)J", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Long;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Long;", false);
                 }
                 break;
             case UINT64:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt64",
-                            "(Ljava/io/InputStream;)J", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)J", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt64Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Long;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Long;", false);
                 }
                 break;
             case FLOAT32:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readFloat32",
-                            "(Ljava/io/InputStream;)F", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)F", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readFloat32Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Float;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Float;", false);
                 }
                 break;
             case FLOAT64:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readFloat64",
-                            "(Ljava/io/InputStream;)D", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)D", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readFloat64Null",
-                            "(Ljava/io/InputStream;)Ljava/lang/Double;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Double;", false);
                 }
                 break;
             case BIGINT:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBigInt",
-                            "(Ljava/io/InputStream;)Ljava/math/BigInteger;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/math/BigInteger;", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBigIntNull",
-                            "(Ljava/io/InputStream;)Ljava/math/BigInteger;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/math/BigInteger;", false);
                 }
                 break;
             case DECIMAL:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readDecimal",
-                            "(Ljava/io/InputStream;)Ljava/math/BigDecimal;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/math/BigDecimal;", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readDecimalNull",
-                            "(Ljava/io/InputStream;)Ljava/math/BigDecimal;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/math/BigDecimal;", false);
                 }
                 break;
             case BIGDECIMAL:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBigDecimal",
-                            "(Ljava/io/InputStream;)Ljava/math/BigDecimal;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/math/BigDecimal;", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBigDecimalNull",
-                            "(Ljava/io/InputStream;)Ljava/math/BigDecimal;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/math/BigDecimal;", false);
                 }
                 break;
             case STRING:
@@ -1415,10 +1416,10 @@ class ByteCodeGenerator {
                         "()I", false);
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8",
-                            "(Ljava/io/InputStream;I)Ljava/lang/String;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;I)Ljava/lang/String;", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8Null",
-                            "(Ljava/io/InputStream;I)Ljava/lang/String;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;I)Ljava/lang/String;", false);
                 }
                 break;
             case BINARY:
@@ -1428,33 +1429,33 @@ class ByteCodeGenerator {
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize",
                         "()I", false);
                 if (required) {
-                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinary", "(Ljava/io/InputStream;I)[B", false);
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinary", "(Lcom/cinnober/msgcodec/ByteSource;I)[B", false);
                 } else {
-                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinaryNull", "(Ljava/io/InputStream;I)[B", false);
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinaryNull", "(Lcom/cinnober/msgcodec/ByteSource;I)[B", false);
                 }
                 break;
             case BOOLEAN:
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBoolean",
-                            "(Ljava/io/InputStream;)Z", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Z", false);
                 } else {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBooleanNull",
-                            "(Ljava/io/InputStream;)Ljava/lang/Boolean;", false);
+                            "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Boolean;", false);
                 }
                 break;
             case ENUM:
-                generateDecodeEnumValue(required, mv, blinkInput, type, nextVar, javaClass, debugValueLabel);
+                generateDecodeEnumValue(required, mv, type, nextVar, javaClass, debugValueLabel);
                 break;
             case TIME:
-                generateDecodeTimeValue((TypeDef.Time) type, javaClass, required, mv, blinkInput, nextVar);
+                generateDecodeTimeValue((TypeDef.Time) type, javaClass, required, mv, nextVar);
                 break;
             case SEQUENCE:
-                generateDecodeSequenceValue(javaClass, nextVar, required, mv, blinkInput, componentJavaClass,
+                generateDecodeSequenceValue(javaClass, nextVar, required, mv, componentJavaClass,
                         inputStreamVar, type, dict, genClassInternalName, debugValueLabel, javaClassCodec);
                 break;
             case REFERENCE:
                 generateDecodeRefValue(refGroup, required, mv, inputStreamVar, genClassInternalName, javaClass,
-                        blinkInput, type, javaClassCodec);
+                        type, javaClassCodec);
                 break;
             case DYNAMIC_REFERENCE:
                 generateDecodeDynRefValue(mv, required, refGroup, javaClass);
@@ -1471,30 +1472,30 @@ class ByteCodeGenerator {
     }
 
     private void generateDecodeTimeValue(TypeDef.Time type, Class<?> javaClass, boolean required, MethodVisitor mv,
-            String blinkInput, LocalVariable nextVar) throws IllegalArgumentException {
+            LocalVariable nextVar) throws IllegalArgumentException {
         if (javaClass == long.class || javaClass == Long.class) {
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Ljava/io/InputStream;)J", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Lcom/cinnober/msgcodec/ByteSource;)J", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64Null",
-                        "(Ljava/io/InputStream;)Ljava/lang/Long;", false);
+                        "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Long;", false);
             }
         } else if (javaClass == int.class || javaClass == Integer.class) {
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32", "(Ljava/io/InputStream;)I", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32", "(Lcom/cinnober/msgcodec/ByteSource;)I", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32Null",
-                        "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+                        "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Integer;", false);
             }
         } else if (javaClass == Date.class) {
 
             int timeVar = nextVar.next(); nextVar.next(); // note: 2 variable slots
             Label endLabel = new Label();
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Ljava/io/InputStream;)J", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64", "(Lcom/cinnober/msgcodec/ByteSource;)J", false);
             } else {
                 mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt64Null",
-                        "(Ljava/io/InputStream;)Ljava/lang/Long;", false);
+                        "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Long;", false);
                 mv.visitInsn(DUP);
                 Label nonNullLabel = new Label();
                 mv.visitJumpInsn(IFNONNULL, nonNullLabel);
@@ -1535,17 +1536,17 @@ class ByteCodeGenerator {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void generateDecodeEnumValue(boolean required, MethodVisitor mv, String blinkInput, TypeDef type,
+    private void generateDecodeEnumValue(boolean required, MethodVisitor mv, TypeDef type,
             LocalVariable nextVar, Class<?> javaClass, String debugValueLabel)
             throws IllegalArgumentException {
 
         Label endLabel = new Label();
         if (required) {
             mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32",
-                    "(Ljava/io/InputStream;)I", false);
+                    "(Lcom/cinnober/msgcodec/ByteSource;)I", false);
         } else {
             mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32Null",
-                    "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+                    "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Integer;", false);
             mv.visitInsn(DUP);
             Label nonNullLabel = new Label();
             mv.visitJumpInsn(IFNONNULL, nonNullLabel);
@@ -1623,10 +1624,10 @@ class ByteCodeGenerator {
         mv.visitInsn(SWAP); // this and in
         if (required) {
             mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
-                    "readDynamicGroup", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
+                    "readDynamicGroup", "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Object;", false);
         } else {
             mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME,
-                    "readDynamicGroupNull", "(Lcom/cinnober/msgcodec/util/LimitInputStream;)Ljava/lang/Object;", false);
+                    "readDynamicGroupNull", "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Object;", false);
         }
         if (refGroup != null) {
             mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
@@ -1635,7 +1636,7 @@ class ByteCodeGenerator {
 
     private void generateDecodeRefValue(GroupDef refGroup, boolean required, MethodVisitor mv, int inputStreamVar,
             String genClassInternalName,
-            Class<?> javaClass, String blinkInput, TypeDef type, boolean javaClassCodec) throws IllegalArgumentException {
+            Class<?> javaClass, TypeDef type, boolean javaClassCodec) throws IllegalArgumentException {
         if (refGroup != null) {
             String groupDescriptor = javaClassCodec ? Type.getDescriptor(javaClass) : "Ljava/lang/Object;";
             if (required) {
@@ -1643,10 +1644,10 @@ class ByteCodeGenerator {
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitVarInsn(ALOAD, inputStreamVar);
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + refGroup.getName(),
-                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor,
+                        "(Lcom/cinnober/msgcodec/ByteSource;)" + groupDescriptor,
                         false);
             } else {
-                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBoolean", "(Ljava/io/InputStream;)Z", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBoolean", "(Lcom/cinnober/msgcodec/ByteSource;)Z", false);
                 Label nonNullLabel = new Label();
                 Label endLabel = new Label();
                 mv.visitJumpInsn(IFNE, nonNullLabel); // not false, i.e. true
@@ -1660,7 +1661,7 @@ class ByteCodeGenerator {
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitVarInsn(ALOAD, inputStreamVar);
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "readStaticGroup_" + refGroup.getName(),
-                        "(Lcom/cinnober/msgcodec/util/LimitInputStream;)" + groupDescriptor,
+                        "(Lcom/cinnober/msgcodec/ByteSource;)" + groupDescriptor,
                         false);
 
                 mv.visitLabel(endLabel);
@@ -1673,7 +1674,7 @@ class ByteCodeGenerator {
     }
 
     private void generateDecodeSequenceValue(
-            Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv, String blinkInput,
+            Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv,
             Class<?> componentJavaClass, int inputStreamVar, TypeDef type, ProtocolDictionary dict,
             String genClassInternalName, String debugValueLabel, boolean javaClassCodec)
             throws IllegalArgumentException {
@@ -1685,11 +1686,11 @@ class ByteCodeGenerator {
         int sequenceVar = nextVar.next();
         Label finalEndLabel = new Label();
         if (required) {
-            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32", "(Ljava/io/InputStream;)I", false);
+            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32", "(Lcom/cinnober/msgcodec/ByteSource;)I", false);
             mv.visitVarInsn(ISTORE, lengthVar);
         } else {
             mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32Null",
-                    "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
+                    "(Lcom/cinnober/msgcodec/ByteSource;)Ljava/lang/Integer;", false);
             mv.visitInsn(DUP);
             mv.visitJumpInsn(IFNULL, finalEndLabel);
             unbox(mv, Integer.class);

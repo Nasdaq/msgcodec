@@ -17,6 +17,7 @@
  */
 package com.cinnober.msgcodec.util;
 
+import com.cinnober.msgcodec.ByteSink;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,7 @@ import java.util.Objects;
  * @author mikael.brannstrom
  *
  */
-public class TempOutputStream extends OutputStream {
+public class TempOutputStream extends OutputStream implements ByteSink {
 
     private final Pool<byte[]> bufferPool;
 
@@ -115,13 +116,116 @@ public class TempOutputStream extends OutputStream {
         buffers.add(currentBuffer);
     }
 
-    @Override
-    public void write(int b) {
+    private int ensureAvailable() {
         if (currentBuffer == null || currentPosition == currentBuffer.length) {
             allocate();
         }
+        return currentBuffer.length - currentPosition;
+    }
+    
+    @Override
+    public void write(int b) {
+        ensureAvailable();
         currentBuffer[currentPosition++] = (byte)b;
     }
+
+//    @Override
+//    public void write2(int b1, int b2) throws IOException {
+//        if (ensureAvailable() >= 2) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentPosition += 2;
+//        } else {
+//            ByteSink.super.write2(b1, b2);
+//        }
+//    }
+//
+//    @Override
+//    public void write3(int b1, int b2, int b3) throws IOException {
+//        if (ensureAvailable() >= 3) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentBuffer[currentPosition+2] = (byte)b3;
+//            currentPosition += 3;
+//        } else {
+//            ByteSink.super.write3(b1, b2, b3);
+//        }
+//    }
+//
+//    @Override
+//    public void write4(int b1, int b2, int b3, int b4) throws IOException {
+//        if (ensureAvailable() >= 4) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentBuffer[currentPosition+2] = (byte)b3;
+//            currentBuffer[currentPosition+3] = (byte)b4;
+//            currentPosition += 4;
+//        } else {
+//            ByteSink.super.write4(b1, b2, b3, b4);
+//        }
+//    }
+//
+//    @Override
+//    public void write5(int b1, int b2, int b3, int b4, int b5) throws IOException {
+//        if (ensureAvailable() >= 5) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentBuffer[currentPosition+2] = (byte)b3;
+//            currentBuffer[currentPosition+3] = (byte)b4;
+//            currentBuffer[currentPosition+4] = (byte)b5;
+//            currentPosition += 5;
+//        } else {
+//            ByteSink.super.write5(b1, b2, b3, b4, b5);
+//        }
+//    }
+//
+//    @Override
+//    public void write6(int b1, int b2, int b3, int b4, int b5, int b6) throws IOException {
+//        if (ensureAvailable() >= 6) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentBuffer[currentPosition+2] = (byte)b3;
+//            currentBuffer[currentPosition+3] = (byte)b4;
+//            currentBuffer[currentPosition+4] = (byte)b5;
+//            currentBuffer[currentPosition+5] = (byte)b6;
+//            currentPosition += 6;
+//        } else {
+//            ByteSink.super.write6(b1, b2, b3, b4, b5, b6);
+//        }
+//    }
+//
+//    @Override
+//    public void write7(int b1, int b2, int b3, int b4, int b5, int b6, int b7) throws IOException {
+//        if (ensureAvailable() >= 7) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentBuffer[currentPosition+2] = (byte)b3;
+//            currentBuffer[currentPosition+3] = (byte)b4;
+//            currentBuffer[currentPosition+4] = (byte)b5;
+//            currentBuffer[currentPosition+5] = (byte)b6;
+//            currentBuffer[currentPosition+6] = (byte)b7;
+//            currentPosition += 7;
+//        } else {
+//            ByteSink.super.write7(b1, b2, b3, b4, b5, b6, b7);
+//        }
+//    }
+//
+//    @Override
+//    public void write8(int b1, int b2, int b3, int b4, int b5, int b6, int b7, int b8) throws IOException {
+//        if (ensureAvailable() >= 7) {
+//            currentBuffer[currentPosition] = (byte)b1;
+//            currentBuffer[currentPosition+1] = (byte)b2;
+//            currentBuffer[currentPosition+2] = (byte)b3;
+//            currentBuffer[currentPosition+3] = (byte)b4;
+//            currentBuffer[currentPosition+4] = (byte)b5;
+//            currentBuffer[currentPosition+5] = (byte)b6;
+//            currentBuffer[currentPosition+6] = (byte)b7;
+//            currentBuffer[currentPosition+7] = (byte)b8;
+//            currentPosition += 8;
+//        } else {
+//            ByteSink.super.write8(b1, b2, b3, b4, b5, b6, b7, b8);
+//        }
+//    }
 
     @Override
     public void write(byte[] buf) {
@@ -215,6 +319,43 @@ public class TempOutputStream extends OutputStream {
                     start += bufferEnd - start;
                 } else {
                     out.put(buffer, start - bufferStart, end - start);
+                    return;
+                }
+            }
+            bufferStart = bufferEnd;
+        }
+        throw new Error("Internal error. start=" + start + ", end=" + end +
+                ", bufferStart=" + bufferStart + ", bufferEnd=" + bufferEnd);
+    }
+
+    /**
+     * Copy bytes from this buffer to the specified binary output.
+     *
+     * @param out the binary output to write to.
+     * @param start the position of the first byte to write
+     * @param end the position after the last byte to write
+     * @throws BufferOverflowException the byte buffer gets overfull.
+     */
+    public void copyTo(ByteSink out, int start, int end) throws IOException {
+        if (start == end) {
+            return;
+        }
+        if (start > end) {
+            throw new IllegalArgumentException("start must be <= end");
+        }
+        if (end > position()) {
+            throw new IllegalArgumentException("end must be <= position()");
+        }
+        int bufferStart = 0;
+        int bufferEnd = 0;
+        for (byte[] buffer : buffers) {
+            bufferEnd += buffer.length;
+            if (start < bufferEnd) {
+                if (end > bufferEnd) {
+                    out.write(buffer, start - bufferStart, bufferEnd - start);
+                    start += bufferEnd - start;
+                } else {
+                    out.write(buffer, start - bufferStart, end - start);
                     return;
                 }
             }

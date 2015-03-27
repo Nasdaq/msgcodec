@@ -874,11 +874,11 @@ abstract class FieldInstruction<V> {
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
             require(value);
-            codec.writeDynamicGroup(out, value);
+            codec.writeDynamicGroup(out.sink(), value);
         }
         @Override
         public Object decodeValue(BlinkInputStream in) throws IOException {
-            return codec.readDynamicGroup(in);
+            return codec.readDynamicGroup(in.source());
         }
     }
     static class DynamicGroupNull extends FieldInstruction<Object> {
@@ -889,11 +889,11 @@ abstract class FieldInstruction<V> {
         }
         @Override
         public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
-            codec.writeDynamicGroupNull(out, value);
+            codec.writeDynamicGroupNull(out.sink(), value);
         }
         @Override
         public Object decodeValue(BlinkInputStream in) throws IOException {
-            return codec.readDynamicGroupNull(in);
+            return codec.readDynamicGroupNull(in.source());
         }
     }
 

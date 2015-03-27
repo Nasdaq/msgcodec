@@ -18,6 +18,8 @@
 
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
@@ -259,12 +261,13 @@ class InstructionCodec extends GeneratedCodec {
     }
 
     @Override
-    protected void writeStaticGroupWithId(OutputStream out, Object value) throws IOException, IllegalArgumentException {
-        if (out instanceof BlinkOutputStream) {
-            writeStaticGroupWithId((BlinkOutputStream)out, value);
-        } else {
-            writeStaticGroupWithId(new BlinkOutputStream(out), value);
-        }
+    protected void writeStaticGroupWithId(ByteSink out, Object value) throws IOException, IllegalArgumentException {
+        throw new RuntimeException("not implemented");
+//        if (out instanceof BlinkOutputStream) {
+//            writeStaticGroupWithId((BlinkOutputStream)out, value);
+//        } else {
+//            writeStaticGroupWithId(new BlinkOutputStream(out), value);
+//        }
     }
     private void writeStaticGroupWithId(BlinkOutputStream out, Object value) throws IOException, IllegalArgumentException {
         Object groupType = groupTypeAccessor.getGroupType(value);
@@ -278,12 +281,9 @@ class InstructionCodec extends GeneratedCodec {
     }
 
     @Override
-    protected Object readStaticGroup(int groupId, LimitInputStream in) throws IOException, DecodeException {
-        if (in instanceof BlinkInputStream) {
-            return readStaticGroup(groupId, (BlinkInputStream)in);
-        } else {
-            return readStaticGroup(groupId, new BlinkInputStream(in));
-        }
+    protected Object readStaticGroup(int groupId, ByteSource in) throws IOException, DecodeException {
+        throw new RuntimeException("not implemented");
+        //return readStaticGroup(groupId, new BlinkInputStream(in));
     }
     private Object readStaticGroup(int groupId, BlinkInputStream in) throws IOException, DecodeException {
         StaticGroupInstruction groupInstruction = groupInstructionsById.get(groupId);

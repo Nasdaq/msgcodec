@@ -17,6 +17,8 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.util.OutputStreamSink;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,8 +34,14 @@ import java.math.BigInteger;
  */
 public class BlinkOutputStream extends FilterOutputStream {
 
+    private final ByteSink sink;
     public BlinkOutputStream(OutputStream out) {
         super(out);
+        sink = new OutputStreamSink(out);
+    }
+
+    ByteSink sink() {
+        return sink;
     }
 
     /**
@@ -42,7 +50,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeNull() throws IOException {
-        BlinkOutput.writeNull(out);
+        BlinkOutput.writeNull(sink);
     }
 
     /**
@@ -52,7 +60,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt8(byte value) throws IOException {
-        BlinkOutput.writeInt8(out, value);
+        BlinkOutput.writeInt8(sink, value);
     }
     /**
      * Write a signed 16-bit integer.
@@ -61,7 +69,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt16(short value) throws IOException {
-        BlinkOutput.writeInt16(out, value);
+        BlinkOutput.writeInt16(sink, value);
     }
     /**
      * Write a signed 32-bit integer.
@@ -70,7 +78,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt32(int value) throws IOException {
-        BlinkOutput.writeInt32(out, value);
+        BlinkOutput.writeInt32(sink, value);
     }
     /**
      * Write a signed 64-bit integer.
@@ -79,7 +87,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt64(long value) throws IOException {
-        BlinkOutput.writeInt64(out, value);
+        BlinkOutput.writeInt64(sink, value);
     }
     /**
      * Write an unsigned 8-bit integer.
@@ -88,7 +96,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt8(byte value) throws IOException {
-        BlinkOutput.writeUInt8(out, value);
+        BlinkOutput.writeUInt8(sink, value);
     }
     /**
      * Write an unsigned 16-bit integer.
@@ -97,7 +105,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt16(short value) throws IOException {
-        BlinkOutput.writeUInt16(out, value);
+        BlinkOutput.writeUInt16(sink, value);
     }
     /**
      * Write an unsigned 32-bit integer.
@@ -106,7 +114,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt32(int value) throws IOException {
-        BlinkOutput.writeUInt32(out, value);
+        BlinkOutput.writeUInt32(sink, value);
     }
     /**
      * Write an unsigned 64-bit integer.
@@ -115,7 +123,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt64(long value) throws IOException {
-        BlinkOutput.writeUInt64(out, value);
+        BlinkOutput.writeUInt64(sink, value);
     }
     /**
      * Write a nullable signed 8-bit integer.
@@ -124,7 +132,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt8Null(Byte value) throws IOException {
-        BlinkOutput.writeInt8Null(out, value);
+        BlinkOutput.writeInt8Null(sink, value);
     }
     /**
      * Write a nullable signed 16-bit integer.
@@ -133,7 +141,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt16Null(Short value) throws IOException {
-        BlinkOutput.writeInt16Null(out, value);
+        BlinkOutput.writeInt16Null(sink, value);
     }
     /**
      * Write a nullable signed 32-bit integer.
@@ -142,7 +150,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt32Null(Integer value) throws IOException {
-        BlinkOutput.writeInt32Null(out, value);
+        BlinkOutput.writeInt32Null(sink, value);
     }
     /**
      * Write a nullable signed 64-bit integer.
@@ -151,7 +159,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeInt64Null(Long value) throws IOException {
-        BlinkOutput.writeInt64Null(out, value);
+        BlinkOutput.writeInt64Null(sink, value);
     }
     /**
      * Write a nullable unsigned 8-bit integer.
@@ -160,7 +168,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt8Null(Byte value) throws IOException {
-        BlinkOutput.writeUInt8Null(out, value);
+        BlinkOutput.writeUInt8Null(sink, value);
     }
     /**
      * Write a nullable unsigned 16-bit integer.
@@ -169,7 +177,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt16Null(Short value) throws IOException {
-        BlinkOutput.writeUInt16Null(out, value);
+        BlinkOutput.writeUInt16Null(sink, value);
     }
     /**
      * Write a nullable unsigned 32-bit integer.
@@ -178,7 +186,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt32Null(Integer value) throws IOException {
-        BlinkOutput.writeUInt32Null(out, value);
+        BlinkOutput.writeUInt32Null(sink, value);
     }
     /**
      * Write a nullable unsigned 64-bit integer.
@@ -187,7 +195,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUInt64Null(Long value) throws IOException {
-        BlinkOutput.writeUInt64Null(out, value);
+        BlinkOutput.writeUInt64Null(sink, value);
     }
 
     /**
@@ -197,7 +205,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeBigIntNull(BigInteger value) throws IOException {
-        BlinkOutput.writeBigIntNull(out, value);
+        BlinkOutput.writeBigIntNull(sink, value);
     }
     /**
      * Write a signed big integer.
@@ -206,7 +214,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeBigInt(BigInteger value) throws IOException {
-        BlinkOutput.writeBigInt(out, value);
+        BlinkOutput.writeBigInt(sink, value);
     }
 
     /**
@@ -220,7 +228,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @see #writeFloat64(double)
      */
     public void writeFloat32(float value) throws IOException {
-        BlinkOutput.writeFloat32(out, value);
+        BlinkOutput.writeFloat32(sink, value);
     }
     /**
      * Write a nullable 32-bit floating point number.
@@ -233,7 +241,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @see #writeFloat64Null(Double)
      */
     public void writeFloat32Null(Float value) throws IOException {
-        BlinkOutput.writeFloat32Null(out, value);
+        BlinkOutput.writeFloat32Null(sink, value);
     }
     /**
      * Write a 64-bit floating point number.
@@ -242,7 +250,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeFloat64(double value) throws IOException {
-        BlinkOutput.writeFloat64(out, value);
+        BlinkOutput.writeFloat64(sink, value);
     }
     /**
      * Write a nullable 64-bit floating point number.
@@ -251,7 +259,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeFloat64Null(Double value) throws IOException {
-        BlinkOutput.writeFloat64Null(out, value);
+        BlinkOutput.writeFloat64Null(sink, value);
     }
 
     /**
@@ -262,7 +270,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws NullPointerException if value is null
      */
     public void writeDecimal(BigDecimal value) throws IOException, NullPointerException {
-        BlinkOutput.writeDecimal(out, value);
+        BlinkOutput.writeDecimal(sink, value);
     }
     /**
      * Write a nullable decimal number.
@@ -271,7 +279,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeDecimalNull(BigDecimal value) throws IOException {
-        BlinkOutput.writeDecimalNull(out, value);
+        BlinkOutput.writeDecimalNull(sink, value);
     }
     /**
      * Write a big decimal number.
@@ -281,7 +289,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws NullPointerException if value is null
      */
     public void writeBigDecimal(BigDecimal value) throws IOException, NullPointerException {
-        BlinkOutput.writeBigDecimal(out, value);
+        BlinkOutput.writeBigDecimal(sink, value);
     }
     /**
      * Write a nullable big decimal number.
@@ -290,7 +298,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeBigDecimalNull(BigDecimal value) throws IOException {
-        BlinkOutput.writeBigDecimalNull(out, value);
+        BlinkOutput.writeBigDecimalNull(sink, value);
     }
 
     /**
@@ -300,7 +308,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeBoolean(boolean value) throws IOException {
-        BlinkOutput.writeBoolean(out, value);
+        BlinkOutput.writeBoolean(sink, value);
     }
     /**
      * Write a nullable boolean.
@@ -309,7 +317,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeBooleanNull(Boolean value) throws IOException {
-        BlinkOutput.writeBooleanNull(out, value);
+        BlinkOutput.writeBooleanNull(sink, value);
     }
     /**
      * Write a unicode string.
@@ -319,7 +327,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws NullPointerException if value is null
      */
     public void writeStringUTF8(String value) throws IOException {
-        BlinkOutput.writeStringUTF8(out, value);
+        BlinkOutput.writeStringUTF8(sink, value);
     }
     /**
      * Write a nullable unicode string.
@@ -328,7 +336,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeStringUTF8Null(String value) throws IOException {
-        BlinkOutput.writeStringUTF8Null(out, value);
+        BlinkOutput.writeStringUTF8Null(sink, value);
     }
     /**
      * Write binary data.
@@ -338,7 +346,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws NullPointerException if value is null
      */
     public void writeBinary(byte[] value) throws IOException {
-        BlinkOutput.writeBinary(out, value);
+        BlinkOutput.writeBinary(sink, value);
     }
     /**
      * Write nullable binary data.
@@ -347,7 +355,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeBinaryNull(byte[] value) throws IOException {
-        BlinkOutput.writeBinaryNull(out, value);
+        BlinkOutput.writeBinaryNull(sink, value);
     }
     /**
      * Write a signed big variable-length code value.
@@ -356,7 +364,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeSignedBigVLC(BigInteger value) throws IOException {
-        BlinkOutput.writeSignedVLC(out, value);
+        BlinkOutput.writeSignedVLC(sink, value);
     }
 
     /**
@@ -366,7 +374,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeSignedVLC(long value) throws IOException {
-        BlinkOutput.writeSignedVLC(out, value);
+        BlinkOutput.writeSignedVLC(sink, value);
     }
     /**
      * Write an unsigned variable-length code value.
@@ -375,7 +383,7 @@ public class BlinkOutputStream extends FilterOutputStream {
      * @throws IOException if the underlying stream throws an exception
      */
     public void writeUnsignedVLC(long value) throws IOException {
-        BlinkOutput.writeUnsignedVLC(out, value);
+        BlinkOutput.writeUnsignedVLC(sink, value);
     }
 
     /**

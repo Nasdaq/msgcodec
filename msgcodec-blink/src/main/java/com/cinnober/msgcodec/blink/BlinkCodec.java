@@ -17,12 +17,16 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.StreamCodec;
 import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
+import com.cinnober.msgcodec.util.InputStreamSource;
 import com.cinnober.msgcodec.util.LimitInputStream;
+import com.cinnober.msgcodec.util.OutputStreamSink;
 import com.cinnober.msgcodec.util.Pool;
 import com.cinnober.msgcodec.util.TempOutputStream;
 import java.io.IOException;
@@ -151,6 +155,9 @@ public class BlinkCodec implements StreamCodec {
 
     @Override
     public void encode(Object group, OutputStream out) throws IOException {
+        encode(group, new OutputStreamSink(out));
+    }
+    public void encode(Object group, ByteSink out) throws IOException {
         try {
              generatedCodec.writeDynamicGroup(out, group);
         } catch (Throwable t) {
@@ -159,14 +166,15 @@ public class BlinkCodec implements StreamCodec {
             throw t;
         }
     }
+
     @Override
     public Object decode(InputStream in) throws IOException {
+        return decode(new InputStreamSource(in));
+    }
+
+    public Object decode(ByteSource in) throws IOException {
         try {
-            if (in instanceof LimitInputStream) {
-                return generatedCodec.readDynamicGroupNull((LimitInputStream)in);
-            } else {
-                return generatedCodec.readDynamicGroupNull(new BlinkInputStream(in));
-            }
+            return generatedCodec.readDynamicGroupNull(in);
         } catch(GroupDecodeException|FieldDecodeException e) {
             Throwable t = e;
             StringBuilder str = new StringBuilder();
@@ -184,16 +192,16 @@ public class BlinkCodec implements StreamCodec {
         }
     }
 
-    OutputStream preambleBegin() {
+    ByteSink preambleBegin() {
         Preamble preamble = new Preamble();
         if (!preambleStack.isEmpty()) {
             preambleStack.peek().startChild(preamble);
         }
         preambleStack.push(preamble);
-        return internalStream;
+        return internalBuffer; //Stream;
     }
 
-    void preambleEnd(OutputStream out) throws IOException {
+    void preambleEnd(ByteSink out) throws IOException {
         Preamble preamble = preambleStack.pop();
         preamble.end();
         if (preambleStack.isEmpty()) {
@@ -251,7 +259,7 @@ public class BlinkCodec implements StreamCodec {
             size += addedSize;
             addedSize += sizeOfPreamble(size);
         }
-        private void copyTo(OutputStream out) throws IOException {
+        private void copyTo(ByteSink out) throws IOException {
             // write size preamble
             BlinkOutput.writeUInt32(out, size);
             int position = startPosition;
@@ -265,7 +273,7 @@ public class BlinkCodec implements StreamCodec {
         /**
          * Flush the temporary encoded group, add size preambles and finally reset the internal buffer.
          */
-        public void flush(OutputStream out) throws IOException {
+        public void flush(ByteSink out) throws IOException {
             calculateSize();
             copyTo(out);
             internalBuffer.reset();

@@ -2,6 +2,8 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.util.ByteArrayBuf;
+import com.cinnober.msgcodec.util.ByteArrays;
 import com.cinnober.msgcodec.util.ByteBufferInputStream;
 import com.cinnober.msgcodec.util.ByteBufferOutputStream;
 import java.io.IOException;
@@ -25,17 +27,18 @@ public class BenchmarkOuch42EnterOrder {
     public int price;
     @Param({"100"}) //, "10000"})
     public int shares;
-    @Param({"true", "false"})
+    @Param({"true"})
+    //@Param({"true", "false"})
     public boolean bytecode;
 
     private Ouch42EnterOrder msg;
     private BlinkCodec codec;
-    private ByteBuffer buf;
-    private int encodecSize;
+//    private ByteBuffer buf;
+    private int encodedSize;
     private ByteBufferOutputStream bufOut;
     private ByteBufferInputStream bufIn;
 
-
+    private ByteArrayBuf buf;
 
     public BenchmarkOuch42EnterOrder() {
     }
@@ -48,9 +51,10 @@ public class BenchmarkOuch42EnterOrder {
                 CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
                 CodecOption.INSTRUCTION_CODEC_ONLY);
         codec = factory.createStreamCodec();
-        buf = ByteBuffer.allocate(1024);
-        bufOut = new ByteBufferOutputStream(buf);
-        bufIn = new ByteBufferInputStream(buf);
+//        buf = ByteBuffer.allocate(1024);
+        buf = new ByteArrayBuf(new byte[1024]);
+//        bufOut = new ByteBufferOutputStream(buf);
+//        bufIn = new ByteBufferInputStream(buf);
 
         msg = new Ouch42EnterOrder();
         msg.token = "qwerty1234";
@@ -67,19 +71,20 @@ public class BenchmarkOuch42EnterOrder {
         msg.crossType = 'N';
         msg.customerType = 'R';
 
-        encodecSize = benchmarkEncode();
-        System.out.println("Encoded size: " + encodecSize);
+        encodedSize = benchmarkEncode();
+        System.out.println("Encoded size: " + encodedSize);
+        System.out.println("Encoded hex: " + ByteArrays.toHex(buf.array(), 0, encodedSize, 1, 100, 100));
     }
 
     @Benchmark
     public Object benchmarkDecode() throws IOException {
-        buf.position(0).limit(encodecSize);
-        return codec.decode(bufIn);
+        buf.position(0).limit(encodedSize);
+        return codec.decode(buf);
     }
     @Benchmark
     public int benchmarkEncode() throws IOException {
         buf.clear();
-        codec.encode(msg, bufOut);
+        codec.encode(msg, buf);
         return buf.position();
     }
 }

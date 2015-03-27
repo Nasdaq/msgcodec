@@ -6,6 +6,9 @@
 
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.ByteBuf;
+import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.util.LimitInputStream;
@@ -49,7 +52,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @throws IOException if the underlying stream throws an exception.
      * @throws IllegalArgumentException if an illegal value is encountered, e.g. missing required field value.
      */
-    protected abstract void writeStaticGroupWithId(OutputStream out, Object group) 
+    protected abstract void writeStaticGroupWithId(ByteSink out, Object group)
             throws IOException, IllegalArgumentException;
     
     /**
@@ -62,7 +65,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @throws IOException if the underlying stream throws an exception.
      * @throws DecodeException if the group could not be decoded.
      */
-    protected abstract Object readStaticGroup(int groupId, LimitInputStream in) throws IOException, DecodeException;
+    protected abstract Object readStaticGroup(int groupId, ByteSource in) throws IOException, DecodeException;
 
     /**
      * Write a dynamic group to the specified output stream.
@@ -70,10 +73,27 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @param group the group to encode, not null
      * @throws IOException if the underlying stream throws an exception.
      */
-    public void writeDynamicGroup(OutputStream out, Object group) throws IOException, IllegalArgumentException {
-        OutputStream out2 = codec.preambleBegin();
-        writeStaticGroupWithId(out2, group);
-        codec.preambleEnd(out);
+    public void writeDynamicGroup(ByteSink out, Object group) throws IOException, IllegalArgumentException {
+//        if (out instanceof ByteBuf) {
+            ByteBuf buf = (ByteBuf) out;
+            int start = buf.position();
+            buf.skip(2); // size
+            writeStaticGroupWithId(buf, group);
+            int end = buf.position();
+            int size = end - start - 2;
+            if (size < 1<<14) {
+                buf.position(start);
+                BlinkOutput.writeVLC(buf, size, 2);
+            } else {
+                throw new RuntimeException("FIXME: handle messages larger than 2^14");
+            }
+            buf.position(end);
+//        } else {
+//            ByteSink out2 = codec.preambleBegin();
+//            writeStaticGroupWithId(out2, group);
+//            codec.preambleEnd(out);
+//            throw new RuntimeException("FIXME: should not happen");
+//        }
     }
 
     /**
@@ -82,7 +102,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @param group the group to encode, not null
      * @throws IOException if the underlying stream throws an exception.
      */
-    public void writeDynamicGroupNull(OutputStream out, Object group) throws IOException {
+    public void writeDynamicGroupNull(ByteSink out, Object group) throws IOException {
         if (group == null) {
             BlinkOutput.writeNull(out);
         } else {
@@ -96,7 +116,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @return the group, not null.
      * @throws IOException if the underlying stream throws an exception.
      */
-    public Object readDynamicGroup(LimitInputStream in) throws IOException {
+    public Object readDynamicGroup(ByteSource in) throws IOException {
         int size = BlinkInput.readUInt32(in);
         return readDynamicGroup(size, in);
     }
@@ -106,7 +126,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @return the group, or null.
      * @throws IOException if the underlying stream throws an exception.
      */
-    public Object readDynamicGroupNull(LimitInputStream in) throws IOException {
+    public Object readDynamicGroupNull(ByteSource in) throws IOException {
         Integer sizeObj = BlinkInput.readUInt32Null(in);
         if (sizeObj == null) {
             return null;
@@ -115,19 +135,19 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
         return readDynamicGroup(size, in);
     }
 
-    private Object readDynamicGroup(int size, LimitInputStream in) throws IOException {
-        int limit = in.limit();
+    private Object readDynamicGroup(int size, ByteSource in) throws IOException {
+//        int limit = in.limit();
         try {
-            if (limit >= 0) {
-                if (size > limit) {
-                    // there is already a limit that is smaller than this message size
-                    throw new DecodeException("Dynamic group size preamble (" + size +
-                            ") goes beyond current stream limit (" + limit + ").");
-                } else {
-                    limit -= size;
-                    in.limit(size);
-                }
-            }
+//            if (limit >= 0) {
+//                if (size > limit) {
+//                    // there is already a limit that is smaller than this message size
+//                    throw new DecodeException("Dynamic group size preamble (" + size +
+//                            ") goes beyond current stream limit (" + limit + ").");
+//                } else {
+//                    limit -= size;
+//                    in.limit(size);
+//                }
+//            }
             int groupId = BlinkInput.readUInt32(in);
             Object group;
             try {
@@ -140,10 +160,10 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
                     throw e;
                 }
             }
-            in.skip(in.limit());
+//            in.skip(in.limit());
             return group;
         } finally {
-            in.limit(limit); // restore old limit
+//            in.limit(limit); // restore old limit
         }
     }
 

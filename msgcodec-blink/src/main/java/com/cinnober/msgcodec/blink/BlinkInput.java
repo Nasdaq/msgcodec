@@ -17,15 +17,13 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
-import com.cinnober.msgcodec.util.InputStreams;
+import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
-
-import java.io.EOFException;
 
 /**
  * Methods for reading primitive Blink data types.
@@ -42,32 +40,6 @@ public class BlinkInput {
     private BlinkInput() {
     }
 
-    /**
-     * Read the next byte from the specified input stream.
-     * @param in the input stream to read from, not null.
-     * @return the next byte (never -1).
-     * @throws EOFException if there is no more data.
-     */
-    private static int read(InputStream in) throws IOException {
-        int b = in.read();
-        if (b == -1) {
-            throw new EOFException();
-        }
-        return b;
-    }
-
-    /**
-     * Read bytes from the specified input stream.
-     *
-     * @param in the input stream to read from, not null.
-     * @param buf the buffer into which the data is read
-     *
-     * @throws EOFException if there is no more data.
-     */
-    private static void read(InputStream in, byte[] buf) throws IOException {
-        InputStreams.readFully(in, buf);
-    }
-
 
     /**
      * Read a signed 8-bit integer.
@@ -76,7 +48,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static byte readInt8(InputStream in) throws IOException {
+    public static byte readInt8(ByteSource in) throws IOException {
         return (byte) readSignedVLC(in);
     }
     /**
@@ -86,7 +58,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static short readInt16(InputStream in) throws IOException {
+    public static short readInt16(ByteSource in) throws IOException {
         return (short) readSignedVLC(in);
     }
     /**
@@ -96,7 +68,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static int readInt32(InputStream in) throws IOException {
+    public static int readInt32(ByteSource in) throws IOException {
         return (int) readSignedVLC(in);
     }
     /**
@@ -106,7 +78,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static long readInt64(InputStream in) throws IOException {
+    public static long readInt64(ByteSource in) throws IOException {
         return readSignedVLC(in);
     }
 
@@ -117,7 +89,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static byte readUInt8(InputStream in) throws IOException {
+    public static byte readUInt8(ByteSource in) throws IOException {
         return (byte) readUnsignedVLC(in);
     }
     /**
@@ -127,7 +99,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static short readUInt16(InputStream in) throws IOException {
+    public static short readUInt16(ByteSource in) throws IOException {
         return (short) readUnsignedVLC(in);
     }
     /**
@@ -137,7 +109,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static int readUInt32(InputStream in) throws IOException {
+    public static int readUInt32(ByteSource in) throws IOException {
         return (int) readUnsignedVLC(in);
     }
     /**
@@ -147,7 +119,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static long readUInt64(InputStream in) throws IOException {
+    public static long readUInt64(ByteSource in) throws IOException {
         return readUnsignedVLC(in);
     }
 
@@ -158,8 +130,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Byte readInt8Null(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Byte readInt8Null(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -173,8 +145,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Short readInt16Null(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Short readInt16Null(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -188,8 +160,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Integer readInt32Null(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Integer readInt32Null(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -203,7 +175,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Long readInt64Null(InputStream in) throws IOException {
+    public static Long readInt64Null(ByteSource in) throws IOException {
         return readSignedVLCNull(in);
     }
 
@@ -214,8 +186,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Byte readUInt8Null(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Byte readUInt8Null(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -229,8 +201,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Short readUInt16Null(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Short readUInt16Null(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -244,8 +216,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Integer readUInt32Null(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Integer readUInt32Null(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -259,7 +231,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Long readUInt64Null(InputStream in) throws IOException {
+    public static Long readUInt64Null(ByteSource in) throws IOException {
         return readUnsignedVLCNull(in);
     }
 
@@ -270,7 +242,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigInteger readBigInt(InputStream in) throws IOException {
+    public static BigInteger readBigInt(ByteSource in) throws IOException {
         return readSignedBigVLC(in);
     }
     /**
@@ -280,7 +252,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigInteger readBigIntNull(InputStream in) throws IOException {
+    public static BigInteger readBigIntNull(ByteSource in) throws IOException {
         return readSignedBigVLCNull(in);
     }
 
@@ -292,11 +264,11 @@ public class BlinkInput {
      *
      * @param in the input stream to read from, not null.
      * @return the value
-     * @see #readFloat64(InputStream)
+     * @see #readFloat64(ByteSource)
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static float readFloat32(InputStream in) throws IOException {
+    public static float readFloat32(ByteSource in) throws IOException {
         return (float) readFloat64(in);
     }
 
@@ -308,11 +280,11 @@ public class BlinkInput {
      *
      * @param in the input stream to read from, not null.
      * @return the value, or null.
-     * @see #readFloat64(InputStream)
+     * @see #readFloat64(ByteSource)
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Float readFloat32Null(InputStream in) throws IOException {
+    public static Float readFloat32Null(ByteSource in) throws IOException {
         Double value = readFloat64Null(in);
         if (value == null) {
             return null;
@@ -328,7 +300,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static double readFloat64(InputStream in) throws IOException {
+    public static double readFloat64(ByteSource in) throws IOException {
         long value = readUInt64(in);
         return Double.longBitsToDouble(value);
     }
@@ -339,7 +311,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Double readFloat64Null(InputStream in) throws IOException {
+    public static Double readFloat64Null(ByteSource in) throws IOException {
         Long value = readUInt64Null(in);
         if (value == null) {
             return null;
@@ -355,7 +327,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigDecimal readDecimal(InputStream in) throws IOException {
+    public static BigDecimal readDecimal(ByteSource in) throws IOException {
         int exp = readInt8(in);
         long mantissa = readInt64(in);
         return BigDecimal.valueOf(mantissa, -exp);
@@ -367,7 +339,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigDecimal readDecimalNull(InputStream in) throws IOException {
+    public static BigDecimal readDecimalNull(ByteSource in) throws IOException {
         Byte exp = readInt8Null(in);
         if (exp == null) {
             return null;
@@ -384,7 +356,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigDecimal readBigDecimal(InputStream in) throws IOException {
+    public static BigDecimal readBigDecimal(ByteSource in) throws IOException {
         int exp = readInt32(in);
         BigInteger mantissa = readBigInt(in);
         return new BigDecimal(mantissa, -exp);
@@ -396,7 +368,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigDecimal readBigDecimalNull(InputStream in) throws IOException {
+    public static BigDecimal readBigDecimalNull(ByteSource in) throws IOException {
         Integer exp = readInt32Null(in);
         if (exp == null) {
             return null;
@@ -413,7 +385,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static boolean readBoolean(InputStream in) throws IOException {
+    public static boolean readBoolean(ByteSource in) throws IOException {
         return readUInt8(in) != 0;  // TODO: is it byte or VLC?
     }
     /**
@@ -423,8 +395,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Boolean readBooleanNull(InputStream in) throws IOException {
-        int b = read(in);
+    public static Boolean readBooleanNull(ByteSource in) throws IOException {
+        int b = in.read();
         if (b == 0xc0) {
             return null;
         } else {
@@ -439,7 +411,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static String readStringUTF8(InputStream in) throws IOException {
+    public static String readStringUTF8(ByteSource in) throws IOException {
         return readStringUTF8(in, -1);
     }
     /**
@@ -449,7 +421,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static String readStringUTF8Null(InputStream in) throws IOException {
+    public static String readStringUTF8Null(ByteSource in) throws IOException {
         return readStringUTF8Null(in, -1);
     }
     /**
@@ -460,10 +432,15 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static String readStringUTF8(InputStream in, int maxLength) throws IOException {
-        byte[] bytes = readBinary(in, maxLength);
-        String value = new String(bytes, UTF8); // TODO: use a cache?
-        return value;
+    public static String readStringUTF8(ByteSource in, int maxLength) throws IOException {
+        int size = readUInt32(in);
+        if (size < 0) {
+            throw new DecodeException("Cannot read string larger than " + Integer.MAX_VALUE + " bytes.");
+        }
+        if (size > maxLength && maxLength >= 0) {
+            throw new DecodeException("String length (" + size + ") exceeds limit (" + maxLength + ")");
+        }
+        return in.readStringUtf8(size);
     }
     /**
      * Read a nullable unicode string.
@@ -473,14 +450,19 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static String readStringUTF8Null(InputStream in, int maxLength) throws IOException {
-        byte[] bytes = readBinaryNull(in, maxLength);
-        if (bytes == null) {
+    public static String readStringUTF8Null(ByteSource in, int maxLength) throws IOException {
+        Integer sizeObj = readUInt32Null(in);
+        if (sizeObj == null) {
             return null;
-        } else {
-            String value = new String(bytes, UTF8); // TODO: use a cache?
-            return value;
         }
+        int size = sizeObj.intValue();
+        if (size < 0) {
+            throw new DecodeException("Cannot read string larger than " + Integer.MAX_VALUE + " bytes.");
+        }
+        if (size > maxLength && maxLength >= 0) {
+            throw new DecodeException("String length (" + size + ") exceeds limit (" + maxLength + ")");
+        }
+        return in.readStringUtf8(size);
     }
     /**
      * Read a binary value.
@@ -489,7 +471,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static byte[] readBinary(InputStream in) throws IOException {
+    public static byte[] readBinary(ByteSource in) throws IOException {
         return readBinary(in, -1);
     }
     /**
@@ -499,7 +481,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static byte[] readBinaryNull(InputStream in) throws IOException {
+    public static byte[] readBinaryNull(ByteSource in) throws IOException {
         return readBinaryNull(in, -1);
     }
     /**
@@ -510,7 +492,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static byte[] readBinary(InputStream in, int maxLength) throws IOException {
+    public static byte[] readBinary(ByteSource in, int maxLength) throws IOException {
         int size = readUInt32(in);
         if (size < 0) {
             throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
@@ -519,7 +501,7 @@ public class BlinkInput {
             throw new DecodeException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
         }
         byte[] value = new byte[size];
-        read(in, value);
+        in.read(value);
         return value;
     }
 
@@ -531,7 +513,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static byte[] readBinaryNull(InputStream in, int maxLength) throws IOException {
+    public static byte[] readBinaryNull(ByteSource in, int maxLength) throws IOException {
         Integer sizeObj = readUInt32Null(in);
         if (sizeObj == null) {
             return null;
@@ -544,7 +526,7 @@ public class BlinkInput {
             throw new DecodeException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
         }
         byte[] value = new byte[size];
-        read(in, value);
+        in.read(value);
         return value;
     }
 
@@ -555,8 +537,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Long readSignedVLCNull(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Long readSignedVLCNull(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -570,8 +552,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static long readSignedVLC(InputStream in) throws IOException {
-        return readSignedVLC(in, read(in));
+    public static long readSignedVLC(ByteSource in) throws IOException {
+        return readSignedVLC(in, in.read());
     }
 
     /**
@@ -583,7 +565,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    private static long readSignedVLC(InputStream in, int b1) throws IOException {
+    private static long readSignedVLC(ByteSource in, int b1) throws IOException {
         if ((0x80 & b1) == 0) {
             // single byte
             if ((0x40 & b1) != 0) {
@@ -595,7 +577,7 @@ public class BlinkInput {
             }
         } else if ((0xc0 & b1) == 0x80) {
             // two bytes
-            int b2 = read(in);
+            int b2 = in.read();
             if ((b2 & 0x80) != 0) {
                 // negative
                 return (-1L << 14) | (0x3fL & b1) | ((0xffL & b2) << 6);
@@ -610,7 +592,7 @@ public class BlinkInput {
             }
             long value = 0;
             for (int i=0; i<size; i++) {
-                value |= (0xffL & read(in)) << (i * 8);
+                value |= (0xffL & in.read()) << (i * 8);
             }
             if (((value >> ((size-1) * 8)) & 0x80) != 0 && // value should be negative
                 value > 0) { // but value is not already negative
@@ -628,7 +610,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigInteger readSignedBigVLC(InputStream in) throws IOException {
+    public static BigInteger readSignedBigVLC(ByteSource in) throws IOException {
     	BigInteger value = readSignedBigVLCNull(in);
     	if (value == null) {
             throw new DecodeException("Found null (0xc0) while parsing a non-nullable VLC integer");
@@ -643,8 +625,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigInteger readSignedBigVLCNull(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static BigInteger readSignedBigVLCNull(ByteSource in) throws IOException {
+        int b1 = in.read();
         if ((0x80 & b1) == 0) {
             // single byte
             if ((0x40 & b1) != 0) {
@@ -656,7 +638,7 @@ public class BlinkInput {
             }
         } else if ((0xc0 & b1) == 0x80) {
             // two bytes
-            int b2 = read(in);
+            int b2 = in.read();
             if ((b2 & 0x80) != 0) {
                 // negative
                 return BigInteger.valueOf((-1L << 14) | (0x3fL & b1) | ((0xffL & b2) << 6));
@@ -673,7 +655,7 @@ public class BlinkInput {
             } else {
                 byte[] bytes = new byte[size];
                 for (int i = bytes.length - 1; i >= 0; i--) {
-                    bytes[i] = (byte) read(in);
+                    bytes[i] = (byte) in.read();
                 }
                 return new BigInteger(bytes);
             }
@@ -687,8 +669,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static Long readUnsignedVLCNull(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static Long readUnsignedVLCNull(ByteSource in) throws IOException {
+        int b1 = in.read();
         if (b1 == 0xc0) {
             return null;
         } else {
@@ -702,8 +684,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static long readUnsignedVLC(InputStream in) throws IOException {
-        return readUnsignedVLC(in, read(in));
+    public static long readUnsignedVLC(ByteSource in) throws IOException {
+        return readUnsignedVLC(in, in.read());
     }
 
     /**
@@ -715,13 +697,13 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    private static long readUnsignedVLC(InputStream in, int b1) throws IOException {
+    private static long readUnsignedVLC(ByteSource in, int b1) throws IOException {
         if ((0x80 & b1) == 0) {
             // single byte
             return 0x7fL & b1;
         } else if ((0xc0 & b1) == 0x80) {
             // two bytes
-            int b2 = read(in);
+            int b2 = in.read();
             // positive
             return (0x3fL & b1) | ((0xffL & b2) << 6);
         } else {
@@ -731,7 +713,7 @@ public class BlinkInput {
             }
             long value = 0;
             for (int i=0; i<size; i++) {
-                value |= (0xffL & read(in)) << (i * 8);
+                value |= (0xffL & in.read()) << (i * 8);
             }
             return value;
         }
@@ -744,8 +726,8 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static boolean skipVLC(InputStream in) throws IOException {
-        int b1 = read(in);
+    public static boolean skipVLC(ByteSource in) throws IOException {
+        int b1 = in.read();
         if ((0x80 & b1) == 0) {
             // single byte
             return true;
@@ -770,7 +752,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt8(InputStream in) throws IOException {
+    public static void skipInt8(ByteSource in) throws IOException {
         skipVLC(in);
     }
     
@@ -780,7 +762,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt16(InputStream in) throws IOException {
+    public static void skipInt16(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -790,7 +772,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt32(InputStream in) throws IOException {
+    public static void skipInt32(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -800,7 +782,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt64(InputStream in) throws IOException {
+    public static void skipInt64(ByteSource in) throws IOException {
         skipVLC(in);
     }
     
@@ -810,7 +792,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt8(InputStream in) throws IOException {
+    public static void skipUInt8(ByteSource in) throws IOException {
         skipVLC(in);
     }
     
@@ -820,7 +802,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt16(InputStream in) throws IOException {
+    public static void skipUInt16(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -830,7 +812,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt32(InputStream in) throws IOException {
+    public static void skipUInt32(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -840,7 +822,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt64(InputStream in) throws IOException {
+    public static void skipUInt64(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -850,7 +832,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt8Null(InputStream in) throws IOException {
+    public static void skipInt8Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
     
@@ -860,7 +842,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt16Null(InputStream in) throws IOException {
+    public static void skipInt16Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -870,7 +852,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt32Null(InputStream in) throws IOException {
+    public static void skipInt32Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -880,7 +862,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipInt64Null(InputStream in) throws IOException {
+    public static void skipInt64Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
     
@@ -890,7 +872,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt8Null(InputStream in) throws IOException {
+    public static void skipUInt8Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
     
@@ -900,7 +882,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt16Null(InputStream in) throws IOException {
+    public static void skipUInt16Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -910,7 +892,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt32Null(InputStream in) throws IOException {
+    public static void skipUInt32Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -920,7 +902,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipUInt64Null(InputStream in) throws IOException {
+    public static void skipUInt64Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -931,7 +913,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBigInt(InputStream in) throws IOException {
+    public static void skipBigInt(ByteSource in) throws IOException {
         skipVLC(in);
     }
     /**
@@ -940,29 +922,29 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBigIntNull(InputStream in) throws IOException {
+    public static void skipBigIntNull(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
     /**
      * Skip a 32-bit floating point number.
      * @param in the input stream to read from, not null.
-     * @see #readFloat64(InputStream)
+     * @see #readFloat64(ByteSource)
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipFloat32(InputStream in) throws IOException {
+    public static void skipFloat32(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
     /**
      * Skip a nullable 32-bit floating point number.
      * @param in the input stream to read from, not null.
-     * @see #readFloat64(InputStream)
+     * @see #readFloat64(ByteSource)
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipFloat32Null(InputStream in) throws IOException {
+    public static void skipFloat32Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -972,7 +954,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipFloat64(InputStream in) throws IOException {
+    public static void skipFloat64(ByteSource in) throws IOException {
         skipVLC(in);
     }
     /**
@@ -981,7 +963,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipFloat64Null(InputStream in) throws IOException {
+    public static void skipFloat64Null(ByteSource in) throws IOException {
         skipVLC(in);
     }
 
@@ -991,7 +973,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipDecimal(InputStream in) throws IOException {
+    public static void skipDecimal(ByteSource in) throws IOException {
         skipVLC(in);
         skipVLC(in);
     }
@@ -1001,7 +983,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipDecimalNull(InputStream in) throws IOException {
+    public static void skipDecimalNull(ByteSource in) throws IOException {
         if (skipVLC(in)) {
             skipVLC(in);
         }
@@ -1013,7 +995,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBigDecimal(InputStream in) throws IOException {
+    public static void skipBigDecimal(ByteSource in) throws IOException {
         skipDecimal(in);
     }
     /**
@@ -1022,7 +1004,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBigDecimalNull(InputStream in) throws IOException {
+    public static void skipBigDecimalNull(ByteSource in) throws IOException {
         skipDecimalNull(in);
     }
 
@@ -1032,7 +1014,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBoolean(InputStream in) throws IOException {
+    public static void skipBoolean(ByteSource in) throws IOException {
         in.skip(1); // TODO: is it byte or VLC?
     }
     /**
@@ -1041,7 +1023,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBooleanNull(InputStream in) throws IOException {
+    public static void skipBooleanNull(ByteSource in) throws IOException {
         in.skip(1); // TODO: is it byte or VLC?
     }
 
@@ -1051,7 +1033,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipStringUTF8(InputStream in) throws IOException {
+    public static void skipStringUTF8(ByteSource in) throws IOException {
         skipBinary(in);
     }
     /**
@@ -1060,7 +1042,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipStringUTF8Null(InputStream in) throws IOException {
+    public static void skipStringUTF8Null(ByteSource in) throws IOException {
         skipBinaryNull(in);
     }
     /**
@@ -1069,7 +1051,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBinary(InputStream in) throws IOException {
+    public static void skipBinary(ByteSource in) throws IOException {
         int size = readUInt32(in);
         if (size < 0) {
             throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
@@ -1082,7 +1064,7 @@ public class BlinkInput {
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static void skipBinaryNull(InputStream in) throws IOException {
+    public static void skipBinaryNull(ByteSource in) throws IOException {
         Integer sizeObj = readUInt32Null(in);
         if (sizeObj == null) {
             return;
