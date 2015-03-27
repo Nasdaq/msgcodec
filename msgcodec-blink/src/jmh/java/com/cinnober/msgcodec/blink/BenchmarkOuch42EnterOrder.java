@@ -68,6 +68,7 @@ public class BenchmarkOuch42EnterOrder {
         msg.customerType = 'R';
 
         encodecSize = benchmarkEncode();
+        System.out.println("Encoded size: " + encodecSize);
     }
 
     @Benchmark
