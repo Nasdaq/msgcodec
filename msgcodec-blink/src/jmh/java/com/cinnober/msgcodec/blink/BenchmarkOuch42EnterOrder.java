@@ -31,6 +31,7 @@ public class BenchmarkOuch42EnterOrder {
     private Ouch42EnterOrder msg;
     private BlinkCodec codec;
     private ByteBuffer buf;
+    private int encodecSize;
     private ByteBufferOutputStream bufOut;
     private ByteBufferInputStream bufIn;
 
@@ -40,7 +41,7 @@ public class BenchmarkOuch42EnterOrder {
     }
 
     @Setup
-    public void setup() {
+    public void setup() throws IOException {
         ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(Ouch42EnterOrder.class);
         BlinkCodecFactory factory = new BlinkCodecFactory(dict);
         factory.setCodecOption(bytecode ? 
@@ -65,13 +66,13 @@ public class BenchmarkOuch42EnterOrder {
         msg.minimumQuantity = 1;
         msg.crossType = 'N';
         msg.customerType = 'R';
+
+        encodecSize = benchmarkEncode();
     }
 
     @Benchmark
-    public Object benchmarkEncodeDecode() throws IOException {
-        buf.clear();
-        codec.encode(msg, bufOut);
-        buf.flip();
+    public Object benchmarkDecode() throws IOException {
+        buf.position(0).limit(encodecSize);
         return codec.decode(bufIn);
     }
     @Benchmark
