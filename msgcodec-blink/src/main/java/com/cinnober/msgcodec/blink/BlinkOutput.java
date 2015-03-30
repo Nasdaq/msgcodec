@@ -537,67 +537,59 @@ public class BlinkOutput {
         if (size == 1) {
             out.write((int)value & 0x7f);
         } else if (size == 2) {
-            out.write2(
-                    ((int)value & 0x3f) | 0x80,
-                    (int)(value >> 6) & 0xff);
+            out.write(((int)value & 0x3f) | 0x80);
+            out.write((int)(value >> 6) & 0xff);
         } else {
-            out.write(((size - 1) & 0x3f) | 0xc0);
+            out.write(((size-1) & 0x3f) | 0xc0);
             switch (size) {
                 case 3:
-                    out.write2(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
                     break;
                 case 4:
-                    out.write3(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff,
-                            (int) (value >> 16) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
+                    out.write((int)(value >> 16) & 0xff);
                     break;
                 case 5:
-                    out.write4(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff,
-                            (int) (value >> 16) & 0xff,
-                            (int) (value >> 24) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
+                    out.write((int)(value >> 16) & 0xff);
+                    out.write((int)(value >> 24) & 0xff);
                     break;
                 case 6:
-                    out.write5(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff,
-                            (int) (value >> 16) & 0xff,
-                            (int) (value >> 24) & 0xff,
-                            (int) (value >> 32) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
+                    out.write((int)(value >> 16) & 0xff);
+                    out.write((int)(value >> 24) & 0xff);
+                    out.write((int)(value >> 32) & 0xff);
                     break;
                 case 7:
-                    out.write6(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff,
-                            (int) (value >> 16) & 0xff,
-                            (int) (value >> 24) & 0xff,
-                            (int) (value >> 32) & 0xff,
-                            (int) (value >> 40) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
+                    out.write((int)(value >> 16) & 0xff);
+                    out.write((int)(value >> 24) & 0xff);
+                    out.write((int)(value >> 32) & 0xff);
+                    out.write((int)(value >> 40) & 0xff);
                     break;
                 case 8:
-                    out.write7(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff,
-                            (int) (value >> 16) & 0xff,
-                            (int) (value >> 24) & 0xff,
-                            (int) (value >> 32) & 0xff,
-                            (int) (value >> 40) & 0xff,
-                            (int) (value >> 48) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
+                    out.write((int)(value >> 16) & 0xff);
+                    out.write((int)(value >> 24) & 0xff);
+                    out.write((int)(value >> 32) & 0xff);
+                    out.write((int)(value >> 40) & 0xff);
+                    out.write((int)(value >> 48) & 0xff);
                     break;
                 case 9:
-                    out.write8(
-                            (int) value & 0xff,
-                            (int) (value >> 8) & 0xff,
-                            (int) (value >> 16) & 0xff,
-                            (int) (value >> 24) & 0xff,
-                            (int) (value >> 32) & 0xff,
-                            (int) (value >> 40) & 0xff,
-                            (int) (value >> 48) & 0xff,
-                            (int) (value >> 56) & 0xff);
+                    out.write((int)value & 0xff);
+                    out.write((int)(value >> 8) & 0xff);
+                    out.write((int)(value >> 16) & 0xff);
+                    out.write((int)(value >> 24) & 0xff);
+                    out.write((int)(value >> 32) & 0xff);
+                    out.write((int)(value >> 40) & 0xff);
+                    out.write((int)(value >> 48) & 0xff);
+                    out.write((int)(value >> 56) & 0xff);
                     break;
                 default:
                     throw new IllegalArgumentException("Illegal size: " + size);
