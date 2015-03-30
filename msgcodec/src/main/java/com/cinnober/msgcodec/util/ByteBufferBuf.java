@@ -85,7 +85,7 @@ public class ByteBufferBuf implements ByteBuf {
 
     @Override
     public int read() throws IOException {
-        return buf.get();
+        return 0xff & buf.get();
     }
 
     @Override

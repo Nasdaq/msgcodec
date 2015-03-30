@@ -81,7 +81,7 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public int read() throws IOException {
-        return data[pos++];
+        return 0xff & data[pos++];
     }
 
     @Override
