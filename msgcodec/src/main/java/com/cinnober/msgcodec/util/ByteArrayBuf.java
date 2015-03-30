@@ -130,7 +130,7 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public void shift(int position, int length, int distance) {
-        System.arraycopy(data, pos, data, position+distance, length);
+        System.arraycopy(data, position, data, position+distance, length);
     }
 
     public void copyTo(ByteSink out) throws IOException {
