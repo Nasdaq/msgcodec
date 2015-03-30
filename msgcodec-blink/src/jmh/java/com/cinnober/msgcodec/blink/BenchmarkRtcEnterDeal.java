@@ -1,6 +1,5 @@
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ByteBuf;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.ProtocolDictionary;
 import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
@@ -10,10 +9,9 @@ import com.cinnober.msgcodec.blink.rtcmessages.Request;
 import com.cinnober.msgcodec.blink.rtcmessages.SessionToken;
 import com.cinnober.msgcodec.blink.rtcmessages.TradeDestination;
 import com.cinnober.msgcodec.blink.rtcmessages.TradeExternalData;
-import com.cinnober.msgcodec.util.ByteArrayBuf;
 import com.cinnober.msgcodec.util.ByteArrays;
-import com.cinnober.msgcodec.util.ByteBufferBuf;
-import com.cinnober.msgcodec.util.ByteBuffers;
+import com.cinnober.msgcodec.util.ByteBufferInputStream;
+import com.cinnober.msgcodec.util.ByteBufferOutputStream;
 import com.cinnober.msgcodec.util.TimeFormat;
 import java.io.IOException;
 import java.math.*;
@@ -42,17 +40,13 @@ public class BenchmarkRtcEnterDeal {
     //@Param({"true", "false"})
     public boolean bytecode;
 
-    @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
-    public BufferType bufType;
-
     private EnterDeal msg;
     private BlinkCodec codec;
+    private ByteBuffer buf;
     private int encodedSize;
+    private ByteBufferOutputStream bufOut;
+    private ByteBufferInputStream bufIn;
 
-    private ByteBuf buf;
-
-    public BenchmarkRtcEnterDeal() {
-    }
 
     @Setup
     public void setup() throws IOException {
@@ -65,34 +59,19 @@ public class BenchmarkRtcEnterDeal {
                 TradeExternalData.class
         ).assignGroupIds();
         BlinkCodecFactory factory = new BlinkCodecFactory(dict);
-        factory.setCodecOption(bytecode ? 
+        factory.setCodecOption(bytecode ?
                 CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
                 CodecOption.INSTRUCTION_CODEC_ONLY);
         codec = factory.createStreamCodec();
-        final int bufferSize = 1024;
-        switch (bufType) {
-            case ARRAY:
-                buf = new ByteArrayBuf(new byte[bufferSize]);
-                break;
-            case BUFFER:
-                buf = new ByteBufferBuf(ByteBuffer.allocate(bufferSize));
-                break;
-            case DIRECT_BUFFER:
-                buf = new ByteBufferBuf(ByteBuffer.allocateDirect(bufferSize));
-                break;
-            default:
-                throw new RuntimeException("Unhandled case: " + bufType);
-        }
+        buf = ByteBuffer.allocate(1024);
+        bufOut = new ByteBufferOutputStream(buf);
+        bufIn = new ByteBufferInputStream(buf);
 
         msg = createRtcEnterDeal();
 
         encodedSize = benchmarkEncode();
         System.out.println("Encoded size: " + encodedSize);
-        if (bufType == BufferType.ARRAY) {
-            System.out.println("Encoded hex: " + ByteArrays.toHex(((ByteArrayBuf)buf).array(), 0, encodedSize, 1, 100, 100));
-        } else {
-            System.out.println("Encoded hex: " + ByteBuffers.toHex(((ByteBufferBuf)buf).buffer(), 0, encodedSize, 1, 100, 100));
-        }
+        System.out.println("Encoded hex: " + ByteArrays.toHex(buf.array(), 0, encodedSize, 1, 100, 100));
     }
 
     public static EnterDeal createRtcEnterDeal() {
@@ -124,12 +103,12 @@ public class BenchmarkRtcEnterDeal {
     @Benchmark
     public Object benchmarkDecode() throws IOException {
         buf.position(0).limit(encodedSize);
-        return codec.decode(buf);
+        return codec.decode(bufIn);
     }
     @Benchmark
     public int benchmarkEncode() throws IOException {
         buf.clear();
-        codec.encode(msg, buf);
+        codec.encode(msg, bufOut);
         return buf.position();
     }
 }
