@@ -358,8 +358,7 @@ public class BlinkInput {
      */
     public static BigDecimal readBigDecimal(ByteSource in) throws IOException {
         int exp = readInt32(in);
-        BigInteger mantissa = readBigInt(in);
-        return new BigDecimal(mantissa, -exp);
+        return readBigDecimalMantissa(in, exp);
     }
     /**
      * Read a nullable big decimal number.
@@ -373,8 +372,16 @@ public class BlinkInput {
         if (exp == null) {
             return null;
         } else {
-        	BigInteger mantissa = readBigInt(in);
-            return new BigDecimal(mantissa, -exp.intValue());
+            return readBigDecimalMantissa(in, exp);
+        }
+    }
+
+    private static BigDecimal readBigDecimalMantissa(ByteSource in, int exp) throws IOException {
+        int b1 = in.read();
+        if ((0xc0 & b1) == 0xc0 && (0x3f & b1) <= 8) {
+            return BigDecimal.valueOf(readSignedVLC(in, b1), -exp);
+        } else {
+            return new BigDecimal(readSignedBigVLCNull(in, b1), -exp);
         }
     }
 
@@ -626,7 +633,17 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static BigInteger readSignedBigVLCNull(ByteSource in) throws IOException {
-        int b1 = in.read();
+        return readSignedBigVLCNull(in, in.read());
+    }
+    /**
+     * Read a nullable unsigned big variable-length code value.
+     * @param in the input stream to read from, not null.
+     * @param b1 the first byte read.
+     * @return the value, or null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    private static BigInteger readSignedBigVLCNull(ByteSource in, int b1) throws IOException {
         if ((0x80 & b1) == 0) {
             // single byte
             if ((0x40 & b1) != 0) {

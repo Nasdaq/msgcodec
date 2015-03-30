@@ -26,7 +26,7 @@ import org.openjdk.jmh.annotations.*;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 @State(Scope.Benchmark)
@@ -42,7 +42,8 @@ public class BenchmarkRtcEnterDeal {
     //@Param({"true", "false"})
     public boolean bytecode;
 
-    @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
+//    @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
+    @Param({"ARRAY"})
     public BufferType bufType;
 
     private EnterDeal msg;
