@@ -30,4 +30,5 @@ public interface ByteBuf extends ByteSource, ByteSink {
     ByteBuf limit(int limit);
     ByteBuf clear();
     ByteBuf flip();
+    void shift(int position, int length, int distance);
 }

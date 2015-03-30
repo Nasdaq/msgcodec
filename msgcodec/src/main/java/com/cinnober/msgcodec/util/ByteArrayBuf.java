@@ -128,6 +128,11 @@ public class ByteArrayBuf implements ByteBuf {
     }
 
     @Override
+    public void shift(int position, int length, int distance) {
+        System.arraycopy(data, pos, data, position+distance, length);
+    }
+
+    @Override
     public void write2(int b1, int b2) throws IOException {
         data[pos] = (byte) b1;
         data[pos+1] = (byte) b2;

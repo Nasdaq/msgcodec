@@ -74,7 +74,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @throws IOException if the underlying stream throws an exception.
      */
     public void writeDynamicGroup(ByteSink out, Object group) throws IOException, IllegalArgumentException {
-//        if (out instanceof ByteBuf) {
+        if (out instanceof ByteBuf) {
             ByteBuf buf = (ByteBuf) out;
             int start = buf.position();
             buf.skip(2); // size
@@ -85,15 +85,16 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
                 buf.position(start);
                 BlinkOutput.writeVLC(buf, size, 2);
             } else {
-                throw new RuntimeException("FIXME: handle messages larger than 2^14");
+                int sizeOfSize = BlinkOutput.sizeOfUnsignedVLC(size);
+                buf.shift(start+2, size, sizeOfSize-2);
+                BlinkOutput.writeVLC(buf, size, sizeOfSize);
             }
             buf.position(end);
-//        } else {
-//            ByteSink out2 = codec.preambleBegin();
-//            writeStaticGroupWithId(out2, group);
-//            codec.preambleEnd(out);
-//            throw new RuntimeException("FIXME: should not happen");
-//        }
+        } else {
+            ByteSink out2 = codec.preambleBegin();
+            writeStaticGroupWithId(out2, group);
+            codec.preambleEnd(out);
+        }
     }
 
     /**
