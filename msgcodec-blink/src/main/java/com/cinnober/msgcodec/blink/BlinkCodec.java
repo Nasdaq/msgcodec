@@ -69,6 +69,8 @@ public class BlinkCodec implements StreamCodec {
     /** Blink output stream wrapped around the {@link #internalBuffer}. */
     private final BlinkOutputStream internalStream;
 
+    private final Pool<byte[]> bufferPool;
+
     private final int maxBinarySize;
     private final int maxSequenceLength;
 
@@ -103,6 +105,7 @@ public class BlinkCodec implements StreamCodec {
         if (!dictionary.isBound()) {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
+        this.bufferPool = bufferPool;
         if (bufferPool != null) {
             this.internalBuffer = new TempOutputStream(bufferPool);
             this.internalStream = new BlinkOutputStream(internalBuffer);
@@ -138,6 +141,10 @@ public class BlinkCodec implements StreamCodec {
             generatedCodecTmp = new InstructionCodec(this, dictionary);
         }
         generatedCodec = generatedCodecTmp;
+    }
+
+    Pool<byte[]> bufferPool() {
+        return bufferPool;
     }
 
     // PENDING: this method should be package private. For some reason the generated codec cannot access package private stuff...

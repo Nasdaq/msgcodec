@@ -19,6 +19,7 @@
 package com.cinnober.msgcodec.util;
 
 import com.cinnober.msgcodec.ByteBuf;
+import com.cinnober.msgcodec.ByteSink;
 import java.io.IOException;
 
 /**
@@ -130,6 +131,10 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void shift(int position, int length, int distance) {
         System.arraycopy(data, pos, data, position+distance, length);
+    }
+
+    public void copyTo(ByteSink out) throws IOException {
+        out.write(data, pos, limit-pos);
     }
 
     @Override

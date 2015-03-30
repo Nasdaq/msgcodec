@@ -11,6 +11,7 @@ import com.cinnober.msgcodec.ByteSink;
 import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.GroupDef;
+import com.cinnober.msgcodec.util.ByteArrayBuf;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -91,9 +92,18 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
             }
             buf.position(end);
         } else {
-            ByteSink out2 = codec.preambleBegin();
-            writeStaticGroupWithId(out2, group);
-            codec.preambleEnd(out);
+            byte[] tmpBuf = codec.bufferPool().get();
+            try {
+                ByteArrayBuf tmpOut = new ByteArrayBuf(tmpBuf);
+                writeDynamicGroup(tmpOut, group);
+                tmpOut.flip();
+                tmpOut.copyTo(out);
+            } finally {
+                codec.bufferPool().release(tmpBuf);
+            }
+//            ByteSink out2 = codec.preambleBegin();
+//            writeStaticGroupWithId(out2, group);
+//            codec.preambleEnd(out);
         }
     }
 
