@@ -534,66 +534,72 @@ public class BlinkOutput {
      * @throws IOException if the underlying stream throws an exception
      */
     static void writeVLC(ByteSink out, long value, int size) throws IOException {
-        if (size == 1) {
-            out.write((int)value & 0x7f);
-        } else if (size == 2) {
-            out.write(((int)value & 0x3f) | 0x80);
-            out.write((int)(value >> 6) & 0xff);
-        } else {
-            out.write(((size-1) & 0x3f) | 0xc0);
-            switch (size) {
-                case 3:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    break;
-                case 4:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    out.write((int)(value >> 16) & 0xff);
-                    break;
-                case 5:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    out.write((int)(value >> 16) & 0xff);
-                    out.write((int)(value >> 24) & 0xff);
-                    break;
-                case 6:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    out.write((int)(value >> 16) & 0xff);
-                    out.write((int)(value >> 24) & 0xff);
-                    out.write((int)(value >> 32) & 0xff);
-                    break;
-                case 7:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    out.write((int)(value >> 16) & 0xff);
-                    out.write((int)(value >> 24) & 0xff);
-                    out.write((int)(value >> 32) & 0xff);
-                    out.write((int)(value >> 40) & 0xff);
-                    break;
-                case 8:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    out.write((int)(value >> 16) & 0xff);
-                    out.write((int)(value >> 24) & 0xff);
-                    out.write((int)(value >> 32) & 0xff);
-                    out.write((int)(value >> 40) & 0xff);
-                    out.write((int)(value >> 48) & 0xff);
-                    break;
-                case 9:
-                    out.write((int)value & 0xff);
-                    out.write((int)(value >> 8) & 0xff);
-                    out.write((int)(value >> 16) & 0xff);
-                    out.write((int)(value >> 24) & 0xff);
-                    out.write((int)(value >> 32) & 0xff);
-                    out.write((int)(value >> 40) & 0xff);
-                    out.write((int)(value >> 48) & 0xff);
-                    out.write((int)(value >> 56) & 0xff);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Illegal size: " + size);
-            }
+        switch (size) {
+            case 1:
+                out.write((int)value & 0x7f);
+                break;
+            case 2:
+                out.write(((int)value & 0x3f) | 0x80);
+                out.write((int)(value >> 6) & 0xff);
+                break;
+            case 3:
+                out.write(((3-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                break;
+            case 4:
+                out.write(((4-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                out.write((int)(value >> 16) & 0xff);
+                break;
+            case 5:
+                out.write(((5-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                out.write((int)(value >> 16) & 0xff);
+                out.write((int)(value >> 24) & 0xff);
+                break;
+            case 6:
+                out.write(((6-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                out.write((int)(value >> 16) & 0xff);
+                out.write((int)(value >> 24) & 0xff);
+                out.write((int)(value >> 32) & 0xff);
+                break;
+            case 7:
+                out.write(((7-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                out.write((int)(value >> 16) & 0xff);
+                out.write((int)(value >> 24) & 0xff);
+                out.write((int)(value >> 32) & 0xff);
+                out.write((int)(value >> 40) & 0xff);
+                break;
+            case 8:
+                out.write(((8-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                out.write((int)(value >> 16) & 0xff);
+                out.write((int)(value >> 24) & 0xff);
+                out.write((int)(value >> 32) & 0xff);
+                out.write((int)(value >> 40) & 0xff);
+                out.write((int)(value >> 48) & 0xff);
+                break;
+            case 9:
+                out.write(((9-1) & 0x3f) | 0xc0);
+                out.write((int)value & 0xff);
+                out.write((int)(value >> 8) & 0xff);
+                out.write((int)(value >> 16) & 0xff);
+                out.write((int)(value >> 24) & 0xff);
+                out.write((int)(value >> 32) & 0xff);
+                out.write((int)(value >> 40) & 0xff);
+                out.write((int)(value >> 48) & 0xff);
+                out.write((int)(value >> 56) & 0xff);
+                break;
+            default:
+                throw new IllegalArgumentException("Illegal size: " + size);
         }
     }
 
