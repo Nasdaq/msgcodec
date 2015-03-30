@@ -40,10 +40,6 @@ public class BlinkOutputStream extends FilterOutputStream {
         sink = new OutputStreamSink(out);
     }
 
-    ByteSink sink() {
-        return sink;
-    }
-
     /**
      * Write the null (0xc0) value.
      *

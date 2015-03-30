@@ -17,10 +17,11 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import java.io.IOException;
-
+import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.GroupDef;
+import java.io.IOException;
 
 /** The static group instruction can encode and decode the fields of a group.
  * Any dynamic behaviour lies outside this class, e.g. lookup of <em>which</em>
@@ -48,13 +49,13 @@ class StaticGroupInstruction {
      * @param out
      * @throws IOException
      */
-    public void encodeGroupId(BlinkOutputStream out) throws IOException {
+    public void encodeGroupId(ByteSink out) throws IOException {
         int id = groupDef.getId();
         if (id == -1) {
             throw new IllegalArgumentException("Missing group id, cannot encode as dynamic group: " +
                     groupDef.getName());
         }
-        out.writeUInt32(id);
+        BlinkOutput.writeUInt32(out, id);
     }
     /** Write the fields of the group, including any super groups.
      *
@@ -62,7 +63,7 @@ class StaticGroupInstruction {
      * @param out
      * @throws IOException
      */
-    public void encodeGroup(Object group, BlinkOutputStream out) throws IOException {
+    public void encodeGroup(Object group, ByteSink out) throws IOException {
         if (superGroup != null) {
             superGroup.encodeGroup(group, out);
         }
@@ -76,7 +77,7 @@ class StaticGroupInstruction {
      * @return the group, not null
      * @throws IOException
      */
-    public Object decodeGroup(BlinkInputStream in) throws IOException {
+    public Object decodeGroup(ByteSource in) throws IOException {
         Object group = factory.newInstance();
         decodeGroup(group, in);
         return group;
@@ -87,7 +88,7 @@ class StaticGroupInstruction {
      * @param in
      * @throws IOException
      */
-    private void decodeGroup(Object group, BlinkInputStream in) throws IOException {
+    private void decodeGroup(Object group, ByteSource in) throws IOException {
         if (superGroup != null) {
             superGroup.decodeGroup(group, in);
         }

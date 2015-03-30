@@ -262,14 +262,6 @@ class InstructionCodec extends GeneratedCodec {
 
     @Override
     protected void writeStaticGroupWithId(ByteSink out, Object value) throws IOException, IllegalArgumentException {
-        throw new RuntimeException("not implemented");
-//        if (out instanceof BlinkOutputStream) {
-//            writeStaticGroupWithId((BlinkOutputStream)out, value);
-//        } else {
-//            writeStaticGroupWithId(new BlinkOutputStream(out), value);
-//        }
-    }
-    private void writeStaticGroupWithId(BlinkOutputStream out, Object value) throws IOException, IllegalArgumentException {
         Object groupType = groupTypeAccessor.getGroupType(value);
         StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupType);
         if (groupInstruction == null) {
@@ -282,19 +274,15 @@ class InstructionCodec extends GeneratedCodec {
 
     @Override
     protected Object readStaticGroup(int groupId, ByteSource in) throws IOException, DecodeException {
-        throw new RuntimeException("not implemented");
-        //return readStaticGroup(groupId, new BlinkInputStream(in));
-    }
-    private Object readStaticGroup(int groupId, BlinkInputStream in) throws IOException, DecodeException {
         StaticGroupInstruction groupInstruction = groupInstructionsById.get(groupId);
         if (groupInstruction == null) {
             throw new DecodeException("Unknown group id: " + groupId);
         }
 
-        int limit = in.limit();
+//        int limit = in.limit();
         Object group = groupInstruction.decodeGroup(in);
-        in.skip(in.limit());
-        in.limit(limit); // restore old limit
+//        in.skip(in.limit());
+//        in.limit(limit); // restore old limit
         return group;
     }
 

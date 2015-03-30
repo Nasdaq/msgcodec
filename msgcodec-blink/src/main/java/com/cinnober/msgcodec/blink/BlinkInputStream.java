@@ -43,12 +43,6 @@ public class BlinkInputStream extends LimitInputStream  {
         source = new InputStreamSource(in);
     }
 
-    ByteSource source() {
-        return source;
-    }
-
-
-
     private int sizeLimit(int maxLength) {
         if (maxLength < 0) {
             return maxBinarySize;

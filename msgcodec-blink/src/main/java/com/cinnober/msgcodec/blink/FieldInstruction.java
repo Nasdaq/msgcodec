@@ -17,21 +17,22 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
-
 import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Time;
-import java.util.List;
 
 import static com.cinnober.msgcodec.blink.DateUtil.*;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * A field instruction can encode or decode a field in a group.
@@ -61,10 +62,10 @@ abstract class FieldInstruction<V> {
      * @param group the group from where the field is read, not null.
      * @param out where the encoded field is written
      * @throws IOException
-     * @see #encodeValue(Object, BlinkOutputStream)
+     * @see #encodeValue(Object, ByteSink)
      */
     @SuppressWarnings("unchecked")
-    public void encodeField(Object group, BlinkOutputStream out) throws IOException {
+    public void encodeField(Object group, ByteSink out) throws IOException {
         Object value = accessor.getValue(group);
         encodeValue((V)value, out);
     }
@@ -77,10 +78,10 @@ abstract class FieldInstruction<V> {
      * @param group the group into which the field is copied.
      * @param in where to read the encoded field.
      * @throws IOException
-     * @see #decodeValue(BlinkInputStream)
+     * @see #decodeValue(ByteSource)
      */
     @SuppressWarnings("unchecked")
-    public void decodeField(Object group, BlinkInputStream in) throws IOException {
+    public void decodeField(Object group, ByteSource in) throws IOException {
         Object value;
         try {
             value = decodeValue(in);
@@ -111,14 +112,14 @@ abstract class FieldInstruction<V> {
      * @param out
      * @throws IOException
      */
-    public abstract void encodeValue(V value, BlinkOutputStream out) throws IOException;
+    public abstract void encodeValue(V value, ByteSink out) throws IOException;
     /** Decode a value from the input stream.
      *
      * @param in
      * @return the decoded value.
      * @throws IOException
      */
-    public abstract V decodeValue(BlinkInputStream in) throws IOException;
+    public abstract V decodeValue(ByteSource in) throws IOException;
 
     @Override
     public String toString() {
@@ -135,13 +136,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Byte value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Byte value, ByteSink out) throws IOException {
             require(value);
-            out.writeInt8(value);
+            BlinkOutput.writeInt8(out, value);
         }
         @Override
-        public Byte decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt8();
+        public Byte decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt8(in);
         }
     }
     static class Int16 extends FieldInstruction<Short> {
@@ -149,13 +150,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Short value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Short value, ByteSink out) throws IOException {
             require(value);
-            out.writeInt16(value);
+            BlinkOutput.writeInt16(out, value);
         }
         @Override
-        public Short decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt16();
+        public Short decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt16(in);
         }
     }
     static class Int32 extends FieldInstruction<Integer> {
@@ -163,13 +164,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Integer value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Integer value, ByteSink out) throws IOException {
             require(value);
-            out.writeInt32(value);
+            BlinkOutput.writeInt32(out, value);
         }
         @Override
-        public Integer decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt32();
+        public Integer decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt32(in);
         }
     }
     static class Int64 extends FieldInstruction<Long> {
@@ -177,13 +178,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Long value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Long value, ByteSink out) throws IOException {
             require(value);
-            out.writeInt64(value);
+            BlinkOutput.writeInt64(out, value);
         }
         @Override
-        public Long decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt64();
+        public Long decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt64(in);
         }
     }
     static class Int8Null extends FieldInstruction<Byte> {
@@ -191,12 +192,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Byte value, BlinkOutputStream out) throws IOException {
-            out.writeInt8Null(value);
+        public void encodeValue(Byte value, ByteSink out) throws IOException {
+            BlinkOutput.writeInt8Null(out, value);
         }
         @Override
-        public Byte decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt8Null();
+        public Byte decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt8Null(in);
         }
     }
     static class Int16Null extends FieldInstruction<Short> {
@@ -204,12 +205,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Short value, BlinkOutputStream out) throws IOException {
-            out.writeInt16Null(value);
+        public void encodeValue(Short value, ByteSink out) throws IOException {
+            BlinkOutput.writeInt16Null(out, value);
         }
         @Override
-        public Short decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt16Null();
+        public Short decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt16Null(in);
         }
     }
     static class Int32Null extends FieldInstruction<Integer> {
@@ -217,12 +218,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Integer value, BlinkOutputStream out) throws IOException {
-            out.writeInt32Null(value);
+        public void encodeValue(Integer value, ByteSink out) throws IOException {
+            BlinkOutput.writeInt32Null(out, value);
         }
         @Override
-        public Integer decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt32Null();
+        public Integer decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt32Null(in);
         }
     }
     static class Int64Null extends FieldInstruction<Long> {
@@ -230,12 +231,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Long value, BlinkOutputStream out) throws IOException {
-            out.writeInt64Null(value);
+        public void encodeValue(Long value, ByteSink out) throws IOException {
+            BlinkOutput.writeInt64Null(out, value);
         }
         @Override
-        public Long decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt64Null();
+        public Long decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt64Null(in);
         }
     }
     static class UInt8 extends FieldInstruction<Byte> {
@@ -243,13 +244,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Byte value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Byte value, ByteSink out) throws IOException {
             require(value);
-            out.writeUInt8(value);
+            BlinkOutput.writeUInt8(out, value);
         }
         @Override
-        public Byte decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt8();
+        public Byte decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt8(in);
         }
     }
     static class UInt16 extends FieldInstruction<Short> {
@@ -257,13 +258,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Short value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Short value, ByteSink out) throws IOException {
             require(value);
-            out.writeUInt16(value);
+            BlinkOutput.writeUInt16(out, value);
         }
         @Override
-        public Short decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt16();
+        public Short decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt16(in);
         }
     }
     static class UInt32 extends FieldInstruction<Integer> {
@@ -271,13 +272,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Integer value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Integer value, ByteSink out) throws IOException {
             require(value);
-            out.writeUInt32(value);
+            BlinkOutput.writeUInt32(out, value);
         }
         @Override
-        public Integer decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt32();
+        public Integer decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt32(in);
         }
     }
     static class UInt64 extends FieldInstruction<Long> {
@@ -285,13 +286,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Long value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Long value, ByteSink out) throws IOException {
             require(value);
-            out.writeUInt64(value);
+            BlinkOutput.writeUInt64(out, value);
         }
         @Override
-        public Long decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt64();
+        public Long decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt64(in);
         }
     }
     static class UInt8Null extends FieldInstruction<Byte> {
@@ -299,12 +300,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Byte value, BlinkOutputStream out) throws IOException {
-            out.writeUInt8Null(value);
+        public void encodeValue(Byte value, ByteSink out) throws IOException {
+            BlinkOutput.writeUInt8Null(out, value);
         }
         @Override
-        public Byte decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt8Null();
+        public Byte decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt8Null(in);
         }
     }
     static class UInt16Null extends FieldInstruction<Short> {
@@ -312,12 +313,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Short value, BlinkOutputStream out) throws IOException {
-            out.writeUInt16Null(value);
+        public void encodeValue(Short value, ByteSink out) throws IOException {
+            BlinkOutput.writeUInt16Null(out, value);
         }
         @Override
-        public Short decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt16Null();
+        public Short decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt16Null(in);
         }
     }
     static class UInt32Null extends FieldInstruction<Integer> {
@@ -325,12 +326,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Integer value, BlinkOutputStream out) throws IOException {
-            out.writeUInt32Null(value);
+        public void encodeValue(Integer value, ByteSink out) throws IOException {
+            BlinkOutput.writeUInt32Null(out, value);
         }
         @Override
-        public Integer decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt32Null();
+        public Integer decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt32Null(in);
         }
     }
     static class UInt64Null extends FieldInstruction<Long> {
@@ -338,12 +339,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Long value, BlinkOutputStream out) throws IOException {
-            out.writeUInt64Null(value);
+        public void encodeValue(Long value, ByteSink out) throws IOException {
+            BlinkOutput.writeUInt64Null(out, value);
         }
         @Override
-        public Long decodeValue(BlinkInputStream in) throws IOException {
-            return in.readUInt64Null();
+        public Long decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readUInt64Null(in);
         }
     }
 
@@ -353,13 +354,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Float value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Float value, ByteSink out) throws IOException {
             require(value);
-            out.writeFloat32(value);
+            BlinkOutput.writeFloat32(out, value);
         }
         @Override
-        public Float decodeValue(BlinkInputStream in) throws IOException {
-            return in.readFloat32();
+        public Float decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readFloat32(in);
         }
     }
     static class Float32Null extends FieldInstruction<Float> {
@@ -367,12 +368,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Float value, BlinkOutputStream out) throws IOException {
-            out.writeFloat32Null(value);
+        public void encodeValue(Float value, ByteSink out) throws IOException {
+            BlinkOutput.writeFloat32Null(out, value);
         }
         @Override
-        public Float decodeValue(BlinkInputStream in) throws IOException {
-            return in.readFloat32Null();
+        public Float decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readFloat32Null(in);
         }
     }
     static class Float64 extends FieldInstruction<Double> {
@@ -380,13 +381,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Double value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Double value, ByteSink out) throws IOException {
             require(value);
-            out.writeFloat64(value);
+            BlinkOutput.writeFloat64(out, value);
         }
         @Override
-        public Double decodeValue(BlinkInputStream in) throws IOException {
-            return in.readFloat64();
+        public Double decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readFloat64(in);
         }
     }
     static class Float64Null extends FieldInstruction<Double> {
@@ -394,12 +395,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(Double value, BlinkOutputStream out) throws IOException {
-            out.writeFloat64Null(value);
+        public void encodeValue(Double value, ByteSink out) throws IOException {
+            BlinkOutput.writeFloat64Null(out, value);
         }
         @Override
-        public Double decodeValue(BlinkInputStream in) throws IOException {
-            return in.readFloat64Null();
+        public Double decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readFloat64Null(in);
         }
     }
 
@@ -409,13 +410,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(java.math.BigDecimal value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(java.math.BigDecimal value, ByteSink out) throws IOException {
             require(value);
-            out.writeDecimal(value);
+            BlinkOutput.writeDecimal(out, value);
         }
         @Override
-        public java.math.BigDecimal decodeValue(BlinkInputStream in) throws IOException {
-            return in.readDecimal();
+        public java.math.BigDecimal decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readDecimal(in);
         }
     }
     static class DecimalNull extends FieldInstruction<java.math.BigDecimal> {
@@ -423,12 +424,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(java.math.BigDecimal value, BlinkOutputStream out) throws IOException {
-            out.writeDecimalNull(value);
+        public void encodeValue(java.math.BigDecimal value, ByteSink out) throws IOException {
+            BlinkOutput.writeDecimalNull(out, value);
         }
         @Override
-        public java.math.BigDecimal decodeValue(BlinkInputStream in) throws IOException {
-            return in.readDecimalNull();
+        public java.math.BigDecimal decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readDecimalNull(in);
         }
     }
 
@@ -438,13 +439,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(java.math.BigDecimal value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(java.math.BigDecimal value, ByteSink out) throws IOException {
             require(value);
-            out.writeBigDecimal(value);
+            BlinkOutput.writeBigDecimal(out, value);
         }
         @Override
-        public java.math.BigDecimal decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBigDecimal();
+        public java.math.BigDecimal decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBigDecimal(in);
         }
     }
     static class BigDecimalNull extends FieldInstruction<java.math.BigDecimal> {
@@ -452,12 +453,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(java.math.BigDecimal value, BlinkOutputStream out) throws IOException {
-            out.writeBigDecimalNull(value);
+        public void encodeValue(java.math.BigDecimal value, ByteSink out) throws IOException {
+            BlinkOutput.writeBigDecimalNull(out, value);
         }
         @Override
-        public java.math.BigDecimal decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBigDecimalNull();
+        public java.math.BigDecimal decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBigDecimalNull(in);
         }
     }
     // --- BIGDINT ---
@@ -466,13 +467,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(BigInteger value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(BigInteger value, ByteSink out) throws IOException {
             require(value);
-            out.writeBigInt(value);
+            BlinkOutput.writeBigInt(out, value);
         }
         @Override
-        public BigInteger decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBigInt();
+        public BigInteger decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBigInt(in);
         }
     }
     static class BigIntNull extends FieldInstruction<BigInteger> {
@@ -480,12 +481,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(BigInteger value, BlinkOutputStream out) throws IOException {
-            out.writeBigIntNull(value);
+        public void encodeValue(BigInteger value, ByteSink out) throws IOException {
+            BlinkOutput.writeBigIntNull(out, value);
         }
         @Override
-        public BigInteger decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBigIntNull();
+        public BigInteger decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBigIntNull(in);
         }
     }
 
@@ -495,13 +496,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(java.lang.Boolean value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(java.lang.Boolean value, ByteSink out) throws IOException {
             require(value);
-            out.writeBoolean(value);
+            BlinkOutput.writeBoolean(out, value);
         }
         @Override
-        public java.lang.Boolean decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBoolean();
+        public java.lang.Boolean decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBoolean(in);
         }
     }
     static class BooleanNull extends FieldInstruction<java.lang.Boolean> {
@@ -509,12 +510,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(java.lang.Boolean value, BlinkOutputStream out) throws IOException {
-            out.writeBooleanNull(value);
+        public void encodeValue(java.lang.Boolean value, ByteSink out) throws IOException {
+            BlinkOutput.writeBooleanNull(out, value);
         }
         @Override
-        public java.lang.Boolean decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBooleanNull();
+        public java.lang.Boolean decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBooleanNull(in);
         }
     }
 
@@ -529,14 +530,14 @@ abstract class FieldInstruction<V> {
             epochOffset = getEpochOffset(typeDef.getEpoch());
         }
         @Override
-        public void encodeValue(Date value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Date value, ByteSink out) throws IOException {
             require(value);
             long time = value.getTime();
-            out.writeInt64((time-epochOffset)/timeUnitInMillis);
+            BlinkOutput.writeInt64(out, (time-epochOffset)/timeUnitInMillis);
         }
         @Override
-        public Date decodeValue(BlinkInputStream in) throws IOException {
-            return new Date(in.readInt64()*timeUnitInMillis+epochOffset);
+        public Date decodeValue(ByteSource in) throws IOException {
+            return new Date(BlinkInput.readInt64(in)*timeUnitInMillis+epochOffset);
         }
     }
     static class DateTimeNull extends FieldInstruction<Date> {
@@ -549,17 +550,17 @@ abstract class FieldInstruction<V> {
             epochOffset = getEpochOffset(typeDef.getEpoch());
         }
         @Override
-        public void encodeValue(Date value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Date value, ByteSink out) throws IOException {
             if (value == null) {
-                out.writeUInt64Null(null);
+                BlinkOutput.writeUInt64Null(out, null);
             } else {
                 long time = value.getTime();
-                out.writeInt64((time-epochOffset)/timeUnitInMillis);
+                BlinkOutput.writeInt64(out, (time-epochOffset)/timeUnitInMillis);
             }
         }
         @Override
-        public Date decodeValue(BlinkInputStream in) throws IOException {
-            Long time = in.readInt64Null();
+        public Date decodeValue(ByteSource in) throws IOException {
+            Long time = BlinkInput.readInt64Null(in);
             if (time == null) {
                 return null;
             } else {
@@ -573,13 +574,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(String value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(String value, ByteSink out) throws IOException {
             require(value);
-            out.writeStringUTF8(value);
+            BlinkOutput.writeStringUTF8(out, value);
         }
         @Override
-        public String decodeValue(BlinkInputStream in) throws IOException {
-            return in.readStringUTF8();
+        public String decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readStringUTF8(in);
         }
     }
     static class StringUTF8Null extends FieldInstruction<String> {
@@ -587,12 +588,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(String value, BlinkOutputStream out) throws IOException {
-            out.writeStringUTF8Null(value);
+        public void encodeValue(String value, ByteSink out) throws IOException {
+            BlinkOutput.writeStringUTF8Null(out, value);
         }
         @Override
-        public String decodeValue(BlinkInputStream in) throws IOException {
-            return in.readStringUTF8Null();
+        public String decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readStringUTF8Null(in);
         }
     }
 
@@ -602,13 +603,13 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(byte[] value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(byte[] value, ByteSink out) throws IOException {
             require(value);
-            out.writeBinary(value);
+            BlinkOutput.writeBinary(out, value);
         }
         @Override
-        public byte[] decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBinary();
+        public byte[] decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBinary(in);
         }
     }
     static class BinaryNull extends FieldInstruction<byte[]> {
@@ -616,12 +617,12 @@ abstract class FieldInstruction<V> {
             super(field);
         }
         @Override
-        public void encodeValue(byte[] value, BlinkOutputStream out) throws IOException {
-            out.writeBinaryNull(value);
+        public void encodeValue(byte[] value, ByteSink out) throws IOException {
+            BlinkOutput.writeBinaryNull(out, value);
         }
         @Override
-        public byte[] decodeValue(BlinkInputStream in) throws IOException {
-            return in.readBinaryNull();
+        public byte[] decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readBinaryNull(in);
         }
     }
 
@@ -636,17 +637,17 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Enum value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Enum value, ByteSink out) throws IOException {
             require(value);
             TypeDef.Symbol symbol = enumSymbols.getSymbol(value);
             if (symbol == null) {
                 throw new IllegalArgumentException("Value is not a valid enumeration symbol: " + value);
             }
-            out.writeInt32(symbol.getId());
+            BlinkOutput.writeInt32(out, symbol.getId());
         }
         @Override
-        public Enum decodeValue(BlinkInputStream in) throws IOException {
-            int enumValue = in.readInt32();
+        public Enum decodeValue(ByteSource in) throws IOException {
+            int enumValue = BlinkInput.readInt32(in);
             Enum en = enumSymbols.getEnum(enumValue);
             if (en == null) {
                 throw new DecodeException("Illegal or unknown enum value: " + enumValue);
@@ -664,20 +665,20 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Enum value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Enum value, ByteSink out) throws IOException {
             if (value == null) {
-                out.writeInt32Null(null);
+                BlinkOutput.writeInt32Null(out, null);
             } else {
                 TypeDef.Symbol symbol = enumSymbols.getSymbol(value);
                 if (symbol == null) {
                     throw new IllegalArgumentException("Value is not a valid enumeration symbol: " + value);
                 }
-                out.writeInt32Null(symbol.getId());
+                BlinkOutput.writeInt32Null(out, symbol.getId());
             }
         }
         @Override
-        public Enum decodeValue(BlinkInputStream in) throws IOException {
-            Integer enumValueObj = in.readInt32Null();
+        public Enum decodeValue(ByteSource in) throws IOException {
+            Integer enumValueObj = BlinkInput.readInt32Null(in);
             if (enumValueObj == null) {
                 return null;
             }
@@ -695,13 +696,13 @@ abstract class FieldInstruction<V> {
             // PENDING: validate input/output that it belongs to the enumeration?
         }
         @Override
-        public void encodeValue(Integer value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Integer value, ByteSink out) throws IOException {
             require(value);
-            out.writeInt32(value);
+            BlinkOutput.writeInt32(out, value);
         }
         @Override
-        public Integer decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt32();
+        public Integer decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt32(in);
         }
     }
     static class IntEnumerationNull extends FieldInstruction<Integer> {
@@ -710,12 +711,12 @@ abstract class FieldInstruction<V> {
             // PENDING: validate input/output that it belongs to the enumeration?
         }
         @Override
-        public void encodeValue(Integer value, BlinkOutputStream out) throws IOException {
-            out.writeInt32Null(value);
+        public void encodeValue(Integer value, ByteSink out) throws IOException {
+            BlinkOutput.writeInt32Null(out, value);
         }
         @Override
-        public Integer decodeValue(BlinkInputStream in) throws IOException {
-            return in.readInt32Null();
+        public Integer decodeValue(ByteSource in) throws IOException {
+            return BlinkInput.readInt32Null(in);
         }
     }
 
@@ -730,10 +731,10 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(List value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(List value, ByteSink out) throws IOException {
             require(value);
             int length = value.size();
-            out.writeUInt32(length);
+            BlinkOutput.writeUInt32(out, length);
             for (Object element : value) {
                 elementInstruction.encodeValue(element, out);
             }
@@ -741,8 +742,8 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public List decodeValue(BlinkInputStream in) throws IOException {
-            int size = in.readUInt32();
+        public List decodeValue(ByteSource in) throws IOException {
+            int size = BlinkInput.readUInt32(in);
             if (size < 0) {
                 throw new DecodeException("Sequence size overflow: " + size);
             }
@@ -762,12 +763,12 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(List value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(List value, ByteSink out) throws IOException {
             if (value == null) {
-                out.writeUInt32Null(null);
+                BlinkOutput.writeUInt32Null(out, null);
             } else {
                 int length = value.size();
-                out.writeUInt32Null(length);
+                BlinkOutput.writeUInt32Null(out, length);
                 for (Object element : value) {
                     elementInstruction.encodeValue(element, out);
                 }
@@ -775,8 +776,8 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public List decodeValue(BlinkInputStream in) throws IOException {
-            Integer sizeObj = in.readUInt32Null();
+        public List decodeValue(ByteSource in) throws IOException {
+            Integer sizeObj = BlinkInput.readUInt32Null(in);
             if (sizeObj == null) {
                 return null;
             } else {
@@ -803,17 +804,17 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Object value, ByteSink out) throws IOException {
             require(value);
             int size = Array.getLength(value);
-            out.writeUInt32(size);
+            BlinkOutput.writeUInt32(out, size);
             for (int i=0; i<size; i++) {
                 elementInstruction.encodeValue(Array.get(value, i), out);
             }
         }
         @Override
-        public Object decodeValue(BlinkInputStream in) throws IOException {
-            int size = in.readUInt32();
+        public Object decodeValue(ByteSource in) throws IOException {
+            int size = BlinkInput.readUInt32(in);
             if (size < 0) {
                 throw new DecodeException("Sequence size overflow: " + size);
             }
@@ -835,20 +836,20 @@ abstract class FieldInstruction<V> {
         }
         @SuppressWarnings("unchecked")
         @Override
-        public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Object value, ByteSink out) throws IOException {
             if (value == null) {
-                out.writeUInt32Null(null);
+                BlinkOutput.writeUInt32Null(out, null);
             } else {
                 int size = Array.getLength(value);
-                out.writeUInt32Null(size);
+                BlinkOutput.writeUInt32Null(out, size);
                 for (int i=0; i<size; i++) {
                     elementInstruction.encodeValue(Array.get(value, i), out);
                 }
             }
         }
         @Override
-        public Object decodeValue(BlinkInputStream in) throws IOException {
-            Integer sizeObj = in.readUInt32Null();
+        public Object decodeValue(ByteSource in) throws IOException {
+            Integer sizeObj = BlinkInput.readUInt32Null(in);
             if (sizeObj == null) {
                 return null;
             } else {
@@ -872,13 +873,13 @@ abstract class FieldInstruction<V> {
             this.codec = codec;
         }
         @Override
-        public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Object value, ByteSink out) throws IOException {
             require(value);
-            codec.writeDynamicGroup(out.sink(), value);
+            codec.writeDynamicGroup(out, value);
         }
         @Override
-        public Object decodeValue(BlinkInputStream in) throws IOException {
-            return codec.readDynamicGroup(in.source());
+        public Object decodeValue(ByteSource in) throws IOException {
+            return codec.readDynamicGroup(in);
         }
     }
     static class DynamicGroupNull extends FieldInstruction<Object> {
@@ -888,12 +889,12 @@ abstract class FieldInstruction<V> {
             this.codec = codec;
         }
         @Override
-        public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
-            codec.writeDynamicGroupNull(out.sink(), value);
+        public void encodeValue(Object value, ByteSink out) throws IOException {
+            codec.writeDynamicGroupNull(out, value);
         }
         @Override
-        public Object decodeValue(BlinkInputStream in) throws IOException {
-            return codec.readDynamicGroupNull(in.source());
+        public Object decodeValue(ByteSource in) throws IOException {
+            return codec.readDynamicGroupNull(in);
         }
     }
 
@@ -905,12 +906,12 @@ abstract class FieldInstruction<V> {
             this.groupInstruction = groupInstruction;
         }
         @Override
-        public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Object value, ByteSink out) throws IOException {
             require(value);
             groupInstruction.encodeGroup(value, out);
         }
         @Override
-        public Object decodeValue(BlinkInputStream in) throws IOException {
+        public Object decodeValue(ByteSource in) throws IOException {
             return groupInstruction.decodeGroup(in);
         }
     }
@@ -921,17 +922,17 @@ abstract class FieldInstruction<V> {
             this.groupInstruction = groupInstruction;
         }
         @Override
-        public void encodeValue(Object value, BlinkOutputStream out) throws IOException {
+        public void encodeValue(Object value, ByteSink out) throws IOException {
             if (value == null) {
-                out.writeBoolean(false);
+                BlinkOutput.writeBoolean(out, false);
             } else {
-                out.writeBoolean(true);
+                BlinkOutput.writeBoolean(out, true);
                 groupInstruction.encodeGroup(value, out);
             }
         }
         @Override
-        public Object decodeValue(BlinkInputStream in) throws IOException {
-            boolean present = in.readBoolean();
+        public Object decodeValue(ByteSource in) throws IOException {
+            boolean present = BlinkInput.readBoolean(in);
             if (present) {
                 return groupInstruction.decodeGroup(in);
             } else {
