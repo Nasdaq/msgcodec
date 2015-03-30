@@ -82,15 +82,22 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
             writeStaticGroupWithId(buf, group);
             int end = buf.position();
             int size = end - start - 2;
-            if (size < 1<<14) {
+            if (size < 1<<6) {
+                buf.shift(start+2, size, -1);
+                buf.position(start);
+                BlinkOutput.writeVLC(buf, size, 1);
+                buf.position(end-1);
+            } else if (size < 1<<14) {
                 buf.position(start);
                 BlinkOutput.writeVLC(buf, size, 2);
+                buf.position(end);
             } else {
                 int sizeOfSize = BlinkOutput.sizeOfUnsignedVLC(size);
                 buf.shift(start+2, size, sizeOfSize-2);
+                buf.position(start);
                 BlinkOutput.writeVLC(buf, size, sizeOfSize);
+                buf.position(end + sizeOfSize - 2);
             }
-            buf.position(end);
         } else {
             byte[] tmpBuf = codec.bufferPool().get();
             try {
