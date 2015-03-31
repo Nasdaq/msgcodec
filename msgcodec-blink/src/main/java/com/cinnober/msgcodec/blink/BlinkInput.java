@@ -392,7 +392,7 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static boolean readBoolean(ByteSource in) throws IOException {
-        return readUInt8(in) != 0;  // TODO: is it byte or VLC?
+        return readUInt8(in) != 0;
     }
     /**
      * Read a nullable boolean value.
@@ -406,7 +406,7 @@ public class BlinkInput {
         if (b == 0xc0) {
             return null;
         } else {
-            return b != 0; // TODO: is it byte or VLC?
+            return readUnsignedVLC(in) != 0;
         }
     }
 
@@ -1031,7 +1031,7 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static void skipBoolean(ByteSource in) throws IOException {
-        in.skip(1); // TODO: is it byte or VLC?
+        skipVLC(in);
     }
     /**
      * Skip a nullable boolean value.
@@ -1040,7 +1040,7 @@ public class BlinkInput {
      * @throws DecodeException if the value could not be parsed.
      */
     public static void skipBooleanNull(ByteSource in) throws IOException {
-        in.skip(1); // TODO: is it byte or VLC?
+        skipVLC(in);
     }
 
     /**
