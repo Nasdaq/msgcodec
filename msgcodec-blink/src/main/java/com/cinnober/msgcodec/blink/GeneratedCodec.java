@@ -82,7 +82,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
             writeStaticGroupWithId(buf, group);
             int end = buf.position();
             int size = end - start - 2;
-            if (size < 1<<6) {
+            if (size < 1<<7) {
                 buf.shift(start+2, size, -1);
                 buf.position(start);
                 BlinkOutput.writeVLC(buf, size, 1);
