@@ -21,6 +21,7 @@ package com.cinnober.msgcodec;
 import java.io.IOException;
 
 /**
+ * TODO: javadoc
  *
  * @author mikael.brannstrom
  */

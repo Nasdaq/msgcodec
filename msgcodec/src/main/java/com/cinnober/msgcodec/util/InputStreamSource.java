@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *
+ * TODO: javadoc
  * @author mikael.brannstrom
  */
 public class InputStreamSource implements ByteSource {

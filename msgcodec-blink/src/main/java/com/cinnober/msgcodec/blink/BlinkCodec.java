@@ -127,8 +127,7 @@ public class BlinkCodec implements StreamCodec {
         return bufferPool;
     }
 
-    // PENDING: this method should be package private. For some reason the generated codec cannot access package private stuff...
-    public int getMaxBinarySize() {
+    int getMaxBinarySize() {
         return maxBinarySize;
     }
 

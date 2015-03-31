@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- *
+ * TODO: javadoc
  * @author mikael.brannstrom
  */
 public class OutputStreamSink implements ByteSink {

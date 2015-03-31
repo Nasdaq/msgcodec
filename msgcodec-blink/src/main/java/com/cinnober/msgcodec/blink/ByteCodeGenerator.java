@@ -1410,9 +1410,7 @@ class ByteCodeGenerator {
                 break;
             case STRING:
                 mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, BASECLASS_INTERNALNAME, "codec",
-                        "Lcom/cinnober/msgcodec/blink/BlinkCodec;");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize",
+                mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME, "getMaxBinarySize",
                         "()I", false);
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readStringUTF8",
@@ -1424,9 +1422,7 @@ class ByteCodeGenerator {
                 break;
             case BINARY:
                 mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, BASECLASS_INTERNALNAME, "codec",
-                        "Lcom/cinnober/msgcodec/blink/BlinkCodec;");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/blink/BlinkCodec", "getMaxBinarySize",
+                mv.visitMethodInsn(INVOKEVIRTUAL, BASECLASS_INTERNALNAME, "getMaxBinarySize",
                         "()I", false);
                 if (required) {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readBinary", "(Lcom/cinnober/msgcodec/ByteSource;I)[B", false);

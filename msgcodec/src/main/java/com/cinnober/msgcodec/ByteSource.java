@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
+ * TODO: javadoc
  *
  * @author mikael.brannstrom
  */

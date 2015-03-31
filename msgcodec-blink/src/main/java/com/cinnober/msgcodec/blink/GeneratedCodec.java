@@ -154,6 +154,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
     }
 
     private Object readDynamicGroup(int size, ByteSource in) throws IOException {
+        // TODO: limit
 //        int limit = in.limit();
         try {
 //            if (limit >= 0) {
@@ -183,6 +184,10 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
         } finally {
 //            in.limit(limit); // restore old limit
         }
+    }
+
+    protected int getMaxBinarySize() {
+        return codec.getMaxBinarySize();
     }
 
     // --- UTILITY METHODS FOR CREATING EXCEPTIONS ---

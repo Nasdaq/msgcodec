@@ -23,7 +23,8 @@ import com.cinnober.msgcodec.ByteSink;
 import java.io.IOException;
 
 /**
- *
+ * TODO: javadoc
+ * TODO: limit checks
  * @author mikael.brannstrom
  */
 public class ByteArrayBuf implements ByteBuf {

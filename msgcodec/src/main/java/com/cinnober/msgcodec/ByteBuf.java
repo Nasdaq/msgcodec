@@ -19,7 +19,7 @@
 package com.cinnober.msgcodec;
 
 /**
- *
+ * TODO: javadoc
  * @author mikael.brannstrom
  */
 public interface ByteBuf extends ByteSource, ByteSink {

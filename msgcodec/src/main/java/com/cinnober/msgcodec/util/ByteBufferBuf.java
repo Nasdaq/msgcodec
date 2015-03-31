@@ -24,7 +24,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
- *
+ * TODO: javadoc
+ * TODO: limit checks
  * @author mikael.brannstrom
  */
 public class ByteBufferBuf implements ByteBuf {

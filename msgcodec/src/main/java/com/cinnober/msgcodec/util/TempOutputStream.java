@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
+// PENDING: remove this class?
 
 /**
  * Reusable output stream where temporary encoded data can be stored.
