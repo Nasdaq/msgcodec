@@ -56,19 +56,6 @@ public class BlinkCodec implements StreamCodec {
     private final GeneratedCodec generatedCodec;
     private final ProtocolDictionary dictionary;
 
-    /** The size preambles. The top of the stack refers to the
-     * dynamic group that is currently being encoded.
-     * The stack is only non-empty while encoding a message.
-     */
-    private final Stack<Preamble> preambleStack = new Stack<>();
-    /** The internal buffer used for temporary storage of encoded dynamic groups.
-     * This is needed in order to know how large an encoded dynamic group is, which
-     * is written in the preamble.
-     */
-    private final TempOutputStream internalBuffer;
-    /** Blink output stream wrapped around the {@link #internalBuffer}. */
-    private final BlinkOutputStream internalStream;
-
     private final Pool<byte[]> bufferPool;
 
     private final int maxBinarySize;
@@ -106,13 +93,6 @@ public class BlinkCodec implements StreamCodec {
             throw new IllegalArgumentException("ProtocolDictionary not bound");
         }
         this.bufferPool = bufferPool;
-        if (bufferPool != null) {
-            this.internalBuffer = new TempOutputStream(bufferPool);
-            this.internalStream = new BlinkOutputStream(internalBuffer);
-        } else {
-            this.internalBuffer = null;
-            this.internalStream = null;
-        }
         Objects.requireNonNull(codecOption);
 
         this.maxBinarySize = maxBinarySize;
@@ -165,13 +145,7 @@ public class BlinkCodec implements StreamCodec {
         encode(group, new OutputStreamSink(out));
     }
     public void encode(Object group, ByteSink out) throws IOException {
-        try {
-             generatedCodec.writeDynamicGroup(out, group);
-        } catch (Throwable t) {
-            preambleStack.clear();
-            internalBuffer.reset();
-            throw t;
-        }
+        generatedCodec.writeDynamicGroup(out, group);
     }
 
     @Override
@@ -196,94 +170,6 @@ public class BlinkCodec implements StreamCodec {
                     throw new DecodeException("Could not decode field "+str.toString(), t);
                 }
             }
-        }
-    }
-
-    ByteSink preambleBegin() {
-        Preamble preamble = new Preamble();
-        if (!preambleStack.isEmpty()) {
-            preambleStack.peek().startChild(preamble);
-        }
-        preambleStack.push(preamble);
-        return internalBuffer; //Stream;
-    }
-
-    void preambleEnd(ByteSink out) throws IOException {
-        Preamble preamble = preambleStack.pop();
-        preamble.end();
-        if (preambleStack.isEmpty()) {
-            preamble.flush(out);
-        }
-    }
-
-    private int sizeOfPreamble(int size) {
-        return BlinkOutputStream.sizeOfUnsignedVLC(size);
-    }
-
-    private class Preamble {
-        /** Linked list stuff. */
-        private Preamble firstChild;
-        /** Linked list stuff. */
-        private Preamble lastChild;
-        /** Linked list stuff. */
-        private Preamble nextSibling;
-        /** The position of the first byte in this group. */
-        private final int startPosition;
-        /** The position of the first byte after this group. */
-        private int endPosition;
-
-        /** The size of this group, excluding the preamble of this group.
-         * I.e. the size value to be written in the preamble. */
-        private int size;
-        /** The number of bytes added by the preamble(s) of this group and all child groups. */
-        private int addedSize;
-
-        public Preamble() {
-            startPosition = internalBuffer.position();
-        }
-        void startChild(Preamble preamble) {
-            if (firstChild == null) {
-                firstChild = preamble;
-            }
-            if (lastChild != null) {
-                lastChild.nextSibling = preamble;
-            }
-            lastChild = preamble;
-        }
-        void end() {
-            endPosition = internalBuffer.position();
-        }
-        private int getAddedSize() {
-            return addedSize;
-        }
-        private void calculateSize() {
-            size = endPosition - startPosition;
-            addedSize = 0;
-            for (Preamble child = firstChild; child != null; child = child.nextSibling) {
-                child.calculateSize();
-                addedSize += child.getAddedSize();
-            }
-            size += addedSize;
-            addedSize += sizeOfPreamble(size);
-        }
-        private void copyTo(ByteSink out) throws IOException {
-            // write size preamble
-            BlinkOutput.writeUInt32(out, size);
-            int position = startPosition;
-            for (Preamble child = firstChild; child != null; child = child.nextSibling) {
-                internalBuffer.copyTo(out, position, child.startPosition);
-                child.copyTo(out);
-                position = child.endPosition;
-            }
-            internalBuffer.copyTo(out, position, endPosition);
-        }
-        /**
-         * Flush the temporary encoded group, add size preambles and finally reset the internal buffer.
-         */
-        public void flush(ByteSink out) throws IOException {
-            calculateSize();
-            copyTo(out);
-            internalBuffer.reset();
         }
     }
 }
