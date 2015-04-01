@@ -22,9 +22,9 @@ import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
@@ -59,8 +59,8 @@ public class BlinkCodecTest {
     private void testHelloExample(CodecOption codecOption) throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec.encode(new Hello("Hello World"), bout);
         assertEquals("Encoded Hello World", expected, bout.toByteArray());
@@ -80,16 +80,16 @@ public class BlinkCodecTest {
     }
 
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
-     * Here the dictionary is bound to Group objects.
+     * Here the schema is bound to Group objects.
      */
     private void testHelloExample2(CodecOption codecOption) throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        dictionary = Group.bind(dictionary);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        schema = Group.bind(schema);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        Group hello = new Group(dictionary, "Hello");
+        Group hello = new Group(schema, "Hello");
         hello.set("greeting", "Hello World");
         codec.encode(hello, bout);
         assertEquals("Encoded Hello World", expected, bout.toByteArray());
@@ -109,8 +109,8 @@ public class BlinkCodecTest {
     }
 
     private void testBrokenHelloEncode(CodecOption codecOption) throws Exception {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         
         Hello msg1 = new Hello(); // missing required field
@@ -140,8 +140,8 @@ public class BlinkCodecTest {
     }
 
     private void testBrokenHelloDecodeNull(CodecOption codecOption) throws Exception {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
 
         byte[] dataNull = new byte[]
                 { 0x0d, // length
@@ -171,8 +171,8 @@ public class BlinkCodecTest {
     }
 
     private void testBrokenHelloDecodeEof(CodecOption codecOption) throws Exception {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
 
         byte[] dataNull = new byte[]
                 { 0x0d, // length
@@ -201,9 +201,9 @@ public class BlinkCodecTest {
     }
     
     private void testDynamicGroups(CodecOption codecOption) throws IOException {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Foo.class, Bar.class);
-        System.out.println("Dictionary:\n" + dictionary);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(Foo.class, Bar.class);
+        System.out.println("Schema:\n" + schema);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
         Foo foo1 = new Foo(1);
@@ -278,8 +278,8 @@ public class BlinkCodecTest {
     }
 
     private void testDates1(CodecOption codecOption) throws IOException {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(DateMsg.class);
-        StreamCodec codec = new BlinkCodecFactory(dictionary).setCodecOption(codecOption).createStreamCodec();
+        Schema schema = new SchemaBuilder().build(DateMsg.class);
+        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
 
         long dayInMillis = 24 * 3600 * 1000;
 
@@ -316,13 +316,13 @@ public class BlinkCodecTest {
     }
 
     private void testMetaProtocolEncodeDecode(CodecOption codecOption) throws IOException {
-        ProtocolDictionary classDict = MetaProtocol.getProtocolDictionary();
-        StreamCodec classCodec = new BlinkCodecFactory(classDict).setCodecOption(codecOption).createStreamCodec();
+        Schema classSchema = MetaProtocol.getSchema();
+        MsgCodec classCodec = new BlinkCodecFactory(classSchema).setCodecOption(codecOption).createCodec();
 
-        ProtocolDictionary groupDict = Group.bind(classDict.unbind());
-        StreamCodec groupCodec = new BlinkCodecFactory(groupDict).setCodecOption(codecOption).createStreamCodec();
+        Schema groupSchema = Group.bind(classSchema.unbind());
+        MsgCodec groupCodec = new BlinkCodecFactory(groupSchema).setCodecOption(codecOption).createCodec();
 
-        Object classMsg = classDict.toMessage();
+        Object classMsg = classSchema.toMessage();
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         classCodec.encode(classMsg, bout);

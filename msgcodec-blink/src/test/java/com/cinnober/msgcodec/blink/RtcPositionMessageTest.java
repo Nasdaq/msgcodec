@@ -24,8 +24,8 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.anot.Id;
 
 /**
@@ -36,7 +36,7 @@ public class RtcPositionMessageTest {
 
     @Test
     public void testEncodeDecode() throws IOException {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(
+        Schema dictionary = new SchemaBuilder().build(
                 AmPosition.class,
                 AmPositionExt.class,
                 PositionInfo.class,

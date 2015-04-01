@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author mikael.brannstrom
  *
  */
-public class ProtocolDictionaryBinding {
+public class SchemaBinding {
     private final GroupTypeAccessor groupTypeAccessor;
 
     /**
@@ -34,7 +34,7 @@ public class ProtocolDictionaryBinding {
      *
      * @param groupTypeAccessor the group type accessor, not null
      */
-    public ProtocolDictionaryBinding(GroupTypeAccessor groupTypeAccessor) {
+    public SchemaBinding(GroupTypeAccessor groupTypeAccessor) {
         this.groupTypeAccessor = Objects.requireNonNull(groupTypeAccessor);
     }
 
@@ -49,10 +49,10 @@ public class ProtocolDictionaryBinding {
         if (obj == this) {
             return true;
         }
-        if (obj == null || !obj.getClass().equals(ProtocolDictionaryBinding.class)) {
+        if (obj == null || !obj.getClass().equals(SchemaBinding.class)) {
             return false;
         }
-        ProtocolDictionaryBinding other = (ProtocolDictionaryBinding) obj;
+        SchemaBinding other = (SchemaBinding) obj;
         return groupTypeAccessor.equals(other.groupTypeAccessor);
     }
 

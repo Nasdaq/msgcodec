@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Time;
-import com.cinnober.msgcodec.util.ByteArrays;
+import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.util.TimeFormat;
 import java.lang.reflect.Field;
 import java.util.Arrays;

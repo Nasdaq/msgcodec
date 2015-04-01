@@ -17,7 +17,7 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -30,7 +30,7 @@ public class TestProtocolTest {
 
     @Test
     public void testTestProtocol() {
-        ProtocolDictionary dict = TestProtocol.getProtocolDictionary();
+        Schema dict = TestProtocol.getProtocolDictionary();
         System.out.println(dict.toString());
     }
 }

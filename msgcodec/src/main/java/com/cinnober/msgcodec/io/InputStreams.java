@@ -16,7 +16,7 @@
  * distributing this software or its derivatives.
  */
 
-package com.cinnober.msgcodec.util;
+package com.cinnober.msgcodec.io;
 
 import java.io.EOFException;
 import java.io.IOException;

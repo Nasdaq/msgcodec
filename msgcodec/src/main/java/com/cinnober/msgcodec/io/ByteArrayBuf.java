@@ -16,10 +16,10 @@
  * distributing this software or its derivatives.
  */
 
-package com.cinnober.msgcodec.util;
+package com.cinnober.msgcodec.io;
 
-import com.cinnober.msgcodec.ByteBuf;
-import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.io.ByteBuf;
+import com.cinnober.msgcodec.io.ByteSink;
 import java.io.IOException;
 
 /**

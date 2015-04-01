@@ -17,7 +17,7 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.io.ByteSink;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;

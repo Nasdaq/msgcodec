@@ -18,7 +18,7 @@
 
 package com.cinnober.msgcodec.examples;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.examples.generated.GeneratedProtocol;
 
 /**
@@ -29,7 +29,7 @@ import com.cinnober.msgcodec.examples.generated.GeneratedProtocol;
  */
 public class GeneratedCodeExample {
     public static void main(String... args) throws Exception {
-        ProtocolDictionary dict = GeneratedProtocol.getInstance();
+        Schema dict = GeneratedProtocol.getInstance();
 
         System.out.println("The generated protocol:\n" + dict);
 

@@ -18,8 +18,8 @@
 package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.Accessor;
-import com.cinnober.msgcodec.ByteSink;
-import com.cinnober.msgcodec.ByteSource;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.FieldDef;

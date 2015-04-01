@@ -18,7 +18,7 @@
 
 package com.cinnober.msgcodec.util;
 
-import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.io.ByteSink;
 import java.io.IOException;
 import java.io.OutputStream;
 

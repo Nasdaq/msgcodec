@@ -35,7 +35,7 @@ import com.cinnober.msgcodec.messages.MetaGroupDef;
  * A group is represented by a Java Object.
  * GroupDef is immutable.
  *
- * <p>A group has a string name and a optional numeric id. Both must be unique within a {@link ProtocolDictionary}.
+ * <p>A group has a string name and a optional numeric id. Both must be unique within a {@link Schema}.
  *
  * @author mikael.brannstrom
  *

@@ -23,13 +23,13 @@ package com.cinnober.msgcodec;
  *
  * @author mikael.brannstrom
  */
-public class StreamCodecInstantiationException extends RuntimeException {
+public class MsgCodecInstantiationException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
      * Create a new CodecInstantiationException.
      */
-    public StreamCodecInstantiationException() {
+    public MsgCodecInstantiationException() {
     }
 
     /**
@@ -37,7 +37,7 @@ public class StreamCodecInstantiationException extends RuntimeException {
      *
      * @param message the detail message.
      */
-    public StreamCodecInstantiationException(String message) {
+    public MsgCodecInstantiationException(String message) {
         super(message);
     }
 
@@ -47,7 +47,7 @@ public class StreamCodecInstantiationException extends RuntimeException {
      * @param message the detail message.
      * @param cause the cause.
      */
-    public StreamCodecInstantiationException(String message, Throwable cause) {
+    public MsgCodecInstantiationException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -56,7 +56,7 @@ public class StreamCodecInstantiationException extends RuntimeException {
      * 
      * @param cause the cause.
      */
-    public StreamCodecInstantiationException(Throwable cause) {
+    public MsgCodecInstantiationException(Throwable cause) {
         super(cause);
     }
 

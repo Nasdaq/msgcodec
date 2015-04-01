@@ -38,7 +38,7 @@ public class Group {
     private final Object[] fieldValues;
 
 
-    private static GroupInfo getGroupInfo(ProtocolDictionary dictionary, String groupName) {
+    private static GroupInfo getGroupInfo(Schema dictionary, String groupName) {
         DictionaryInfo dictInfo = dictInfoByDictUID.get(dictionary.getUID());
         if (dictInfo == null) {
             throw new IllegalArgumentException("Dictionary not bound to Group");
@@ -56,7 +56,7 @@ public class Group {
      * @param dictionary the dictionary bound to {@link Group}, not null.
      * @param groupName the group name, not null.
      */
-    public Group(ProtocolDictionary dictionary, String groupName) {
+    public Group(Schema dictionary, String groupName) {
         this(getGroupInfo(dictionary, groupName));
     }
 
@@ -128,16 +128,16 @@ public class Group {
      * @param dictionary the dictionary to be bound, not null.
      * @return the bound dictionary
      */
-    public static ProtocolDictionary bind(ProtocolDictionary dictionary) {
+    public static Schema bind(Schema dictionary) {
         Map<String, GroupInfo> groupInfos = new HashMap<>();
         ArrayList<FieldIndexAccessor> fieldAccessors = new ArrayList<>();
         List<GroupDef> groups = new ArrayList<>(dictionary.getGroups().size());
         for (GroupDef group : dictionary.getGroups()) {
             groups.add(bind(group, dictionary, groupInfos, fieldAccessors));
         }
-        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(GROUP_TYPE_ACCESSOR);
-        ProtocolDictionary boundDict =
-                new ProtocolDictionary(groups, dictionary.getNamedTypes(), dictionary.getAnnotations(), binding);
+        SchemaBinding binding = new SchemaBinding(GROUP_TYPE_ACCESSOR);
+        Schema boundDict =
+                new Schema(groups, dictionary.getNamedTypes(), dictionary.getAnnotations(), binding);
 
         DictionaryInfo dictInfo = new DictionaryInfo(groupInfos);
         dictInfoByDictUID.put(boundDict.getUID(), dictInfo);
@@ -151,7 +151,7 @@ public class Group {
         return accessors.get(index);
     }
 
-    private static GroupDef bind(GroupDef group, ProtocolDictionary dictionary,
+    private static GroupDef bind(GroupDef group, Schema dictionary,
             Map<String, GroupInfo> groupInfoByName, List<FieldIndexAccessor> accessors) {
         GroupInfo superGroupInfo = group.getSuperGroup() != null ? groupInfoByName.get(group.getSuperGroup()) : null;
         List<FieldDef> allFields = new ArrayList<>();

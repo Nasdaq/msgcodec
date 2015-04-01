@@ -17,7 +17,7 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ByteSink;
+import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.util.OutputStreamSink;
 import java.io.FilterOutputStream;
 import java.io.IOException;

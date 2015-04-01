@@ -18,6 +18,7 @@
 
 package com.cinnober.msgcodec.util;
 
+import com.cinnober.msgcodec.io.ByteBuffers;
 import java.nio.ByteBuffer;
 import org.junit.Test;
 import static org.junit.Assert.*;

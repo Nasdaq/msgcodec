@@ -6,9 +6,9 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.StreamCodecInstantiationException;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodecFactory;
+import com.cinnober.msgcodec.MsgCodecInstantiationException;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodecFactory;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
 import com.cinnober.msgcodec.util.Pool;
 import java.util.Objects;
@@ -18,9 +18,9 @@ import java.util.Objects;
  * 
  * @author mikael.brannstrom
  */
-public class BlinkCodecFactory implements StreamCodecFactory {
+public class BlinkCodecFactory implements MsgCodecFactory {
 
-    private final ProtocolDictionary dictionary;
+    private final Schema schema;
     private Pool<byte[]> bufferPool;
     private int maxBinarySize = 10 * 1_048_576; // 10 MB
     private int maxSequenceLength = 1_000_000;
@@ -29,13 +29,13 @@ public class BlinkCodecFactory implements StreamCodecFactory {
     /**
      * Create a Blink codec factory.
      * 
-     * @param dictionary the protocol dictionary to be used by all codec instances, not null.
+     * @param schema the protocol schema to be used by all codec instances, not null.
      */
-    public BlinkCodecFactory(ProtocolDictionary dictionary) {
-        if (!dictionary.isBound()) {
-            throw new IllegalArgumentException("Dictionary must be bound");
+    public BlinkCodecFactory(Schema schema) {
+        if (!schema.isBound()) {
+            throw new IllegalArgumentException("Schema must be bound");
         }
-        this.dictionary = dictionary;
+        this.schema = schema;
         this.bufferPool = new ConcurrentBufferPool(8192, 10);
         this.codecOption = CodecOption.AUTOMATIC;
     }
@@ -79,8 +79,8 @@ public class BlinkCodecFactory implements StreamCodecFactory {
     }
 
     @Override
-    public BlinkCodec createStreamCodec() throws StreamCodecInstantiationException {
-        return new BlinkCodec(dictionary, bufferPool, maxBinarySize, maxSequenceLength, codecOption);
+    public BlinkCodec createCodec() throws MsgCodecInstantiationException {
+        return new BlinkCodec(schema, bufferPool, maxBinarySize, maxSequenceLength, codecOption);
     }
     
 }

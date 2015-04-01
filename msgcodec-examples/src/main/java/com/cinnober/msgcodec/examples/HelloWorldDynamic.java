@@ -19,27 +19,22 @@ package com.cinnober.msgcodec.examples;
 
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.StreamCodec;
-import com.cinnober.msgcodec.blink.BlinkCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.blink.BlinkCodecFactory;
 import com.cinnober.msgcodec.examples.messages.Hello;
-import com.cinnober.msgcodec.json.JsonCodec;
 import com.cinnober.msgcodec.json.JsonCodecFactory;
 import com.cinnober.msgcodec.messages.MetaProtocol;
-import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
-import com.cinnober.msgcodec.tap.TapCodec;
-import com.cinnober.msgcodec.tap.TapCodecFactory;
-import com.cinnober.msgcodec.util.ByteArrays;
-import com.cinnober.msgcodec.xml.XmlCodec;
+import com.cinnober.msgcodec.messages.MetaSchema;
+import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.xml.XmlCodecFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 
 /** This is a somewhat advanced example, that demonstrates the dynamic binding feature of msgcodec,
- * as well as the encoding the protocol dictionary itself.
+ * as well as the encoding the protocol schema itself.
  *
  * <p>This example might be useful for writing applications like:
  * <ul>
@@ -56,35 +51,34 @@ public class HelloWorldDynamic {
     private static final String JSON = "JSON";
     private static final String BLINK = "Blink";
     private static final String XML = "XML";
-    private static final String TAP = "TAP";
 
     public static void main(String... args) throws Exception {
         String format = args.length > 0 ? args[0] :  XML;
 
-        // we've got the protocol dictionary in an encoded format, from somewhere
-        byte[] encodedDictionary = getEncodedDictionary(format);
+        // we've got the protocol schema in an encoded format, from somewhere
+        byte[] encodedSchema = getEncodedSchema(format);
 
         // lets just dump it to see what it looks like
-        System.out.println("Encoded dictionary:");
+        System.out.println("Encoded schema:");
         if (isBinary(format)) {
-            System.out.println(ByteArrays.toHex(encodedDictionary));
+            System.out.println(ByteArrays.toHex(encodedSchema));
         } else {
-            System.out.println(new String(encodedDictionary, UTF8));
+            System.out.println(new String(encodedSchema, UTF8));
         }
 
-        // we need to parse the dictionary
-        StreamCodec metaCodec = createCodec(format, MetaProtocol.getProtocolDictionary());
-        MetaProtocolDictionary metaMessage =
-                (MetaProtocolDictionary) metaCodec.decode(new ByteArrayInputStream(encodedDictionary));
-        ProtocolDictionary dictionary = metaMessage.toProtocolDictionary();
+        // we need to parse the schema
+        MsgCodec metaCodec = createCodec(format, MetaProtocol.getSchema());
+        MetaSchema metaMessage =
+                (MetaSchema) metaCodec.decode(new ByteArrayInputStream(encodedSchema));
+        Schema schema = metaMessage.toSchema();
 
         // now we've got a dictionary, but it is not bound to any java messages (e.g. Hello.class)
         // let's assume we do not have any message classes corresponding to this protocol,
         // instead bind it to the generic Group class
-        dictionary = Group.bind(dictionary);
+        schema = Group.bind(schema);
 
         // create a codec
-        StreamCodec codec = createCodec(format, dictionary);
+        MsgCodec codec = createCodec(format, schema);
 
         // we've got an encoded message, from somewhere
         byte[] encodedMessage = getEncodedMessage(format);
@@ -102,20 +96,18 @@ public class HelloWorldDynamic {
         System.out.println("Decoded message:\n" + message);
 
         // have a look at the message type
-        GroupDef groupDef = dictionary.getGroup(message.getGroupName());
+        GroupDef groupDef = schema.getGroup(message.getGroupName());
         System.out.println(groupDef.toString());
     }
 
-    private static StreamCodec createCodec(String format, ProtocolDictionary dictionary) throws Exception {
+    private static MsgCodec createCodec(String format, Schema schema) throws Exception {
         switch (format) {
         case XML:
-            return new XmlCodecFactory(dictionary).createStreamCodec();
+            return new XmlCodecFactory(schema).createCodec();
         case JSON:
-            return new JsonCodecFactory(dictionary).createStreamCodec();
+            return new JsonCodecFactory(schema).createCodec();
         case BLINK:
-            return new BlinkCodecFactory(dictionary).createStreamCodec();
-        case TAP:
-            return new TapCodecFactory(dictionary).createStreamCodec();
+            return new BlinkCodecFactory(schema).createCodec();
         default:
             throw new Error("Unhandled format: " + format);
         }
@@ -127,37 +119,36 @@ public class HelloWorldDynamic {
         case JSON:
             return false;
         case BLINK:
-        case TAP:
             return true;
         default:
             throw new Error("Unhandled format: " + format);
         }
     }
 
-    /** Helper to generate an encoded dictionary in the specified format. */
-    private static byte[] getEncodedDictionary(String format) throws Exception {
-        // Create the dictionary from some source, here we generate it from java messages
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
+    /** Helper to generate an encoded schema in the specified format. */
+    private static byte[] getEncodedSchema(String format) throws Exception {
+        // Create the schema from some source, here we generate it from java messages
+        Schema schema = new SchemaBuilder().build(Hello.class);
 
-        // Obtain the meta dictionary, that can describe a dictionary
-        ProtocolDictionary metaDictionary = MetaProtocol.getProtocolDictionary();
-        // create a codec for the meta dictionary
-        StreamCodec codec = createCodec(format, metaDictionary);
+        // Obtain the meta schema, that can describe a dictionary
+        Schema metaSchema = MetaProtocol.getSchema();
+        // create a codec for the meta schema
+        MsgCodec codec = createCodec(format, metaSchema);
 
-        // encode the dictionary (containing Hello) using the codec
+        // encode the schema (containing Hello) using the codec
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        codec.encode(dictionary.toMessage(), out);
+        codec.encode(schema.toMessage(), out);
 
         return out.toByteArray();
     }
 
     /** Helper to generate an encoded message in the specified format. */
     private static byte[] getEncodedMessage(String format) throws Exception {
-        // Create the dictionary from some source, here we generate it from java messages
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
+        // Create the schema from some source, here we generate it from java messages
+        Schema schema = new SchemaBuilder().build(Hello.class);
 
         Hello hello = new Hello("I come in peace!");
-        StreamCodec codec = createCodec(format, dictionary);
+        MsgCodec codec = createCodec(format, schema);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         codec.encode(hello, out);
         return out.toByteArray();

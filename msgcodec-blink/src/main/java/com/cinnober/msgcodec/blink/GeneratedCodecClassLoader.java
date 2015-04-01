@@ -18,7 +18,7 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
@@ -36,7 +36,7 @@ class GeneratedCodecClassLoader extends ClassLoader {
     }
 
     private final ByteCodeGenerator codeGenerator;
-    private final WeakHashMap<Object, Class<GeneratedCodec>> codecClassesByDictionaryUID = new WeakHashMap<>();
+    private final WeakHashMap<Object, Class<GeneratedCodec>> codecClassesBySchemaUID = new WeakHashMap<>();
     private int nextClassSuffix = 0;
     
     private GeneratedCodecClassLoader() {
@@ -44,20 +44,20 @@ class GeneratedCodecClassLoader extends ClassLoader {
         codeGenerator = new ByteCodeGenerator();
     }
 
-    public Class<GeneratedCodec> getGeneratedCodecClass(ProtocolDictionary dictionary) {
+    public Class<GeneratedCodec> getGeneratedCodecClass(Schema schema) {
         synchronized (this) {
-            final Object uid = dictionary.getUID();
-            Class<GeneratedCodec> codecClass = codecClassesByDictionaryUID.get(uid);
-            if (codecClass == null && !codecClassesByDictionaryUID.containsKey(uid)) {
-                codecClass = generateCodecClass(dictionary, nextClassSuffix++);
-                codecClassesByDictionaryUID.put(uid, codecClass);
+            final Object uid = schema.getUID();
+            Class<GeneratedCodec> codecClass = codecClassesBySchemaUID.get(uid);
+            if (codecClass == null && !codecClassesBySchemaUID.containsKey(uid)) {
+                codecClass = generateCodecClass(schema, nextClassSuffix++);
+                codecClassesBySchemaUID.put(uid, codecClass);
             }
             return codecClass;
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Class<GeneratedCodec> generateCodecClass(ProtocolDictionary dictionary, int suffix) {
+    private Class<GeneratedCodec> generateCodecClass(Schema dictionary, int suffix) {
         String generatedClassName = codeGenerator.getGeneratedClassName(suffix);
         byte[] generatedClassBytes = codeGenerator.generateClass(dictionary, suffix);
         Class<?> generatedClass = defineClass(generatedClassName, generatedClassBytes, 0, generatedClassBytes.length);

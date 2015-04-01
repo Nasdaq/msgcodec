@@ -7,17 +7,17 @@
 package com.cinnober.msgcodec;
 
 /**
- * A factory that can create a stream codec.
+ * A factory that can create a message codec.
  * 
  * <p>Example usage:</p>
  * <pre>
  * // init (once)
- * ProtocolDictionary dictionary = ...
- * StreamCodecFactory codecFactory = new XxxCodecFactory(dictionary);
+ * Schema schema = ...
+ * MsgCodecFactory codecFactory = new XxxCodecFactory(schema);
  * codecFactory.setSomeParameter(...); // optionally configure
  * 
  * // create codec (for each socket, thread, etc)
- * StreamCodec codec = codecFactory.createStreamCodec();
+ * MsgCodec codec = codecFactory.createCodec();
  * OutputStream out = ...
  * InputStream in = ...
  * 
@@ -30,17 +30,17 @@ package com.cinnober.msgcodec;
  * <p>It is recommended that implementations have parameter setter methods that returns the
  * instance itself to allow for method chaining. For example:
  * <pre>
- * StreamCodec codec = new XxxCodecFactory(dictionary).setFoo(a).setBar(b).createStreamCodec();
+ * MsgCodec codec = new XxxCodecFactory(schema).setFoo(a).setBar(b).createCodec();
  * </pre>
  *
  * @author mikael.brannstrom
  */
-public interface StreamCodecFactory {
+public interface MsgCodecFactory {
     /**
-     * Create a new stream codec.
-     * @return a stream codec, not null.
-     * @throws StreamCodecInstantiationException if the codec could not be instantiated,
+     * Create a new message codec.
+     * @return a message codec, not null.
+     * @throws MsgCodecInstantiationException if the codec could not be instantiated,
      * for example due to a factory configuration error.
      */
-    StreamCodec createStreamCodec() throws StreamCodecInstantiationException;
+    MsgCodec createCodec() throws MsgCodecInstantiationException;
 }

@@ -22,7 +22,7 @@ import java.util.Collections;
 
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.NamedType;
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
@@ -30,13 +30,13 @@ import com.cinnober.msgcodec.anot.Sequence;
 import java.util.List;
 
 /**
- * Message for a protocol dictionary.
+ * Message for a schema.
  *
  * @author mikael.brannstrom
  */
-@Name("ProtocolDictionary")
+@Name("Schema")
 @Id(16000)
-public class MetaProtocolDictionary extends MetaAnnotated {
+public class MetaSchema extends MetaAnnotated {
     /**
      * The groups in the dictionary.
      */
@@ -52,9 +52,9 @@ public class MetaProtocolDictionary extends MetaAnnotated {
     @Id(2)
     public List<MetaNamedType> namedTypes;
 
-    public MetaProtocolDictionary() {}
+    public MetaSchema() {}
 
-    public MetaProtocolDictionary(List<MetaGroupDef> groups,
+    public MetaSchema(List<MetaGroupDef> groups,
             List<MetaNamedType> namedTypes) {
         this.groups = groups;
         this.namedTypes = namedTypes;
@@ -83,7 +83,7 @@ public class MetaProtocolDictionary extends MetaAnnotated {
         return list;
     }
 
-    public ProtocolDictionary toProtocolDictionary() {
-        return new ProtocolDictionary(toGroupDefs(), toNamedTypes(), toAnnotationsMap(), null);
+    public Schema toSchema() {
+        return new Schema(toGroupDefs(), toNamedTypes(), toAnnotationsMap(), null);
     }
 }

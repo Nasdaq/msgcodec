@@ -25,9 +25,9 @@ import java.nio.charset.Charset;
 
 import org.junit.Test;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
+import com.cinnober.msgcodec.MsgCodec;
 
 /**
  * @author Mikael Brannstrom
@@ -37,9 +37,9 @@ public class JsonCodecTest {
 
     @Test
     public void test() throws Exception {
-        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder();
-        ProtocolDictionary dictionary = builder.build(Hello.class);
-        StreamCodec codec = new JsonCodec(dictionary);
+        SchemaBuilder builder = new SchemaBuilder();
+        Schema dictionary = builder.build(Hello.class);
+        MsgCodec codec = new JsonCodec(dictionary);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Hello msg = new Hello("Hello world!");
         codec.encode(msg, out);

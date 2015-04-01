@@ -19,8 +19,8 @@ package com.cinnober.msgcodec.json;
 
 import org.junit.Test;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 
 /**
@@ -31,9 +31,9 @@ public class MetaMessagesTest {
 
     @Test
     public void test() throws Exception {
-        ProtocolDictionary dictionary = MetaProtocol.getProtocolDictionary();
+        Schema dictionary = MetaProtocol.getSchema();
         System.out.println(dictionary);
-        StreamCodec codec = new JsonCodec(dictionary);
+        MsgCodec codec = new JsonCodec(dictionary);
         codec.encode(dictionary.toMessage(), System.out);
     }
 

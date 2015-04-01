@@ -87,7 +87,7 @@ import java.util.Objects;
  * @author mikael.brannstrom
  *
  */
-public class ProtocolDictionaryBuilder {
+public class SchemaBuilder {
 
     private static final Set<Class<?>> nativeTypes =
             new HashSet<>(new ArrayList<Class<?>>(Arrays.asList(
@@ -113,7 +113,7 @@ public class ProtocolDictionaryBuilder {
     /**
      * Create a protocol dictionary builder with default behaviour.
      */
-    public ProtocolDictionaryBuilder() {
+    public SchemaBuilder() {
     }
 
     /**
@@ -121,7 +121,7 @@ public class ProtocolDictionaryBuilder {
      *
      * @param strict true if unecessary annotations should be checked for, otherwise false (default).
      */
-    public ProtocolDictionaryBuilder(boolean strict) {
+    public SchemaBuilder(boolean strict) {
         this.strict = strict;
     }
 
@@ -166,7 +166,7 @@ public class ProtocolDictionaryBuilder {
      * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
      * E.g. wrong annotations etc.
      */
-    public ProtocolDictionary build(Class<?> ... messageTypes) throws IllegalArgumentException {
+    public Schema build(Class<?> ... messageTypes) throws IllegalArgumentException {
         addMessages(messageTypes);
         return build();
     }
@@ -181,7 +181,7 @@ public class ProtocolDictionaryBuilder {
      * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
      * E.g. wrong annotations etc.
      */
-    public ProtocolDictionary build(Collection<Class<?>> messageTypes) throws IllegalArgumentException {
+    public Schema build(Collection<Class<?>> messageTypes) throws IllegalArgumentException {
         addMessages(messageTypes);
         return build();
     }
@@ -190,7 +190,7 @@ public class ProtocolDictionaryBuilder {
      * @param messageTypes the Java classes that should be included in the protocol dictionary
      * @return the builder, with the message types added
      */
-    public ProtocolDictionaryBuilder addMessages(Class<?> ... messageTypes) {
+    public SchemaBuilder addMessages(Class<?> ... messageTypes) {
         return addMessages(Arrays.asList(messageTypes));
     }
     
@@ -198,12 +198,12 @@ public class ProtocolDictionaryBuilder {
      * @param messageTypes the Java classes that should be included in the protocol dictionary
      * @return the builder, with the message types added
      */
-    public ProtocolDictionaryBuilder addMessages(Collection<Class<?>>  messageTypes) {
+    public SchemaBuilder addMessages(Collection<Class<?>>  messageTypes) {
         this.messageTypes.addAll(messageTypes);
         return this;
     }
 
-    public ProtocolDictionary build(){
+    public Schema build(){
         Map<Class<?>, GroupMeta> groups = new HashMap<>(messageTypes.size() * 2);
         for (Class<?> messageType : messageTypes) {
             groups.put(messageType, new GroupMeta(messageType));
@@ -218,7 +218,7 @@ public class ProtocolDictionaryBuilder {
      * E.g. wrong annotations etc.
      */
     @SuppressWarnings({ "rawtypes" })
-    private ProtocolDictionary internalBuild(Map<Class<?>, GroupMeta> groups) throws IllegalArgumentException {
+    private Schema internalBuild(Map<Class<?>, GroupMeta> groups) throws IllegalArgumentException {
 
         Map<String, NamedType> namedTypes = new LinkedHashMap<>();
 
@@ -273,8 +273,8 @@ public class ProtocolDictionaryBuilder {
             groupDefs.add(groupDef);
         }
 
-        ProtocolDictionaryBinding binding = new ProtocolDictionaryBinding(JavaClassGroupTypeAccessor.INSTANCE);
-        return new ProtocolDictionary(groupDefs, namedTypes.values(), binding);
+        SchemaBinding binding = new SchemaBinding(JavaClassGroupTypeAccessor.INSTANCE);
+        return new Schema(groupDefs, namedTypes.values(), binding);
     }
 
 

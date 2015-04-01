@@ -18,13 +18,13 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ByteSink;
-import com.cinnober.msgcodec.ByteSource;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A codec for a specific dictionary, which use FieldInstruction for encoding/decoding.
+ * A codec for a specific schema, which use FieldInstruction for encoding/decoding.
  *
  * @author mikael.brannstrom
  */
@@ -45,20 +45,20 @@ class InstructionCodec extends GeneratedCodec {
     /** The compiled static groups by group id. */
     private final Map<Integer, StaticGroupInstruction> groupInstructionsById;
 
-    public InstructionCodec(BlinkCodec codec, ProtocolDictionary dictionary) {
+    public InstructionCodec(BlinkCodec codec, Schema schema) {
         super(codec);
-        groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
-        groupInstructionsByGroupType = new HashMap<>(dictionary.getGroups().size() * 2);
-        groupInstructionsById = new HashMap<>(dictionary.getGroups().size() * 2);
+        groupTypeAccessor = schema.getBinding().getGroupTypeAccessor();
+        groupInstructionsByGroupType = new HashMap<>(schema.getGroups().size() * 2);
+        groupInstructionsById = new HashMap<>(schema.getGroups().size() * 2);
         // first store place holders for group instructions,
         // since they might be needed when creating field instructions
-        for (GroupDef groupDef : dictionary.getGroups()) {
+        for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupInstruction superGroupInstruction = null;
             if (groupDef.getSuperGroup() != null) {
-                GroupDef superGroup = dictionary.getGroup(groupDef.getSuperGroup());
+                GroupDef superGroup = schema.getGroup(groupDef.getSuperGroup());
                 superGroupInstruction = groupInstructionsByGroupType.get(superGroup.getGroupType());
                 if (superGroupInstruction == null) {
-                    throw new RuntimeException("I think I found a bug in ProtocolDictionary");
+                    throw new RuntimeException("I think I found a bug in Schema");
                 }
             }
 
@@ -67,12 +67,12 @@ class InstructionCodec extends GeneratedCodec {
             groupInstructionsById.put(groupDef.getId(), groupInstruction);
         }
         // create field instructions for all groups
-        for (GroupDef groupDef : dictionary.getGroups()) {
+        for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupDef.getGroupType());
             int index = 0;
             for (FieldDef fieldDef : groupDef.getFields()) {
                 @SuppressWarnings("rawtypes")
-                FieldInstruction fieldInstruction = createFieldInstruction(dictionary, fieldDef, fieldDef.getType(),
+                FieldInstruction fieldInstruction = createFieldInstruction(schema, fieldDef, fieldDef.getType(),
                         fieldDef.getJavaClass(), fieldDef.getComponentJavaClass());
                 groupInstruction.initFieldInstruction(index++, fieldInstruction);
             }
@@ -80,15 +80,15 @@ class InstructionCodec extends GeneratedCodec {
     }
 
     @SuppressWarnings("rawtypes")
-    private FieldInstruction createFieldInstruction(ProtocolDictionary dictionary, FieldDef field, TypeDef type,
+    private FieldInstruction createFieldInstruction(Schema schema, FieldDef field, TypeDef type,
             Class<?> javaClass, Class<?> componentJavaClass) {
-        type = dictionary.resolveToType(type, true);
-        GroupDef typeGroup = dictionary.resolveToGroup(type);
+        type = schema.resolveToType(type, true);
+        GroupDef typeGroup = schema.resolveToGroup(type);
         boolean required = field == null || field.isRequired();
         if (type instanceof TypeDef.Sequence) {
             // --- SEQUENCE ---
             FieldInstruction elementInstruction =
-                    createFieldInstruction(dictionary, null, ((TypeDef.Sequence) type).getComponentType(),
+                    createFieldInstruction(schema, null, ((TypeDef.Sequence) type).getComponentType(),
                             componentJavaClass, null);
             if (javaClass.isArray()) {
                 if (required) {
@@ -265,7 +265,7 @@ class InstructionCodec extends GeneratedCodec {
         Object groupType = groupTypeAccessor.getGroupType(value);
         StaticGroupInstruction groupInstruction = groupInstructionsByGroupType.get(groupType);
         if (groupInstruction == null) {
-            throw new IllegalArgumentException("Cannot encode group. Group type not found in protocol dictionary: " +
+            throw new IllegalArgumentException("Cannot encode group. Group type not found in schema: " +
                     groupType);
         }
         groupInstruction.encodeGroupId(out);

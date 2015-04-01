@@ -16,37 +16,34 @@
  * distributing this software or its derivatives.
  */
 
-package com.cinnober.msgcodec;
+package com.cinnober.msgcodec.io;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.io.OutputStream;
 
 /**
  * TODO: javadoc
- *
  * @author mikael.brannstrom
  */
-public interface ByteSource {
-    static final Charset UTF8 = Charset.forName("UTF-8");
+public class ByteSinkOutputStream extends OutputStream {
+    private final ByteSink sink;
 
-    int read() throws IOException;
-    default void read(byte[] b, int off, int len) throws IOException {
-        for (int i=off; i<len; i++) {
-            b[i] = (byte) read();
-        }
-    }
-    default void read(byte[] b) throws IOException {
-        read(b, 0, b.length);
+    public ByteSinkOutputStream(ByteSink sink) {
+        this.sink = sink;
     }
 
-    default String readStringUtf8(int len) throws IOException {
-        byte[] data = new byte[len];
-        read(data);
-        return new String(data, UTF8);
+    @Override
+    public void write(int b) throws IOException {
+        sink.write(b);
     }
-    default void skip(int len) throws IOException {
-        for (int i=0; i<len; i++) {
-            read();
-        }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        sink.write(b, off, len);
+    }
+
+    @Override
+    public void write(byte[] b) throws IOException {
+        sink.write(b);
     }
 }

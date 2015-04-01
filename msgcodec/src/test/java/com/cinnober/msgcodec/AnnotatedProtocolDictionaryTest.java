@@ -36,7 +36,7 @@ public class AnnotatedProtocolDictionaryTest {
     @Test
     public void testRawGroupDef() throws Exception {
         GroupDef groupDef = ExecutionReport.groupDef();
-        ProtocolDictionary dict = new ProtocolDictionary(Collections.singletonList(groupDef),null);
+        Schema dict = new Schema(Collections.singletonList(groupDef),null);
         String groupLevelDocForExecReport =
                 "An execution report is used for a bunch of things, like confirming the receipt of an order";
         Annotations annotations = new Annotations();
@@ -55,7 +55,7 @@ public class AnnotatedProtocolDictionaryTest {
         Assert.assertEquals(fieldLevelDocForClientOrderId, getClientOrderId(dict).getAnnotation(annotationName));
     }
 
-    private FieldDef getClientOrderId(ProtocolDictionary dictionary) {
+    private FieldDef getClientOrderId(Schema dictionary) {
         return dictionary.getGroup(executionReportGroupName).getField(clientOrderIdFieldName);
     }
 

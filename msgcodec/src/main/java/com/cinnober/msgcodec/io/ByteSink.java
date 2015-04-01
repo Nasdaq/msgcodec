@@ -16,19 +16,25 @@
  * distributing this software or its derivatives.
  */
 
-package com.cinnober.msgcodec;
+package com.cinnober.msgcodec.io;
+
+import java.io.IOException;
 
 /**
  * TODO: javadoc
+ *
  * @author mikael.brannstrom
  */
-public interface ByteBuf extends ByteSource, ByteSink {
-    int position();
-    ByteBuf position(int position);
-    int limit();
-    int capacity();
-    ByteBuf limit(int limit);
-    ByteBuf clear();
-    ByteBuf flip();
-    void shift(int position, int length, int distance);
+public interface ByteSink {
+    void write(int b) throws IOException;
+
+    default void write(byte[] b, int off, int len) throws IOException {
+        for (int i=off; i<len; i++) {
+            write(b[i]);
+        }
+    }
+    default void write(byte[] b) throws IOException {
+        write(b, 0, b.length);
+    }
+
 }

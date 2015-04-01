@@ -17,15 +17,19 @@
  */
 package com.cinnober.msgcodec.json;
 
-import com.cinnober.msgcodec.StreamCodecInstantiationException;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodecInstantiationException;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Sequence;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ByteSinkOutputStream;
+import com.cinnober.msgcodec.io.ByteSource;
+import com.cinnober.msgcodec.io.ByteSourceInputStream;
 import com.cinnober.msgcodec.json.JsonValueHandler.ArraySequenceHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.DynamicGroupHandler;
 import com.cinnober.msgcodec.json.JsonValueHandler.FieldHandler;
@@ -78,7 +82,7 @@ import java.util.Map;
  * @see JsonCodecFactory
  *
  */
-public class JsonCodec implements StreamCodec {
+public class JsonCodec implements MsgCodec {
 
     private static final byte[] NULL_BYTES = new byte[] { 'n', 'u', 'l', 'l' };
     private final GroupTypeAccessor groupTypeAccessor;
@@ -87,25 +91,25 @@ public class JsonCodec implements StreamCodec {
     private final DynamicGroupHandler dynamicGroupHandler;
 
     @SuppressWarnings("rawtypes")
-    JsonCodec(ProtocolDictionary dictionary) {
-        if (!dictionary.isBound()) {
-            throw new IllegalArgumentException("ProtocolDictionary not bound");
+    JsonCodec(Schema schema) {
+        if (!schema.isBound()) {
+            throw new IllegalArgumentException("Schema not bound");
         }
 
         dynamicGroupHandler = new DynamicGroupHandler(this);
-        groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
-        int mapSize = dictionary.getGroups().size() * 2;
+        groupTypeAccessor = schema.getBinding().getGroupTypeAccessor();
+        int mapSize = schema.getGroups().size() * 2;
         staticGroupsByName = new HashMap<>(mapSize);
         staticGroupsByGroupType = new HashMap<>(mapSize);
 
-        for (GroupDef groupDef : dictionary.getGroups()) {
+        for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupHandler groupInstruction = new StaticGroupHandler(groupDef);
             staticGroupsByGroupType.put(groupDef.getGroupType(), groupInstruction);
             staticGroupsByName.put(groupDef.getName(), groupInstruction);
         }
 
         // create field instructions for all groups
-        for (GroupDef groupDef : dictionary.getGroups()) {
+        for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupHandler groupInstruction = staticGroupsByGroupType.get(groupDef.getGroupType());
             Map<String, FieldHandler> fields = new LinkedHashMap<>();
             if (groupDef.getSuperGroup() != null) {
@@ -114,7 +118,7 @@ public class JsonCodec implements StreamCodec {
             }
 
             for (FieldDef fieldDef : groupDef.getFields()) {
-                JsonValueHandler valueHandler = createValueHandler(dictionary, fieldDef.getType(), fieldDef.getJavaClass(), fieldDef.getComponentJavaClass());
+                JsonValueHandler valueHandler = createValueHandler(schema, fieldDef.getType(), fieldDef.getJavaClass(), fieldDef.getComponentJavaClass());
                 FieldHandler fieldHandler = new FieldHandler(fieldDef, valueHandler);
                 fields.put(fieldDef.getName(), fieldHandler);
             }
@@ -123,7 +127,7 @@ public class JsonCodec implements StreamCodec {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private JsonValueHandler createValueHandler(ProtocolDictionary dictionary, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass) {
+    private JsonValueHandler createValueHandler(Schema dictionary, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass) {
         type = dictionary.resolveToType(type, true);
         GroupDef group = dictionary.resolveToGroup(type);
         switch (type.getType()) {
@@ -185,6 +189,17 @@ public class JsonCodec implements StreamCodec {
             g.flush();
         }
     }
+    @Override
+    public void encode(Object group, ByteSink out) throws IOException {
+        if (group == null) {
+            out.write(NULL_BYTES);
+        } else {
+            JsonFactory f = new JsonFactory();
+            JsonGenerator g = f.createGenerator(new ByteSinkOutputStream(out));
+            dynamicGroupHandler.writeValue(group, g);
+            g.flush();
+        }
+    }
 
     @Override
     public Object decode(InputStream in) throws IOException {
@@ -197,6 +212,10 @@ public class JsonCodec implements StreamCodec {
             throw new DecodeException("Expected {");
         }
         return dynamicGroupHandler.readValue(p);
+    }
+    @Override
+    public Object decode(ByteSource in) throws IOException {
+        return decode(new ByteSourceInputStream(in));
     }
 
     StaticGroupHandler lookupGroupByName(String name) {

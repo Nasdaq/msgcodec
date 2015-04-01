@@ -16,7 +16,7 @@
  * distributing this software or its derivatives.
  */
 
-package com.cinnober.msgcodec.util;
+package com.cinnober.msgcodec.io;
 
 /**
  * Utilities for byte arrays and binary data.

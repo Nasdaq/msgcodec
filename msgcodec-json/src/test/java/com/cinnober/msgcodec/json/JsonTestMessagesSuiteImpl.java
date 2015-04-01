@@ -19,7 +19,7 @@ package com.cinnober.msgcodec.json;
 
 import org.junit.runners.model.InitializationError;
 
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
 import com.cinnober.msgcodec.test.messages.TestProtocol;
 
@@ -34,7 +34,7 @@ public class JsonTestMessagesSuiteImpl extends TestMessagesSuite {
         super(rootClass, createCodec());
     }
 
-    private static StreamCodec createCodec() {
+    private static MsgCodec createCodec() {
         return new JsonCodec(TestProtocol.getProtocolDictionary());
     }
 }

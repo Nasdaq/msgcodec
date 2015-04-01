@@ -1,13 +1,13 @@
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ByteSink;
-import com.cinnober.msgcodec.ByteSource;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.util.ByteArrayBuf;
-import com.cinnober.msgcodec.util.ByteArrays;
-import com.cinnober.msgcodec.util.ByteBufferInputStream;
-import com.cinnober.msgcodec.util.ByteBufferOutputStream;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ByteSource;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
+import com.cinnober.msgcodec.io.ByteArrayBuf;
+import com.cinnober.msgcodec.io.ByteArrays;
+import com.cinnober.msgcodec.io.ByteBufferInputStream;
+import com.cinnober.msgcodec.io.ByteBufferOutputStream;
 import com.cinnober.msgcodec.util.InputStreamSource;
 import com.cinnober.msgcodec.util.OutputStreamSink;
 import java.io.IOException;
@@ -44,12 +44,12 @@ public class BenchmarkOuch42EnterOrderStream {
 
     @Setup
     public void setup() throws IOException {
-        ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(Ouch42EnterOrder.class);
+        Schema dict = new SchemaBuilder(true).build(Ouch42EnterOrder.class);
         BlinkCodecFactory factory = new BlinkCodecFactory(dict);
         factory.setCodecOption(bytecode ? 
                 CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
                 CodecOption.INSTRUCTION_CODEC_ONLY);
-        codec = factory.createStreamCodec();
+        codec = factory.createCodec();
         buf = ByteBuffer.allocate(1024);
         sink = new OutputStreamSink(new ByteBufferOutputStream(buf));
         source = new InputStreamSource(new ByteBufferInputStream(buf));

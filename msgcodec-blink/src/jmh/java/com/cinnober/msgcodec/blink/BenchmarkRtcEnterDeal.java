@@ -1,19 +1,19 @@
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ByteBuf;
+import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.Epoch;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.blink.rtcmessages.EnterDeal;
 import com.cinnober.msgcodec.blink.rtcmessages.IncomingTradeSide;
 import com.cinnober.msgcodec.blink.rtcmessages.Request;
 import com.cinnober.msgcodec.blink.rtcmessages.SessionToken;
 import com.cinnober.msgcodec.blink.rtcmessages.TradeDestination;
 import com.cinnober.msgcodec.blink.rtcmessages.TradeExternalData;
-import com.cinnober.msgcodec.util.ByteArrayBuf;
-import com.cinnober.msgcodec.util.ByteArrays;
-import com.cinnober.msgcodec.util.ByteBufferBuf;
-import com.cinnober.msgcodec.util.ByteBuffers;
+import com.cinnober.msgcodec.io.ByteArrayBuf;
+import com.cinnober.msgcodec.io.ByteArrays;
+import com.cinnober.msgcodec.io.ByteBufferBuf;
+import com.cinnober.msgcodec.io.ByteBuffers;
 import com.cinnober.msgcodec.util.TimeFormat;
 import java.io.IOException;
 import java.math.*;
@@ -57,7 +57,7 @@ public class BenchmarkRtcEnterDeal {
 
     @Setup
     public void setup() throws IOException {
-        ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(
+        Schema dict = new SchemaBuilder(true).build(
                 EnterDeal.class,
                 Request.class,
                 IncomingTradeSide.class,
@@ -69,7 +69,7 @@ public class BenchmarkRtcEnterDeal {
         factory.setCodecOption(bytecode ? 
                 CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
                 CodecOption.INSTRUCTION_CODEC_ONLY);
-        codec = factory.createStreamCodec();
+        codec = factory.createCodec();
         final int bufferSize = 1024;
         switch (bufType) {
             case ARRAY:

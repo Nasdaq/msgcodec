@@ -30,22 +30,22 @@ import java.util.Map;
 import com.cinnober.msgcodec.TypeDef.Ref;
 import com.cinnober.msgcodec.messages.MetaGroupDef;
 import com.cinnober.msgcodec.messages.MetaNamedType;
-import com.cinnober.msgcodec.messages.MetaProtocolDictionary;
+import com.cinnober.msgcodec.messages.MetaSchema;
 import java.util.List;
 import java.util.Objects;
 
 /**
- * The protocol dictionary defines the messages of a protocol.
- * Protocol dictionary is immutable.
+ * The schema defines the messages of a protocol.
+ * Schema is immutable.
  *
- * <p>A protocol dictionary consists of a collection of message definitions ({@link GroupDef}),
+ * <p>A schema consists of a collection of message definitions ({@link GroupDef}),
  * and any named types (a mapping from String to {@link TypeDef}) that may be referred to by
  * message fields ({@link FieldDef}).
  *
  * @author mikael.brannstrom
  *
  */
-public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
+public class Schema implements Annotatable<Schema> {
     private final Object UID = new Object();
     private final Map<String, NamedType> typesByName;
 
@@ -55,41 +55,41 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     private final Collection<GroupDef> sortedGroups;
     private final Map<String, String> annotations;
 
-    private final ProtocolDictionaryBinding binding;
+    private final SchemaBinding binding;
     private BindingStatus bindingStatus;
 
     /**
-     * Creates a protocol dictionary.
+     * Creates a schema.
      *
      * @param groups the group definitions (the protocol messages), not null.
      * @param namedTypes any named types, or null if none.
      */
-    public ProtocolDictionary(Collection<GroupDef> groups, Collection<NamedType> namedTypes) {
+    public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes) {
         this(groups, namedTypes, null, null);
     }
 
     /**
-     * Creates a protocol dictionary.
+     * Creates a schema.
      *
      * @param groups the group definitions (the protocol messages), not null.
      * @param namedTypes any named types, or null if none.
      * @param binding the protocol dictionary binding, or null if unbound
      */
-    public ProtocolDictionary(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
-        ProtocolDictionaryBinding binding) {
+    public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
+        SchemaBinding binding) {
         this(groups, namedTypes, null, binding);
     }
 
     /**
-     * Creates a protocol dictionary.
+     * Creates a schema.
      *
      * @param groups the group definitions (the protocol messages), not null.
      * @param namedTypes any named types, or null if none.
      * @param annotations the group annotations.
      * @param binding the protocol dictionary binding, or null if unbound
      */
-    public ProtocolDictionary(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
-        Map<String, String> annotations, ProtocolDictionaryBinding binding) {
+    public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
+        Map<String, String> annotations, SchemaBinding binding) {
         if (annotations == null || annotations.isEmpty()) {
             this.annotations = Collections.emptyMap();
         } else{
@@ -241,7 +241,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
     /**
      * @return the binding
      */
-    public ProtocolDictionaryBinding getBinding() {
+    public SchemaBinding getBinding() {
         return binding;
     }
 
@@ -276,7 +276,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
      * Returns the unbound version of this dictionary.
      * @return the unbound version of this dictionary.
      */
-    public ProtocolDictionary unbind() {
+    public Schema unbind() {
         if (isUnbound()) {
             return this;
         }
@@ -284,7 +284,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         for (GroupDef group : sortedGroups) {
             unboundGroups.add(group.unbind());
         }
-        return new ProtocolDictionary(unboundGroups, typesByName.values(), annotations, null);
+        return new Schema(unboundGroups, typesByName.values(), annotations, null);
     }
 
     /** Resolves the TypeDef to a GroupDef, or null if it cannot be resolved to a GroupDef.
@@ -435,7 +435,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
      * @return a new ProtocolDictionay with group identifiers assigned.
      * @throws IllegalArgumentException if duplicate identifiers were generated
      */
-    public ProtocolDictionary assignGroupIds() {
+    public Schema assignGroupIds() {
         Collection<GroupDef> newSortedGroups = new ArrayList<>(sortedGroups.size());
         for (GroupDef group : sortedGroups) {
             if (group.getId() == -1) {
@@ -454,7 +454,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
             newSortedGroups.add(group);
         }
 
-        return new ProtocolDictionary(newSortedGroups, typesByName.values(), annotations, binding);
+        return new Schema(newSortedGroups, typesByName.values(), annotations, binding);
     }
 
     /**
@@ -472,10 +472,10 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         if (obj == this) {
             return true;
         }
-        if (obj == null || !obj.getClass().equals(ProtocolDictionary.class)) {
+        if (obj == null || !obj.getClass().equals(Schema.class)) {
             return false;
         }
-        final ProtocolDictionary other = (ProtocolDictionary) obj;
+        final Schema other = (Schema) obj;
         return Objects.equals(this.sortedGroups, other.sortedGroups) &&
                 Objects.equals(this.typesByName, other.typesByName) &&
                 Objects.equals(this.annotations, other.annotations) &&
@@ -509,7 +509,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         return str.toString();
     }
 
-    public MetaProtocolDictionary toMessage() {
+    public MetaSchema toMessage() {
         List<MetaGroupDef> msgGroups = new ArrayList<>(sortedGroups.size());
         for (GroupDef group : sortedGroups) {
             msgGroups.add(group.toMessage());
@@ -520,7 +520,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
             msgTypes.add(namedType.toMessage());
         }
 
-        MetaProtocolDictionary message = new MetaProtocolDictionary(msgGroups, msgTypes);
+        MetaSchema message = new MetaSchema(msgGroups, msgTypes);
         message.setAnnotations(annotations.isEmpty() ? null : annotations);
         return message;
     }
@@ -532,7 +532,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
      * @return a new copy of this dictionary, with the specified annotations set.
      */
     @Override
-    public ProtocolDictionary replaceAnnotations(Annotations annotations) {
+    public Schema replaceAnnotations(Annotations annotations) {
         Collection<GroupDef> newGroups = new ArrayList<>(sortedGroups.size());
         for(GroupDef group : sortedGroups){
             newGroups.add(group.replaceAnnotations(annotations.path(group.getName())));
@@ -542,7 +542,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
             newNamedTypes.add(namedType.replaceAnnotations(annotations.path(namedType.getName())));
         }
         Map<String, String> newAnnotations = annotations.map();
-        return new ProtocolDictionary(newGroups, newNamedTypes, newAnnotations, binding);
+        return new Schema(newGroups, newNamedTypes, newAnnotations, binding);
     }
 
     /**
@@ -552,7 +552,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
      * @return a new copy of this dictionary, with the specified annotations set.
      */
     @Override
-    public ProtocolDictionary addAnnotations(Annotations annotations) {
+    public Schema addAnnotations(Annotations annotations) {
         Collection<GroupDef> newGroups = new ArrayList<>(sortedGroups.size());
         for(GroupDef group : sortedGroups){
             newGroups.add(group.addAnnotations(annotations.path(group.getName())));
@@ -563,7 +563,7 @@ public class ProtocolDictionary implements Annotatable<ProtocolDictionary> {
         }
         Map<String, String> newAnnotations = new HashMap<>(this.annotations);
         newAnnotations.putAll(annotations.map());
-        return new ProtocolDictionary(newGroups, newNamedTypes, newAnnotations, binding);
+        return new Schema(newGroups, newNamedTypes, newAnnotations, binding);
     }
 
     /**

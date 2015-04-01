@@ -32,8 +32,8 @@ public class ProtocolDictionaryTest {
 
     @Test
     public void testEqualsAndHashCode() {
-        ProtocolDictionary dict1 = new ProtocolDictionaryBuilder().build(FooMessage.class, BarMessage.class);
-        ProtocolDictionary dict2 = new ProtocolDictionaryBuilder().build(FooMessage.class, BarMessage.class);
+        Schema dict1 = new SchemaBuilder().build(FooMessage.class, BarMessage.class);
+        Schema dict2 = new SchemaBuilder().build(FooMessage.class, BarMessage.class);
 
         assertEquals(dict1, dict2);
         assertEquals(dict1.hashCode(), dict2.hashCode());

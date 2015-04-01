@@ -18,7 +18,8 @@
 
 package com.cinnober.msgcodec.util;
 
-import com.cinnober.msgcodec.ByteSource;
+import com.cinnober.msgcodec.io.InputStreams;
+import com.cinnober.msgcodec.io.ByteSource;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;

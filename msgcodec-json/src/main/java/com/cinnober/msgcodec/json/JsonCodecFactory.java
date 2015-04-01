@@ -6,34 +6,34 @@
 
 package com.cinnober.msgcodec.json;
 
-import com.cinnober.msgcodec.StreamCodecInstantiationException;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodecFactory;
+import com.cinnober.msgcodec.MsgCodecInstantiationException;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodecFactory;
 
 /**
  * Factory for JsonCodec.
  * 
  * @author mikael.brannstrom
  */
-public class JsonCodecFactory implements StreamCodecFactory {
+public class JsonCodecFactory implements MsgCodecFactory {
 
-    private final ProtocolDictionary dictionary;
+    private final Schema schema;
 
     /**
      * Create a JSON codec factory.
      * 
-     * @param dictionary the protocol dictionary to be used by all codec instances, not null.
+     * @param schema the schema to be used by all codec instances, not null.
      */
-    public JsonCodecFactory(ProtocolDictionary dictionary) {
-        if (!dictionary.isBound()) {
-            throw new IllegalArgumentException("Dictionary must be bound");
+    public JsonCodecFactory(Schema schema) {
+        if (!schema.isBound()) {
+            throw new IllegalArgumentException("Schema must be bound");
         }
-        this.dictionary = dictionary;
+        this.schema = schema;
     }
 
     @Override
-    public JsonCodec createStreamCodec() throws StreamCodecInstantiationException {
-        return new JsonCodec(dictionary);
+    public JsonCodec createCodec() throws MsgCodecInstantiationException {
+        return new JsonCodec(schema);
     }
     
 }

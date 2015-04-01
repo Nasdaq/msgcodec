@@ -20,10 +20,14 @@ package com.cinnober.msgcodec.xml;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Enum;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ByteSinkOutputStream;
+import com.cinnober.msgcodec.io.ByteSource;
+import com.cinnober.msgcodec.io.ByteSourceInputStream;
 import com.cinnober.msgcodec.util.TimeFormat;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ArraySequenceSimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ArraySequenceValueField;
@@ -58,7 +62,7 @@ import org.xml.sax.SAXException;
 /**
  * The XML codec can serialize and deserialize Java objects to/from XML.
  * 
- * <p>XML codec support a number of annotations to the protocol dictionary that control the encoding.
+ * <p>XML codec support a number of annotations to the schema that control the encoding.
  * <table>
  * <caption>XML specific annotations</caption>
  * <tr style="text-align: left">
@@ -113,7 +117,7 @@ import org.xml.sax.SAXException;
  * @author mikael.brannstrom
  *
  */
-public class XmlCodec implements StreamCodec {
+public class XmlCodec implements MsgCodec {
 
     private static final Charset UTF8 = Charset.forName("UTF-8");
 
@@ -133,18 +137,18 @@ public class XmlCodec implements StreamCodec {
     private final XmlDocumentHandler saxHandler;
     private final SAXParser saxParser;
 
-    XmlCodec(ProtocolDictionary dictionary) throws ParserConfigurationException, SAXException {
-        if (!dictionary.isBound()) {
-            throw new IllegalArgumentException("ProtocolDictionary not bound");
+    XmlCodec(Schema schema) throws ParserConfigurationException, SAXException {
+        if (!schema.isBound()) {
+            throw new IllegalArgumentException("Schema not bound");
         }
 
-        groupTypeAccessor = dictionary.getBinding().getGroupTypeAccessor();
-        int mapSize = dictionary.getGroups().size() * 2;
+        groupTypeAccessor = schema.getBinding().getGroupTypeAccessor();
+        int mapSize = schema.getGroups().size() * 2;
         staticGroupsByNsName = new HashMap<>(mapSize);
         staticGroupsByName = new HashMap<>(mapSize);
         staticGroupsByGroupType = new HashMap<>(mapSize);
 
-        for (GroupDef groupDef : dictionary.getGroups()) {
+        for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupValue groupInstruction = new StaticGroupValue(getNsName(groupDef), groupDef);
             staticGroupsByGroupType.put(groupDef.getGroupType(), groupInstruction);
             staticGroupsByName.put(groupDef.getName(), groupInstruction);
@@ -152,7 +156,7 @@ public class XmlCodec implements StreamCodec {
         }
 
         // create field instructions for all groups
-        for (GroupDef groupDef : dictionary.getGroups()) {
+        for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupValue groupInstruction = staticGroupsByGroupType.get(groupDef.getGroupType());
             Map<NsName, FieldHandler> elementFields = new LinkedHashMap<>();
             Map<NsName, SimpleField> attributeFields = new LinkedHashMap<>();
@@ -167,7 +171,7 @@ public class XmlCodec implements StreamCodec {
             }
 
             for (FieldDef fieldDef : groupDef.getFields()) {
-                createFieldInstruction(dictionary, fieldDef, fieldDef.getType(), attributeFields, elementFields, inlineField);
+                createFieldInstruction(schema, fieldDef, fieldDef.getType(), attributeFields, elementFields, inlineField);
             }
             groupInstruction.init(attributeFields, elementFields, inlineField.isEmpty() ? null : inlineField.get(0));
         }
@@ -178,11 +182,11 @@ public class XmlCodec implements StreamCodec {
         saxParser = saxFactory.newSAXParser();
     }
 
-    protected NsName getNsName(GroupDef groupDef) {
+    private NsName getNsName(GroupDef groupDef) {
         String nsAnot = groupDef.getAnnotation(ANOT_XML_NAMESPACE);
         return new NsName(nsAnot != null ? nsAnot : namespace, toElementName(groupDef.getName()));
     }
-    protected NsName getNsName(FieldDef fieldDef) {
+    private NsName getNsName(FieldDef fieldDef) {
         String nsAnot = fieldDef.getAnnotation(ANOT_XML_NAMESPACE);
         return new NsName(nsAnot != null ? nsAnot : namespace, toElementName(fieldDef.getName()));
     }
@@ -198,7 +202,7 @@ public class XmlCodec implements StreamCodec {
     }
 
     @SuppressWarnings("rawtypes")
-    private void createFieldInstruction(ProtocolDictionary dictionary, FieldDef field, TypeDef type,
+    private void createFieldInstruction(Schema dictionary, FieldDef field, TypeDef type,
             Map<NsName, SimpleField> attributeFields, Map<NsName, FieldHandler> elementFields,
             List<SimpleField> inlineField) {
         NsName nsName = getNsName(field);
@@ -421,10 +425,19 @@ public class XmlCodec implements StreamCodec {
         }
     }
 
-    public StaticGroupValue lookupGroup(NsName name) {
+    @Override
+    public void encode(Object group, ByteSink out) throws IOException {
+        encode(group, new ByteSinkOutputStream(out));
+    }
+    @Override
+    public Object decode(ByteSource in) throws IOException {
+        return decode(new ByteSourceInputStream(in));
+    }
+
+    StaticGroupValue lookupGroup(NsName name) {
         return staticGroupsByNsName.get(name);
     }
-    public StaticGroupValue lookupGroup(Class<?> javaClass) {
+    StaticGroupValue lookupGroup(Class<?> javaClass) {
         return staticGroupsByGroupType.get(javaClass);
     }
 
