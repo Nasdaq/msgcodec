@@ -15,7 +15,7 @@ buildscript {
 }
 
 allprojects { 
-    ext.nextVersion = 'minor'
+    ext.nextVersion = 'major'
     apply plugin: 'semver-git'
     group = 'com.cinnober.msgcodec'
 }
