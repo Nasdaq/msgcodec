@@ -19,14 +19,13 @@
 package com.cinnober.msgcodec.visitor;
 
 import com.cinnober.msgcodec.FieldBinding;
-import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.TypeDef;
 
 /**
  * A visitor to visit a group definition.
  *
  * <p>The methods of this class must be called in the following order:
- * <code>visitAnnotation* | visitField* | visitEnd</code>
+ * <code>( visitAnnotation | visitField )* visitEnd</code>
  *
  * @author mikael.brannstrom
  */

@@ -29,7 +29,7 @@ import com.cinnober.msgcodec.messages.MetaSchema;
  * A visitor to visit a schema.
  *
  * <p>The methods of this class must be called in the following order:
- * <code>visit | visitAnnotation* | visitNamedType* | visitGroup* | visitEnd</code>
+ * <code>visit ( visitAnnotation | visitNamedType | visitGroup )* visitEnd</code>
  *
  * @author mikael.brannstrom
  */

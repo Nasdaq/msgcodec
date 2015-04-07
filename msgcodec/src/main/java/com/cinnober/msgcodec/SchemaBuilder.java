@@ -1,50 +1,21 @@
 /*
- * The MIT License (MIT)
+ * Copyright (c) 2013 Cinnober Financial Technology AB, Stockholm,
+ * Sweden. All rights reserved.
  *
- * Copyright (c) 2015 The MsgCodec Authors
+ * This software is the confidential and proprietary information of
+ * Cinnober Financial Technology AB, Stockholm, Sweden. You shall not
+ * disclose such Confidential Information and shall use it only in
+ * accordance with the terms of the license agreement you entered into
+ * with Cinnober.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Cinnober makes no representations or warranties about the suitability
+ * of the software, either expressed or implied, including, but not limited
+ * to, the implied warranties of merchantibility, fitness for a particular
+ * purpose, or non-infringement. Cinnober shall not be liable for any
+ * damages suffered by licensee as a result of using, modifying, or
+ * distributing this software or its derivatives.
  */
 package com.cinnober.msgcodec;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.lang.reflect.TypeVariable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
 
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.anot.Annotate;
@@ -57,13 +28,41 @@ import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.SmallDecimal;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
+import com.cinnober.msgcodec.visitor.AnnotatedVisitor;
+import com.cinnober.msgcodec.visitor.FieldDefVisitor;
+import com.cinnober.msgcodec.visitor.GroupDefVisitor;
+import com.cinnober.msgcodec.visitor.SchemaProducer;
+import com.cinnober.msgcodec.visitor.SchemaVisitor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TimeZone;
+import java.util.function.Supplier;
 
 /**
- * The protocol dictionary builder can build a protocol dictionary from a collection of java classes.
+ * The schema builder can build a schema from a collection of java classes.
  * <p>All non-static fields of the Java classes must be annotated properly, see the com.cinnober.msgcodec.anot package.
  * The default constructor must exist, but it need not be public.
  *
@@ -114,16 +113,17 @@ public class SchemaBuilder {
     private boolean strict;
     @SuppressWarnings("rawtypes")
     private final Map<Class<? extends Annotation>, AnnotationMapper> annotationMappers = new HashMap<>();
-    private Collection<Class<?>> messageTypes = new ArrayList<Class<?>>();
+    private final Set<Class<?>> messageClasses = new LinkedHashSet<>();
 
     /**
-     * Create a protocol dictionary builder with default behaviour.
+     * Create a schema builder.
      */
     public SchemaBuilder() {
+        this(false);
     }
 
     /**
-     * Create a protocol dictionary builder.
+     * Create a schema builder.
      *
      * @param strict true if unecessary annotations should be checked for, otherwise false (default).
      */
@@ -135,9 +135,11 @@ public class SchemaBuilder {
      * Set strict validation mode.
      * 
      * @param strict true if unecessary annotations should be checked for, otherwise false (default).
+     * @return this
      */
-    public void setStrict(boolean strict) {
+    public SchemaBuilder setStrict(boolean strict) {
         this.strict = strict;
+        return this;
     }
 
     /**
@@ -156,149 +158,126 @@ public class SchemaBuilder {
      * @param <T> the annotation type
      * @param annotationType the annotation type, not null
      * @param mapper the mapper that can convert the annotation to a "key=value" string.
+     * @return this
      */
-    public <T extends Annotation> void addAnnotationMapper(Class<T> annotationType, AnnotationMapper<T> mapper) {
+    public <T extends Annotation> SchemaBuilder addAnnotationMapper(
+            Class<T> annotationType, AnnotationMapper<T> mapper) {
         annotationMappers.put(Objects.requireNonNull(annotationType), Objects.requireNonNull(mapper));
-    }
-
-
-    /** Build a protocol dictionary from the specified Java classes.
-     *
-     * <p>The protocol dictionary built is bound to the specified classes.
-     *
-     * @param messageTypes the Java classes that should be included in the protocol dictionary.
-     * Any component groups or enumerations that are referred to will be automatically included.
-     * @return the created protocol dictionary.
-     * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
-     * E.g. wrong annotations etc.
-     */
-    public Schema build(Class<?> ... messageTypes) throws IllegalArgumentException {
-        addMessages(messageTypes);
-        return build();
-    }
-
-    /** Build a protocol dictionary from the specified Java classes.
-     *
-     * <p>The protocol dictionary built is bound to the specified classes.
-     *
-     * @param messageTypes the Java classes that should be included in the protocol dictionary.
-     * Any component groups or enumerations that are referred to will be automatically included.
-     * @return the created protocol dictionary.
-     * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
-     * E.g. wrong annotations etc.
-     */
-    public Schema build(Collection<Class<?>> messageTypes) throws IllegalArgumentException {
-        addMessages(messageTypes);
-        return build();
-    }
-
-    /** Adds a set of message types to this builder. 
-     * @param messageTypes the Java classes that should be included in the protocol dictionary
-     * @return the builder, with the message types added
-     */
-    public SchemaBuilder addMessages(Class<?> ... messageTypes) {
-        return addMessages(Arrays.asList(messageTypes));
-    }
-    
-    /** Adds a set of message types to this builder. 
-     * @param messageTypes the Java classes that should be included in the protocol dictionary
-     * @return the builder, with the message types added
-     */
-    public SchemaBuilder addMessages(Collection<Class<?>>  messageTypes) {
-        this.messageTypes.addAll(messageTypes);
         return this;
-    }
-
-    public Schema build(){
-        Map<Class<?>, GroupMeta> groups = new HashMap<>(messageTypes.size() * 2);
-        for (Class<?> messageType : messageTypes) {
-            groups.put(messageType, new GroupMeta(messageType));
-        }
-        return internalBuild(groups);
-    }
-
-    /** Build a protocol dictionary from the specified groups.
-     * @param groups group meta objects where only the java class is initialized, mapped by the java classes.
-     * @return the created protocol dictionary.
-     * @throws IllegalArgumentException if the protocol dictionary could not be build due to wrong input.
-     * E.g. wrong annotations etc.
-     */
-    @SuppressWarnings({ "rawtypes" })
-    private Schema internalBuild(Map<Class<?>, GroupMeta> groups) throws IllegalArgumentException {
-
-        Map<String, NamedType> namedTypes = new LinkedHashMap<>();
-
-        // scan groups for referenced component groups
-        LinkedList<GroupMeta> groupsToScan = new LinkedList<>(groups.values());
-        while (!groupsToScan.isEmpty()) {
-            GroupMeta group = groupsToScan.removeFirst();
-            scanGroup(group, groups, namedTypes, groupsToScan);
-        }
-
-        // infer group names, ids and inheritance
-        for (GroupMeta group : groups.values()) {
-            inferGroupName(group);
-            inferGroupId(group);
-            group.setAnnotations(toAnnotationsMap(group.getJavaClass()));
-            inferGroupInheritance(group, groups);
-        }
-
-        // find fields, traverse groups starting from the top (inheritance wise)
-        ArrayList<GroupMeta> sortedGroups = new ArrayList<>(groups.values());
-        Collections.sort(sortedGroups, new GroupMetaComparator());
-        for (GroupMeta group : sortedGroups) {
-            findFields(group, namedTypes, groups);
-        }
-
-        // build group definitions
-        Collection<GroupDef> groupDefs = new ArrayList<>(sortedGroups.size());
-        for (GroupMeta group : sortedGroups) {
-            Constructor constructor = null;
-            for (Constructor constr : group.getJavaClass().getDeclaredConstructors()) {
-                if (constr.getParameterTypes().length == 0) {
-                    constructor = constr;
-                    constructor.setAccessible(true);
-                    break;
-                }
-            }
-            if (constructor == null) {
-                throw new IllegalArgumentException("No default constructor found for class " +
-                        group.getJavaClass().getName());
-            }
-
-            @SuppressWarnings("unchecked")
-            ConstructorFactory factory = new ConstructorFactory(constructor);
-            GroupDef groupDef = new GroupDef(
-                    group.getName(),
-                    group.getId(),
-                    group.getParent() != null ? group.getParent().getName() : null,
-                    group.getFields(),
-                    group.getAnnotations(),
-                    new GroupBinding(factory, group.getJavaClass())
-                    );
-            groupDefs.add(groupDef);
-        }
-
-        SchemaBinding binding = new SchemaBinding(JavaClassGroupTypeAccessor.INSTANCE);
-        return new Schema(groupDefs, namedTypes.values(), binding);
     }
 
 
     /**
-     * Scan all field types to automatically add GroupMeta objects for all group types.
+     * Add a set of message classes to this builder.
+     * @param messageClasses the Java classes that should be included in the schema
+     * @return this
+     */
+    public SchemaBuilder addMessages(Collection<Class<?>>  messageClasses) {
+        this.messageClasses.addAll(messageClasses);
+        return this;
+    }
+
+    /**
+     * Add a set of message classes to this builder.
+     * @param messageClasses the Java classes that should be included in the schema
+     * @return this
+     */
+    public SchemaBuilder addMessages(Class<?> ... messageClasses) {
+        return addMessages(Arrays.asList(messageClasses));
+    }
+
+    /**
+     * Build a schema from the specified Java classes.
+     *
+     * <p>This is a shorthand for:<br>
+     * <code>builder.addMessages(messageTypes).build()</code>
+     *
+     * @param messageTypes the Java classes that should be included in the schema.
+     * @return the schema.
+     * @throws IllegalArgumentException if the schema could not be built due to wrong input.
+     * E.g. wrong annotations etc.
+     * @see #build()
+     * @see #addMessages(java.util.Collection) 
+     */
+    public Schema build(Collection<Class<?>> messageTypes) throws IllegalArgumentException {
+        return addMessages(messageTypes).build();
+    }
+
+    /**
+     * Build a schema from the specified Java classes.
+     *
+     * <p>This is a shorthand for:<br>
+     * <code>builder.addMessages(messageTypes).build()</code>
+     *
+     * @param messageClasses the Java classes that should be included in the schema.
+     * @return the schema.
+     * @throws IllegalArgumentException if the schema could not be built due to wrong input.
+     * E.g. wrong annotations etc.
+     * @see #build()
+     * @see #addMessages(java.lang.Class...) 
+     */
+    public Schema build(Class<?> ... messageClasses) throws IllegalArgumentException {
+        return addMessages(messageClasses).build();
+    }
+
+    /**
+     * Build a schema from the added message classes.
+     * Any component groups or enumerations that are referred to will be automatically included in the schema.
+     *
+     * <p>The schema is bound the the messages classes.
+     *
+     * @return the schema
+     * @throws IllegalArgumentException if the schema could not be built due to wrong input.
+     * E.g. wrong annotations etc.
+     */
+    public Schema build() {
+        SchemaProducer sp = new SchemaProducer();
+        visit(sp);
+        return sp.getSchema();
+    }
+
+    /**
+     * Visit the schema from the added message classes.
+     * Any component groups or enumerations that are referred to will be automatically included in the schema.
+     *
+     * <p>The schema is bound the the messages classes.
+     * 
+     * @param sv the schema visitor, not null.
+     */
+    public void visit(SchemaVisitor sv) {
+        visit(findAllGroups(messageClasses), sv);
+    }
+
+    /**
+     * Find all groups referenced by, and including the specified groups.
+     * @param groups the groups to scan, not null.
+     * @return all groups found, not null.
+     */
+    private Set<Class<?>> findAllGroups(Set<Class<?>> groups) {
+        groups = new LinkedHashSet<>(groups);
+        // scan groups for referenced component groups
+        LinkedList<Class<?>> groupsToScan = new LinkedList<>(groups);
+        while (!groupsToScan.isEmpty()) {
+            Class<?> group = groupsToScan.removeFirst();
+            scanGroup(group, groups, groupsToScan);
+        }
+        return groups;
+    }
+
+    /**
+     * Scan all field types to automatically find all group types.
      *
      * @param group the group to scan, not null.
      * @param groups all groups, not null. Newly found groups will be added here.
-     * @param namedTypes the named types, not null
      * @param groupsToScan the groups to be scanned, not null. Newly found groups will be added here.
      */
-    private void scanGroup(GroupMeta group,
-            Map<Class<?>, GroupMeta> groups,
-            Map<String, NamedType> namedTypes,
-            LinkedList<GroupMeta> groupsToScan) {
+    private void scanGroup(
+            Class<?> group,
+            Set<Class<?>> groups,
+            LinkedList<Class<?>> groupsToScan) {
         HashMap<Type, Class<?>> genericParameters = new HashMap<>();
 
-        Class<?> javaClass = group.getJavaClass();
+        Class<?> javaClass = group;
         do {
             for (Field field : javaClass.getDeclaredFields()) {
                 if (Modifier.isStatic(field.getModifiers())) {
@@ -312,7 +291,7 @@ public class SchemaBuilder {
                     Class<?> listElementType = getListComponentType(field, genericParameters);
                     type = listElementType != null ? listElementType : sequenceAnot.value();
                 }
-                scanType(type, groups, namedTypes, groupsToScan);
+                scanType(type, groups, groupsToScan);
             }
 
             updateGenericParameters(javaClass, genericParameters);
@@ -320,23 +299,19 @@ public class SchemaBuilder {
         } while (javaClass != null);
     }
 
-
-
     /**
-     * Scan the type to automatically add GroupMeta objects for group types.
+     * Scan the type to automatically add group types.
      *
-     * If the type is a group type, a new GroupMeta is added to groups and groupsToScan.
+     * If the type is a group type, a new group is added to groups and groupsToScan.
      *
      * @param type the type, not null
      * @param groups all groups, not null. Newly found groups will be added here.
-     * @param namedTypes the named types, not null
      * @param groupsToScan the groups to be scanned, not null. Newly found groups will be added here.
      */
-    private void scanType(Class<?> type,
-            Map<Class<?>,
-            GroupMeta> groups,
-            Map<String, NamedType> namedTypes,
-            LinkedList<GroupMeta> groupsToScan) {
+    private void scanType(
+            Class<?> type,
+            Set<Class<?>> groups,
+            LinkedList<Class<?>> groupsToScan) {
         if (nativeTypes.contains(type) || type.isEnum()) {
             return;
         }
@@ -345,54 +320,78 @@ public class SchemaBuilder {
             return; // placeholder for 'any' type
         }
 
-        if (!groups.containsKey(type)) {
-            GroupMeta group = new GroupMeta(type);
-            groups.put(type, group);
-            groupsToScan.add(group);
+        if (!groups.contains(type)) {
+            groups.add(type);
+            groupsToScan.add(type);
         }
     }
 
-    /** Infer and set the group name.
-     * @param group
+    /**
+     * Visit the schema for the specified groups.
+     * @param groups java class of the groups to visit.
+     * @throws IllegalArgumentException if the schema could not be visited due to wrong input.
+     * E.g. wrong annotations etc.
      */
-    private void inferGroupName(GroupMeta group) {
-        String name = group.getJavaClass().getSimpleName();
-        Name nameAnot = group.getJavaClass().getAnnotation(Name.class);
-        if (nameAnot != null) {
-            name = nameAnot.value();
-        }
-        group.setName(name);
-    }
-    /** Infer and set the group id. The name must be set.
-     * @param group
-     */
-    private void inferGroupId(GroupMeta group) {
-        int id = -1;
-        Id idAnot = group.getJavaClass().getAnnotation(Id.class);
-        if (idAnot != null) {
-            id = idAnot.value();
-        }
-        group.setId(id);
-    }
+    @SuppressWarnings({ "rawtypes" })
+    private void visit(Set<Class<?>> groups, SchemaVisitor sv) throws IllegalArgumentException {
 
+        Map<String, NamedType> namedTypes = new LinkedHashMap<>();
+
+        SchemaBinding binding = new SchemaBinding(JavaClassGroupTypeAccessor.INSTANCE);
+        sv.visit(binding);
+
+        // infer group names, ids and inheritance
+        for (Class<?> group : groups) {
+            Constructor constructor = null;
+            for (Constructor constr : group.getDeclaredConstructors()) {
+                if (constr.getParameterTypes().length == 0) {
+                    constructor = constr;
+                    break;
+                }
+            }
+            if (constructor == null) {
+                throw new IllegalArgumentException("No default constructor found for class " +
+                        group.getName());
+            }
+
+            @SuppressWarnings("unchecked")
+            ConstructorFactory factory = new ConstructorFactory(constructor);
+
+            Class<?> superGroup = findSuperGroup(group, groups);
+
+            GroupDefVisitor gv = sv.visitGroup(
+                    getName(group),
+                    getId(group),
+                    superGroup != null ? getName(superGroup) : null,
+                    new GroupBinding(factory, group));
+
+            visitAnnotations(group, gv);
+            visitFields(gv, group, superGroup, namedTypes, groups);
+        }
+
+        namedTypes.values().forEach(nt -> sv.visitNamedType(nt.getName(), nt.getType()));
+
+        sv.visitEnd();
+    }
+    
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private Map<String, String> toAnnotationsMap(AnnotatedElement element) {
+    private Map<String, String> visitAnnotations(AnnotatedElement element, AnnotatedVisitor av) {
         Map<String, String> map = new HashMap<>();
         Annotate annotateAnot = element.getAnnotation(Annotate.class);
         if (annotateAnot != null) {
             for (String keyValue : annotateAnot.value()) {
-                putAnnotation(map, keyValue);
+                visitAnnotation(map, keyValue, av);
             }
         }
         for (Map.Entry<Class<? extends Annotation>, AnnotationMapper> entry : annotationMappers.entrySet()) {
             Annotation anot = element.getAnnotation(entry.getKey());
             if (anot != null) {
-                putAnnotation(map, entry.getValue().map(anot));
+                visitAnnotation(map, entry.getValue().map(anot), av);
             }
         }
         return map;
     }
-    private static void putAnnotation(Map<String, String> map, String keyValue) {
+    private static void visitAnnotation(Map<String, String> map, String keyValue, AnnotatedVisitor av) {
         int idx = keyValue.indexOf('=');
         if (idx == -1) {
             throw new IllegalArgumentException("Illegal annotation \"" + keyValue + "\"");
@@ -400,53 +399,60 @@ public class SchemaBuilder {
         String key = keyValue.substring(0, idx);
         String value = keyValue.substring(idx + 1);
         map.put(key, value);
-    }
-
-    /**
-     * @param group
-     * @param groups
-     */
-    private void inferGroupInheritance(GroupMeta group,
-            Map<Class<?>, GroupMeta> groups) {
-        Class<?> superClass = group.getJavaClass().getSuperclass();
-        while(superClass != null) {
-            GroupMeta superGroup = groups.get(superClass);
-            if(superGroup != null) {
-                group.setParent(superGroup);
-                break;
-            }
-            superClass = superClass.getSuperclass();
+        if (av != null) {
+            av.visitAnnotation(key, value);
         }
     }
 
+    private Class<?> findSuperGroup(Class<?> group, Set<Class<?>> groups) {
+        Class<?> superClass = group.getSuperclass();
+        while(superClass != null) {
+            if(groups.contains(superClass)) {
+                return superClass;
+            }
+            superClass = superClass.getSuperclass();
+        }
+        return null;
+    }
+
     /**
-     * Find all fields up to, but not including, the parent group.
-     * A field consists of a getter/setter pair.
+     * Visit all fields up to, but not including, the parent group.
      *
      * @param group
      */
-    private void findFields(GroupMeta group, Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groupsByClass) {
-        findFields(group, group.getJavaClass(), new HashMap<Type, Class<?>>(), namedTypes, groupsByClass);
+    private void visitFields(
+            GroupDefVisitor gv,
+            Class<?> group,
+            Class<?> parentGroup,
+            Map<String, NamedType> namedTypes,
+            Set<Class<?>> groups) {
+        visitFields(gv, group, parentGroup, group, new HashMap<>(), namedTypes, groups);
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private void findFields(GroupMeta group, Class<?> javaClass,
+    private void visitFields(
+            GroupDefVisitor gv,
+            Class<?> group,
+            Class<?> parentGroup,
+            Class<?> javaClass,
             Map<Type, Class<?>> genericParameters,
             Map<String, NamedType> namedTypes,
-            Map<Class<?>, GroupMeta> groupsByClass) {
+            Set<Class<?>> groups) {
         if (javaClass == null ||
-            (group.getParent() != null && group.getParent().getJavaClass().equals(javaClass))) {
+            (parentGroup != null && parentGroup.equals(javaClass))) {
             return;
         }
 
         updateGenericParameters(javaClass, genericParameters);
-        findFields(group, javaClass.getSuperclass(), genericParameters, namedTypes, groupsByClass); // TODO: pass on generic type info here
+        visitFields(gv, group, parentGroup, javaClass.getSuperclass(), genericParameters, namedTypes, groups);
 
         // fields are not sorted in any order, not even as they appear in the source code
         // instead we sort the fields according to id and name (later on)
 
         Field[] fields = javaClass.getDeclaredFields();
-        ArrayList<FieldDef> fieldDefs = new ArrayList<>();
+
+        // sort fields according to id and then name
+        Arrays.sort(fields, new FieldComparator());
 
         for (Field field : fields) {
             try {
@@ -490,21 +496,26 @@ public class SchemaBuilder {
 
                 TypeDef typeDef = getTypeDef(type, componentType, sequenceAnot, enumAnot, timeAnot,
                         dynamicAnot, unsignedAnot, smallDecimalAnot,
-                        namedTypes, groupsByClass);
-                FieldDef fieldDef = new FieldDef(name, id, required, typeDef,
-                        toAnnotationsMap(field),
+                        namedTypes, groups);
+                
+                FieldDefVisitor fv = null;
+                if (gv != null) {
+                    fv = gv.visitField(
+                        name,
+                        id,
+                        required,
+                        typeDef,
                         new FieldBinding(accessor, type, componentType));
-                fieldDefs.add(fieldDef);
+                }
+
+                visitAnnotations(field, fv);
+                if (fv != null) {
+                    fv.visitEnd();
+                }
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Illegal field type and/or annotations: " +
                     field.getDeclaringClass().getName() + "." + field.getName(), e);
             }
-        }
-
-        // sort fields according to id and then name
-        Collections.sort(fieldDefs, new FieldDefComparator());
-        for (FieldDef field : fieldDefs) {
-            group.addField(field);
         }
     }
 
@@ -604,7 +615,7 @@ public class SchemaBuilder {
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private TypeDef getTypeDef(Class<?> type, Class<?> componentType, Sequence sequenceAnot, Enumeration enumAnot, Time timeAnot,
             Dynamic dynamicAnot, Unsigned unsignedAnot, SmallDecimal smallDecimalAnot,
-            Map<String, NamedType> namedTypes, Map<Class<?>, GroupMeta> groups) {
+            Map<String, NamedType> namedTypes, Set<Class<?>> groups) {
         // sequence
         if (sequenceAnot != null || (type.isArray() && !type.equals(byte[].class))) {
             if (!List.class.equals(type) && !type.isArray()) {
@@ -713,16 +724,31 @@ public class SchemaBuilder {
             }
             return new TypeDef.DynamicReference(null);
         }
-        GroupMeta group = groups.get(type);
-        if (group != null) {
+        if (groups.contains(type)) {
+            String groupName = getName(type);
             if (dynamicAnot == null) {
-                return new TypeDef.Reference(group.getName());
+                return new TypeDef.Reference(groupName);
             } else {
-                return new TypeDef.DynamicReference(group.getName());
+                return new TypeDef.DynamicReference(groupName);
             }
         }
 
         throw new IllegalArgumentException("Illegal field type. " + type.getName());
+    }
+
+    private static int getId(AnnotatedElement elem) {
+        Id id = elem.getAnnotation(Id.class);
+        return id != null ? id.value() : -1;
+    }
+    private static String getName(Field field) {
+        return getName(field, field::getName);
+    }
+    private static String getName(Class<?> groupClass) {
+        return getName(groupClass, groupClass::getSimpleName);
+    }
+    private static String getName(AnnotatedElement elem, Supplier<String> nameFn) {
+        Name name = elem.getAnnotation(Name.class);
+        return name != null ? name.value() : nameFn.get();
     }
 
     private static void assertNotAnnotated(String notApplicableFor, Annotation ... annotations) {
@@ -734,91 +760,14 @@ public class SchemaBuilder {
         }
     }
 
-    private static class GroupMeta {
-        private final Class<?> javaClass;
-        private int id;
-        private String name;
-        private GroupMeta parent;
-        private final List<FieldDef> fields = new LinkedList<>();
-        private Map<String, String> annotations;
-        public GroupMeta(Class<?> javaClass) {
-            if (Modifier.isAbstract(javaClass.getModifiers())) {
-                throw new IllegalArgumentException("Java class must not be abstract: " + javaClass.getName());
-            }
-            this.javaClass = javaClass;
-        }
-        public int getId() {
-            return id;
-        }
-        public void setId(int id) {
-            this.id = id;
-        }
-        public String getName() {
-            return name;
-        }
-        public void setName(String name) {
-            this.name = name;
-        }
-        public GroupMeta getParent() {
-            return parent;
-        }
-        public void setParent(GroupMeta parent) {
-            this.parent = parent;
-        }
-        public Class<?> getJavaClass() {
-            return javaClass;
-        }
-        public void addField(FieldDef field) {
-            fields.add(field);
-        }
-        public List<FieldDef> getFields() {
-            return fields;
-        }
-        public Map<String, String> getAnnotations() {
-            return annotations;
-        }
-        public void setAnnotations(Map<String, String> annotations) {
-            this.annotations = annotations;
-        }
-    }
-
-    /** Compares groups with ascending parent count, followed by group id.
-     *
-     * @author mikael.brannstrom
-     *
-     */
-    private static class GroupMetaComparator implements Comparator<GroupMeta> {
+    private static class FieldComparator implements Comparator<Field> {
         @Override
-        public int compare(GroupMeta group1, GroupMeta group2) {
-            int parentCount1 = parentCount(group1);
-            int parentCount2 = parentCount(group1);
-
-            if (parentCount1 < parentCount2) {
-                return -1;
-            } else if (parentCount1 > parentCount2) {
-                return 1;
-            } else {
-                return Integer.compare(group1.getId(), group2.getId());
-            }
-        }
-
-        private int parentCount(GroupMeta group) {
-            if (group.getParent() == null) {
-                return 0;
-            } else {
-                return 1 + parentCount(group.getParent());
-            }
-        }
-    }
-
-    private static class FieldDefComparator implements Comparator<FieldDef> {
-        @Override
-        public int compare(FieldDef field1, FieldDef field2) {
-            int id1 = field1.getId();
-            int id2 = field2.getId();
+        public int compare(Field field1, Field field2) {
+            int id1 = getId(field1);
+            int id2 = getId(field2);
             if (id1 == -1) {
                 if (id2 == -1) {
-                    return field1.getName().compareTo(field2.getName());
+                    return getName(field1).compareTo(getName(field2));
                 } else {
                     return 1;
                 }
@@ -829,5 +778,4 @@ public class SchemaBuilder {
             }
         }
     }
-
 }

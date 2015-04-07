@@ -22,7 +22,7 @@ package com.cinnober.msgcodec.visitor;
  * A visitor to visit a named type.
  *
  * <p>The methods of this class must be called in the following order:
- * <code>visitAnnotation* | visitEnd</code>
+ * <code>visitAnnotation* visitEnd</code>
  *
  * @author mikael.brannstrom
  */
