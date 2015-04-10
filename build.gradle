@@ -2,13 +2,17 @@ apply plugin: 'maven'
 
 buildscript {
     repositories {
+        mavenCentral();
         maven {
             url uri("http://nexus.cinnober.com/nexus/content/groups/public/")
+        }
+        maven {
+          url "https://plugins.gradle.org/m2/"
         }
         jcenter()
     }
     dependencies {
-        classpath group: 'com.cinnober.gradle', name: 'semver-git', version: '1.0.0'
+        classpath group: "com.cinnober.gradle", name: "semver-git", version: "2.2.0"
         classpath group: 'com.cinnober.gradle', name: 'cinnober-java', version: '1.1.1'
         classpath group: 'me.champeau.gradle', name:'jmh-gradle-plugin', version: '0.2.0'
     }
@@ -16,6 +20,6 @@ buildscript {
 
 allprojects { 
     ext.nextVersion = 'major'
-    apply plugin: 'semver-git'
+    apply plugin: 'com.cinnober.gradle.semver-git'
     group = 'com.cinnober.msgcodec'
 }
