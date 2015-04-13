@@ -1,25 +1,95 @@
 apply plugin: 'maven'
 
 buildscript {
-    repositories {
-        mavenCentral();
-        maven {
-            url uri("http://nexus.cinnober.com/nexus/content/groups/public/")
-        }
-        maven {
-          url "https://plugins.gradle.org/m2/"
-        }
-        jcenter()
+  repositories {
+    mavenCentral();
+    maven {
+      url "https://plugins.gradle.org/m2/"
     }
-    dependencies {
-        classpath group: "com.cinnober.gradle", name: "semver-git", version: "2.2.0"
-        classpath group: 'com.cinnober.gradle', name: 'cinnober-java', version: '1.1.1'
-        classpath group: 'me.champeau.gradle', name:'jmh-gradle-plugin', version: '0.2.0'
-    }
+  }
+  dependencies {
+    classpath group: "com.cinnober.gradle", name: "semver-git", version: "2.2.0"
+    classpath group: 'me.champeau.gradle', name:'jmh-gradle-plugin', version: '0.2.0'
+  }
 }
 
 allprojects { 
-    ext.nextVersion = 'major'
-    apply plugin: 'com.cinnober.gradle.semver-git'
-    group = 'com.cinnober.msgcodec'
+  ext.nextVersion = 'major'
+  apply plugin: 'com.cinnober.gradle.semver-git'
+  group = 'com.cinnober.msgcodec'
+}
+
+subprojects { 
+  apply plugin: 'maven'
+  apply plugin: 'java'
+  apply plugin: 'signing'
+  sourceCompatibility = '1.8'
+  ext.junit_version = '4.11'
+  
+  task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+  }
+
+  task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+  }
+
+  artifacts {
+    archives javadocJar, sourcesJar
+  }
+
+  signing {
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+  }
+
+  repositories {
+    mavenCentral();
+  }
+
+  uploadArchives {
+    repositories {
+      mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+      
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+      
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+        pom.project {
+          name project.name
+          description project.description
+          packaging 'jar'
+          // artifactId defaults to project.name
+          url 'https://github.com/cinnober/semver-git'
+        
+          scm {
+            connection 'scm:git:https://github.com/cinnober/semver-git'
+            developerConnection 'scm:git:https://github.com/cinnober/semver-git'
+            url 'https://github.com/cinnober/semver-git'
+          }
+        
+          licenses {
+            license {
+              name 'MIT License'
+              url 'http://www.opensource.org/licenses/mit-license.php'
+            }
+          }
+          developers {
+            developer {
+              id 'mikael.brannstrom'
+              name 'Mikael Brännström'
+              email 'mikael.brannstrom@cinnober.com'
+            }
+          }        
+        }
+      }
+    }
+  }
+
 }

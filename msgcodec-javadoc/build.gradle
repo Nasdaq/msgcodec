@@ -1,10 +1,12 @@
 description = 'Javadoc doclet for msgcodec documentation'
 
-apply plugin: 'cinnober-java'
-sourceCompatibility = "1.7"
+import javax.tools.ToolProvider
 
 dependencies {
-    compile project(':msgcodec')
-    compile group: 'com.oracle.java', name: 'tools', version:'1.7.0-EXT'
-    testCompile group: 'junit', name: 'junit', version:'4.11'
+  compile project(':msgcodec')
+
+  // tools.jar is needed for the javadoc API
+  compile files(((URLClassLoader) ToolProvider.getSystemToolClassLoader()).getURLs())
+
+  testCompile group: 'junit', name: 'junit', version:junit_version
 }

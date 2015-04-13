@@ -39,11 +39,11 @@ To use msgcodec you will need to include the artifacts in the group=`com.cinnobe
 
 The versions of the artifacts follows [semantic versioning](http://semver.org), which means that a minor version upgrade is always backwards compatible.
 
-In a gradle project one would include the libs in dependencies section of your `build.gradle` file (replace `{version}` with the appropriate current release). Example for a project that uses the TAP encoding format:
+In a gradle project one would include the libs in dependencies section of your `build.gradle` file (replace `{version}` with the appropriate current release). Example for a project that uses the Blink encoding format:
 
     dependencies {
         compile group: 'com.cinnober.msgcodec', name: 'msgcodec', version: '{version}'
-        compile group: 'com.cinnober.msgcodec', name: 'msgcodec-tap', version: '{version}'
+        compile group: 'com.cinnober.msgcodec', name: 'msgcodec-blink', version: '{version}'
     }
 
 ## Project Structure ##
@@ -96,8 +96,12 @@ To create a new release, e.g. 1.2.3:
     git tag -a 1.2.3 -m "New release"
     git push --tags
 
-Then jenkins will do the following. mavenUser and mavenPassword are required in your ~/.gradle/gradle.properties for `uploadArchives`
+If changes are made after version 1.2.3 then the version number be '1.3.0-SNAPSHOT' (default a minor change).
+
+To upload the archives to the Maven Central (through the OSSRH), run:
 
     gradle clean build uploadArchives
 
-If changes are made after version 1.2.3 then the version number be '1.3.0-SNAPSHOT' (default a minor change).
+Note that credentials are required for uploads. They should be placed in e.g. your
+~/.gradle/gradle.properties for `uploadArchives`.
+See [gradle.properties](gradle.properties) for more information.
