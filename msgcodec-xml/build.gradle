@@ -1,10 +1,7 @@
 description = 'XML format support for msgcodec.'
 
-apply plugin: 'cinnober-java'
-sourceCompatibility = "1.7"
-
 dependencies {
-    compile project(':msgcodec')
-    testCompile project(':msgcodec-test')
-    testCompile group: 'junit', name: 'junit', version:'4.11'
+  compile project(':msgcodec')
+  testCompile project(':msgcodec-test')
+  testCompile group: 'junit', name: 'junit', version:junit_version
 }
