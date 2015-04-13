@@ -8,7 +8,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath group: "com.cinnober.gradle", name: "semver-git", version: "2.2.0"
+    classpath group: "com.cinnober.gradle", name: "semver-git", version: "2.2.1"
     classpath group: 'me.champeau.gradle', name:'jmh-gradle-plugin', version: '0.2.0'
   }
 }
