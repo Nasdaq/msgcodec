@@ -24,7 +24,7 @@
 package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.io.ByteSource;
-import com.cinnober.msgcodec.util.InputStreamSource;
+import com.cinnober.msgcodec.io.InputStreamSource;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
 import java.io.InputStream;
