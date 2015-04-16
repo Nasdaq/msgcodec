@@ -30,11 +30,7 @@ import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.io.ByteArrayBuf;
-import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.CodingErrorAction;
-import javax.xml.ws.handler.MessageContext;
 
 /**
  * Base class for a dynamically generated codec for a specific schema.

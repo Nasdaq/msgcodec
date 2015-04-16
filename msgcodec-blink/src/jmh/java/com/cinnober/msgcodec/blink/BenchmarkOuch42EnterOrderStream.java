@@ -4,19 +4,15 @@ import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
-import com.cinnober.msgcodec.io.ByteArrayBuf;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBufferInputStream;
 import com.cinnober.msgcodec.io.ByteBufferOutputStream;
 import com.cinnober.msgcodec.io.InputStreamSource;
 import com.cinnober.msgcodec.io.OutputStreamSink;
 import java.io.IOException;
-import java.math.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.runner.*;
-import org.openjdk.jmh.runner.options.*;
 
 
 @BenchmarkMode(Mode.AverageTime)
