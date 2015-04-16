@@ -3,8 +3,6 @@
 
 A library to encode and decode messages in various formats where messages are defined as plain old java objects. 
 
-This library is maintained by [Mikael Brännström ](mailto:mikael.brannstrom@cinnober.com). Feedback is very welcome. 
-
 ## Usage ##
 Given a POJO:
 
