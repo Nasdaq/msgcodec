@@ -48,7 +48,7 @@ import java.util.List;
 @Id(16000)
 public class MetaSchema extends MetaAnnotated {
     /**
-     * The groups in the dictionary.
+     * The groups in the schema.
      */
     @Required
     @Sequence(MetaGroupDef.class)
@@ -56,7 +56,7 @@ public class MetaSchema extends MetaAnnotated {
     public List<MetaGroupDef> groups;
 
     /**
-     * The named types in the dictionary.
+     * The named types in the schema.
      */
     @Sequence(MetaNamedType.class)
     @Id(2)

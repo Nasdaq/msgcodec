@@ -33,38 +33,38 @@ import static org.junit.Assert.*;
  * @author mikael.brannstrom
  *
  */
-public class ProtocolDictionaryBuilderTest {
+public class SchemaBuilderTest {
 
     @Test
     public void testFoo() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(FooMessage.class);
-        System.out.println(dict.toString());
+        Schema schema = builder.build(FooMessage.class);
+        System.out.println(schema.toString());
     }
     @Test
     public void testFooWithAddMessageStep() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.addMessages(FooMessage.class).build();
-        System.out.println(dict.toString());
+        Schema schema = builder.addMessages(FooMessage.class).build();
+        System.out.println(schema.toString());
     }
     @Test
     public void testBar() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(BarMessage.class, Thing.class);
-        System.out.println(dict.toString());
+        Schema schema = builder.build(BarMessage.class, Thing.class);
+        System.out.println(schema.toString());
     }
     @Test
     public void testFooBarWithAddMessageStep() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.addMessages(BarMessage.class, Thing.class)
+        Schema schema = builder.addMessages(BarMessage.class, Thing.class)
                 .addMessages(FooMessage.class).build();
-        System.out.println(dict.toString());
+        System.out.println(schema.toString());
     }
     @Test
     public void testFooBar() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(FooMessage.class, BarMessage.class, Thing.class);
-        System.out.println(dict.toString());
+        Schema schema = builder.build(FooMessage.class, BarMessage.class, Thing.class);
+        System.out.println(schema.toString());
     }
 
     /** Test of generic class parameters, as well as recursive add of referred components.
@@ -72,8 +72,8 @@ public class ProtocolDictionaryBuilderTest {
     @Test
     public void testWrappedFoo() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(WrappedFoo.class);
-        final GroupDef groupDef = dict.getGroup("WrappedFoo");
+        Schema schema = builder.build(WrappedFoo.class);
+        final GroupDef groupDef = schema.getGroup("WrappedFoo");
         assertEquals("FooMessage", groupDef.getField("wrapped").getType().toString());
         assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
         assertEquals("FooMessage[]", groupDef.getField("wrappedList").getType().toString());
@@ -84,8 +84,8 @@ public class ProtocolDictionaryBuilderTest {
     @Test
     public void testWrappedWrappedFoo() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(WrappedWrappedFoo.class);
-        final GroupDef groupDef = dict.getGroup("WrappedWrappedFoo");
+        Schema schema = builder.build(WrappedWrappedFoo.class);
+        final GroupDef groupDef = schema.getGroup("WrappedWrappedFoo");
         assertEquals("FooMessage", groupDef.getField("wrapped").getType().toString());
         assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
         assertEquals("FooMessage[]", groupDef.getField("wrappedList").getType().toString());
@@ -96,8 +96,8 @@ public class ProtocolDictionaryBuilderTest {
     @Test
     public void testArrayOnlyWrappedFoo() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(ArrayOnlyWrappedFoo.class);
-        final GroupDef groupDef = dict.getGroup("ArrayOnlyWrappedFoo");
+        Schema schmea = builder.build(ArrayOnlyWrappedFoo.class);
+        final GroupDef groupDef = schmea.getGroup("ArrayOnlyWrappedFoo");
         assertEquals("FooMessage[]", groupDef.getField("wrappedArray").getType().toString());
     }
 
@@ -106,18 +106,18 @@ public class ProtocolDictionaryBuilderTest {
     @Test
     public void testListOnlyWrappedFoo() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(ListOnlyWrappedFoo.class);
-        final GroupDef groupDef = dict.getGroup("ListOnlyWrappedFoo");
+        Schema schema = builder.build(ListOnlyWrappedFoo.class);
+        final GroupDef groupDef = schema.getGroup("ListOnlyWrappedFoo");
         assertEquals("FooMessage[]", groupDef.getField("wrappedList").getType().toString());
     }
 
     @Test
     public void testFieldOrder() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(FieldOrderMsg.class);
-        System.out.println(dict.toString());
+        Schema schema = builder.build(FieldOrderMsg.class);
+        System.out.println(schema.toString());
 
-        GroupDef group = dict.getGroup(FieldOrderMsg.class);
+        GroupDef group = schema.getGroup(FieldOrderMsg.class);
         List<FieldDef> fields = group.getFields();
         assertEquals("i1", fields.get(0).getName());
         assertEquals("i4", fields.get(1).getName());
@@ -130,30 +130,25 @@ public class ProtocolDictionaryBuilderTest {
     @Test
     public void testAnnotationMapper() {
         SchemaBuilder builder = new SchemaBuilder();
-        builder.addAnnotationMapper(CustomAnnotation.class, new AnnotationMapper<CustomAnnotation>() {
-            @Override
-            public String map(CustomAnnotation annotation) {
-                return "custom=" + annotation.value();
-            }
-        });
-        Schema dict = builder.build(FooMessage.class);
-        System.out.println("annotationMapper: \n" + dict.toString());
-        assertEquals("FooMessage", dict.getGroup("FooMessage").getAnnotation("custom"));
-        assertEquals("myByte", dict.getGroup("FooMessage").getField("myByte").getAnnotation("custom"));
+        builder.addAnnotationMapper(CustomAnnotation.class, a -> "custom=" + a.value());
+        Schema schema = builder.build(FooMessage.class);
+        System.out.println("annotationMapper: \n" + schema.toString());
+        assertEquals("FooMessage", schema.getGroup("FooMessage").getAnnotation("custom"));
+        assertEquals("myByte", schema.getGroup("FooMessage").getField("myByte").getAnnotation("custom"));
     }
 
     @Test
     public void testPrivate() {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dict = builder.build(SecretMessage.class);
-        System.out.println(dict.toString());
-        assertNotNull(dict.getGroup("SecretMessage").getFactory().newInstance());
+        Schema schema = builder.build(SecretMessage.class);
+        System.out.println(schema.toString());
+        assertNotNull(schema.getGroup("SecretMessage").getFactory().newInstance());
     }
     @Test
     public void testPrivate2() {
         SchemaBuilder builder = new SchemaBuilder();
         try {
-            Schema dict = builder.build(SecretMessage2.class);
+            Schema schema = builder.build(SecretMessage2.class);
             fail("Expected exception: no default constructor");
         } catch (IllegalArgumentException e) {}
     }

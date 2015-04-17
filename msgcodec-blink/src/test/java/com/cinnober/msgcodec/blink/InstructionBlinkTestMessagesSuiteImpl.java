@@ -41,7 +41,7 @@ public class InstructionBlinkTestMessagesSuiteImpl extends TestMessagesSuite {
     }
 
     private static MsgCodec createCodec() {
-        return new BlinkCodecFactory(TestProtocol.getProtocolDictionary()).
+        return new BlinkCodecFactory(TestProtocol.getSchema()).
                 setCodecOption(CodecOption.INSTRUCTION_CODEC_ONLY).createCodec();
     }
 }

@@ -26,8 +26,8 @@ package com.cinnober.msgcodec;
 import java.util.Objects;
 
 /**
- * Protocol dictionary binding.
- * ProtocolDictionaryBinding is immutable.
+ * Schema binding.
+ * SchemaBinding is immutable.
  *
  * @author mikael.brannstrom
  *
@@ -36,7 +36,7 @@ public class SchemaBinding {
     private final GroupTypeAccessor groupTypeAccessor;
 
     /**
-     * Create a protocol dictionary binding.
+     * Create a schema binding.
      *
      * @param groupTypeAccessor the group type accessor, not null
      */

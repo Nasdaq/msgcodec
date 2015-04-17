@@ -41,7 +41,7 @@ public class BytecodeBlinkTestMessagesSuiteImpl extends TestMessagesSuite {
     }
 
     private static MsgCodec createCodec() {
-        return new BlinkCodecFactory(TestProtocol.getProtocolDictionary()).
+        return new BlinkCodecFactory(TestProtocol.getSchema()).
                 setCodecOption(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY).createCodec();
     }
 }

@@ -44,8 +44,8 @@ public class JsonCodecTest {
     @Test
     public void test() throws Exception {
         SchemaBuilder builder = new SchemaBuilder();
-        Schema dictionary = builder.build(Hello.class);
-        MsgCodec codec = new JsonCodec(dictionary);
+        Schema schema = builder.build(Hello.class);
+        MsgCodec codec = new JsonCodec(schema);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Hello msg = new Hello("Hello world!");
         codec.encode(msg, out);

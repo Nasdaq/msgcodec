@@ -63,9 +63,9 @@ class GeneratedCodecClassLoader extends ClassLoader {
     }
 
     @SuppressWarnings("unchecked")
-    private Class<GeneratedCodec> generateCodecClass(Schema dictionary, int suffix) {
+    private Class<GeneratedCodec> generateCodecClass(Schema schema, int suffix) {
         String generatedClassName = codeGenerator.getGeneratedClassName(suffix);
-        byte[] generatedClassBytes = codeGenerator.generateClass(dictionary, suffix);
+        byte[] generatedClassBytes = codeGenerator.generateClass(schema, suffix);
         Class<?> generatedClass = defineClass(generatedClassName, generatedClassBytes, 0, generatedClassBytes.length);
         return (Class<GeneratedCodec>) generatedClass;
     }

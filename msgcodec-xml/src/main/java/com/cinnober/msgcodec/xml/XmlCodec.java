@@ -76,7 +76,7 @@ import org.xml.sax.SAXException;
  * </tr>
  * <tr>
  * <td><code>xml:ns</code></td>
- * <td>ProtocolDictionary</td>
+ * <td>Schema</td>
  * <td>Set the XML namespace of all elements. Default is none.</td>
  * </tr>
  * <tr>
@@ -208,19 +208,19 @@ public class XmlCodec implements MsgCodec {
     }
 
     @SuppressWarnings("rawtypes")
-    private void createFieldInstruction(Schema dictionary, FieldDef field, TypeDef type,
+    private void createFieldInstruction(Schema schema, FieldDef field, TypeDef type,
             Map<NsName, SimpleField> attributeFields, Map<NsName, FieldHandler> elementFields,
             List<SimpleField> inlineField) {
         NsName nsName = getNsName(field);
 
-        type = dictionary.resolveToType(type, true);
-        GroupDef typeGroup = dictionary.resolveToGroup(type);
+        type = schema.resolveToType(type, true);
+        GroupDef typeGroup = schema.resolveToGroup(type);
 
         if (type instanceof TypeDef.Sequence) {
             TypeDef.Sequence sequenceType = (TypeDef.Sequence) type;
             TypeDef componentType = sequenceType.getComponentType();
-            componentType = dictionary.resolveToType(componentType, true);
-            GroupDef componentGroup = dictionary.resolveToGroup(componentType);
+            componentType = schema.resolveToType(componentType, true);
+            GroupDef componentGroup = schema.resolveToGroup(componentType);
 
             ValueHandler valueInstr = null;
             if (componentType instanceof TypeDef.Reference) {
@@ -287,7 +287,7 @@ public class XmlCodec implements MsgCodec {
             boolean inline = ANOTVALUE_FIELD_INLINE_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
 
             if (inline) {
-                for (GroupDef subGroup : dictionary.getDynamicGroups(typeGroup != null ? typeGroup.getName() : null)) {
+                for (GroupDef subGroup : schema.getDynamicGroups(typeGroup != null ? typeGroup.getName() : null)) {
                     StaticGroupValue valueInstr = staticGroupsByName.get(subGroup.getName());
                     FieldHandler fieldInstr = new InlineElementValueField(getNsName(subGroup), field, valueInstr);
                     putElement(elementFields, fieldInstr);

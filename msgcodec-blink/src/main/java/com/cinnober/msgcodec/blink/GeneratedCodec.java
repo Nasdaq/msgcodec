@@ -255,7 +255,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
 
     /**
      * Create an encode exception when trying to encode a group for an unknown group type.
-     * This mean that the group is not present in the dictionary.
+     * This mean that the group is not present in the schema.
      * 
      * @param groupType the group type (e.g. a java class) of the group to be encoded, not null.
      * @return the exception to be thrown.

@@ -42,13 +42,13 @@ public class XmlCodecTest {
     @Test
     public void testDecodeHello() throws Exception {
         System.out.println("--- testDecodeHello ---");
-        Schema dictionary = new SchemaBuilder().build(Hello.class);
+        Schema schema = new SchemaBuilder().build(Hello.class);
 
         Annotations annot = new Annotations();
         annot.path("Hello", "greeting").put("xml:field", "element");
-        dictionary = dictionary.replaceAnnotations(annot);
+        schema = schema.replaceAnnotations(annot);
 
-        MsgCodec codec = new XmlCodec(dictionary);
+        MsgCodec codec = new XmlCodec(schema);
 
         Hello msg = (Hello) codec.decode(XmlCodecTest.class.getResourceAsStream("hello1.xml"));
         Assert.assertEquals("Hello world!", msg.getGreeting());
@@ -59,13 +59,13 @@ public class XmlCodecTest {
     @Test
     public void testDecodeHelloAttribute() throws Exception {
         System.out.println("--- testDecodeHelloAttribute ---");
-        Schema dictionary = new SchemaBuilder().build(Hello.class);
+        Schema schema = new SchemaBuilder().build(Hello.class);
 
         Annotations annot = new Annotations();
         annot.path("Hello", "greeting").put("xml:field", "attribute");
-        dictionary = dictionary.replaceAnnotations(annot);
+        schema = schema.replaceAnnotations(annot);
 
-        MsgCodec codec = new XmlCodec(dictionary);
+        MsgCodec codec = new XmlCodec(schema);
 
         Hello msg = (Hello) codec.decode(XmlCodecTest.class.getResourceAsStream("hello2.xml"));
         Assert.assertEquals("Hello world!", msg.getGreeting());
@@ -76,14 +76,14 @@ public class XmlCodecTest {
     @Test
     public void testDecodeMyMessage() throws Exception {
         System.out.println("--- testDecodeMyMessage ---");
-        Schema dictionary = new SchemaBuilder().build(MyMessage.class, Hello.class);
+        Schema schema = new SchemaBuilder().build(MyMessage.class, Hello.class);
 
         Annotations annot = new Annotations();
         annot.path("Hello", "greeting").put("xml:field", "element");
         annot.path("MyMessage", "person1").put("xml:field", "inline");
-        dictionary = dictionary.replaceAnnotations(annot);
+        schema = schema.replaceAnnotations(annot);
 
-        MsgCodec codec = new XmlCodec(dictionary);
+        MsgCodec codec = new XmlCodec(schema);
 
         MyMessage msg = (MyMessage) codec.decode(XmlCodecTest.class.getResourceAsStream("hello3.xml"));
         System.out.println("Message: " + msg);
@@ -94,14 +94,14 @@ public class XmlCodecTest {
     @Test
     public void testDecodeMyMessageAttribute() throws Exception {
         System.out.println("--- testDecodeMyMessageAttribute ---");
-        Schema dictionary = new SchemaBuilder().build(MyMessage.class, Hello.class);
+        Schema schema = new SchemaBuilder().build(MyMessage.class, Hello.class);
 
         Annotations annot = new Annotations();
         annot.path("Hello", "greeting").put("xml:field", "attribute");
         annot.path("MyMessage", "person1").put("xml:field", "inline");
-        dictionary = dictionary.replaceAnnotations(annot);
+        schema = schema.replaceAnnotations(annot);
 
-        MsgCodec codec = new XmlCodec(dictionary);
+        MsgCodec codec = new XmlCodec(schema);
 
         MyMessage msg = (MyMessage) codec.decode(XmlCodecTest.class.getResourceAsStream("hello4.xml"));
         System.out.println("Message: " + msg);
@@ -112,15 +112,15 @@ public class XmlCodecTest {
 
     public void testDecodeMyMessageAttributeInlineDynamic() throws Exception {
         System.out.println("--- testDecodeMyMessageAttributeInlineDynamic ---");
-        Schema dictionary = new SchemaBuilder().build(MyMessage.class, Hello.class);
+        Schema schema = new SchemaBuilder().build(MyMessage.class, Hello.class);
 
         Annotations annot = new Annotations();
         annot.path("Hello", "greeting").put("xml:field", "attribute");
         annot.path("MyMessage", "person1").put("xml:field", "inline");
         annot.path("MyMessage", "person2").put("xml:field", "inline");
-        dictionary = dictionary.replaceAnnotations(annot);
+        schema = schema.replaceAnnotations(annot);
 
-        MsgCodec codec = new XmlCodec(dictionary);
+        MsgCodec codec = new XmlCodec(schema);
 
         MyMessage msg = (MyMessage) codec.decode(XmlCodecTest.class.getResourceAsStream("hello5.xml"));
         System.out.println("Message: " + msg);

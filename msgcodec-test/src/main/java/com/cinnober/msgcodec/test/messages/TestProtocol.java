@@ -34,7 +34,7 @@ import com.cinnober.msgcodec.SchemaBuilder;
  *
  */
 public class TestProtocol {
-    public static Schema getProtocolDictionary() {
+    public static Schema getSchema() {
         return new SchemaBuilder().build(
             new Class<?>[] {
                 Hello.class,

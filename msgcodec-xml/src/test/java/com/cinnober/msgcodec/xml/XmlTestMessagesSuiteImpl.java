@@ -46,7 +46,7 @@ public class XmlTestMessagesSuiteImpl extends TestMessagesSuite {
 
     private static MsgCodec createCodec() {
         try {
-            return new XmlCodec(TestProtocol.getProtocolDictionary());
+            return new XmlCodec(TestProtocol.getSchema());
         } catch (ParserConfigurationException | SAXException ex) {
             throw new RuntimeException(ex);
         }

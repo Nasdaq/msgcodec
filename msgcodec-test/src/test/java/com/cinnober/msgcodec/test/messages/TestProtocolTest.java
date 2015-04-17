@@ -36,7 +36,7 @@ public class TestProtocolTest {
 
     @Test
     public void testTestProtocol() {
-        Schema dict = TestProtocol.getProtocolDictionary();
+        Schema dict = TestProtocol.getSchema();
         System.out.println(dict.toString());
     }
 }

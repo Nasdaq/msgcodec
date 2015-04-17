@@ -34,20 +34,20 @@ import com.cinnober.msgcodec.Schema;
  */
 public class MetaProtocolTest {
 
-    /** Test that the protocol dictionary can be built (does not throw any exceptions). */
+    /** Test that the schema can be built (does not throw any exceptions). */
     @Test
-    public void testProtocolDictionary() {
-        Schema protocolDictionary = MetaProtocol.getSchema();
-        String protocolDictionaryString = protocolDictionary.toString();
-        System.out.println(protocolDictionaryString);
+    public void testSchema() {
+        Schema schema = MetaProtocol.getSchema();
+        String schemaString = schema.toString();
+        System.out.println(schemaString);
 
         // convert to meta messages and back
-        MetaSchema metaProtocolDictionary = protocolDictionary.toMessage();
-        Schema protocolDictionary2 = metaProtocolDictionary.toSchema();
-        String protocolDictionaryString2 = protocolDictionary2.toString();
-        System.out.println(protocolDictionaryString2);
+        MetaSchema metaSchema = schema.toMessage();
+        Schema schema2 = metaSchema.toSchema();
+        String schemaString2 = schema2.toString();
+        System.out.println(schemaString2);
 
-        assertEquals(protocolDictionaryString, protocolDictionaryString2);
+        assertEquals(schemaString, schemaString2);
     }
 
 }

@@ -70,9 +70,6 @@ public class MetaProtocol {
 
     private MetaProtocol() { }
 
-    /**
-     * @return the protocol dictionary
-     */
     private static Schema createSchema() {
         SchemaBuilder builder = new SchemaBuilder(true);
         Schema s =  builder.build(messageClasses);

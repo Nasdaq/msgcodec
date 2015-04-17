@@ -39,7 +39,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.Charset;
 
-/** This is a somewhat advanced example, that demonstrates the dynamic binding feature of msgcodec,
+/**
+ * This is a somewhat advanced example, that demonstrates the dynamic binding feature of msgcodec,
  * as well as the encoding the protocol schema itself.
  *
  * <p>This example might be useful for writing applications like:
@@ -78,7 +79,7 @@ public class HelloWorldDynamic {
                 (MetaSchema) metaCodec.decode(new ByteArrayInputStream(encodedSchema));
         Schema schema = metaMessage.toSchema();
 
-        // now we've got a dictionary, but it is not bound to any java messages (e.g. Hello.class)
+        // now we've got a schema, but it is not bound to any java messages (e.g. Hello.class)
         // let's assume we do not have any message classes corresponding to this protocol,
         // instead bind it to the generic Group class
         schema = Group.bind(schema);
@@ -136,7 +137,7 @@ public class HelloWorldDynamic {
         // Create the schema from some source, here we generate it from java messages
         Schema schema = new SchemaBuilder().build(Hello.class);
 
-        // Obtain the meta schema, that can describe a dictionary
+        // Obtain the meta schema, that can describe a schema
         Schema metaSchema = MetaProtocol.getSchema();
         // create a codec for the meta schema
         MsgCodec codec = createCodec(format, metaSchema);

@@ -77,7 +77,7 @@ public class GeneratedProtocol {
                     }
                 ),
                 null,
-                new GroupBinding(new ConstructorFactory<User>(User.class.getConstructor()), User.class)
+                new GroupBinding(new ConstructorFactory<>(User.class.getConstructor()), User.class)
             );
     }
 
@@ -91,7 +91,7 @@ public class GeneratedProtocol {
                     }
                 ),
                 null,
-                new GroupBinding(new ConstructorFactory<Animal>(Animal.class.getConstructor()), Animal.class)
+                new GroupBinding(new ConstructorFactory<>(Animal.class.getConstructor()), Animal.class)
             );
     }
 

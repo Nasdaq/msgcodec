@@ -37,10 +37,10 @@ public class MetaMessagesTest {
 
     @Test
     public void test() throws Exception {
-        Schema dictionary = MetaProtocol.getSchema();
-        System.out.println(dictionary);
-        MsgCodec codec = new JsonCodec(dictionary);
-        codec.encode(dictionary.toMessage(), System.out);
+        Schema schema = MetaProtocol.getSchema();
+        System.out.println(schema);
+        MsgCodec codec = new JsonCodec(schema);
+        codec.encode(schema.toMessage(), System.out);
     }
 
 }

@@ -42,7 +42,7 @@ public class RtcPositionMessageTest {
 
     @Test
     public void testEncodeDecode() throws IOException {
-        Schema dictionary = new SchemaBuilder().build(
+        Schema schema = new SchemaBuilder().build(
                 AmPosition.class,
                 AmPositionExt.class,
                 PositionInfo.class,
@@ -50,8 +50,8 @@ public class RtcPositionMessageTest {
                 RtcCustomDetails.class,
                 BiMessageData.class
                 );
-        System.out.println("Dictionary:\n" + dictionary);
-        BlinkCodec codec = new BlinkCodec(dictionary);
+        System.out.println("Schema:\n" + schema);
+        BlinkCodec codec = new BlinkCodec(schema);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         AmPosition msg = new AmPosition();

@@ -41,6 +41,6 @@ public class JsonTestMessagesSuiteImpl extends TestMessagesSuite {
     }
 
     private static MsgCodec createCodec() {
-        return new JsonCodec(TestProtocol.getProtocolDictionary());
+        return new JsonCodec(TestProtocol.getSchema());
     }
 }

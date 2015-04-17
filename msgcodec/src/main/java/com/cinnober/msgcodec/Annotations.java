@@ -30,9 +30,10 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Collection of annotations in a protocol dictionary.
+ * Collection of annotations in a schema.
  *
- * <p>Sample usage:
+ * <p>
+ * Sample usage:
  * <pre>
  * Annotations annotations = new Annotations();
  * annotations.path("MyGroup").put("doc", "My group doc");
@@ -44,26 +45,28 @@ import java.util.Properties;
  */
 public class Annotations {
 
-    private final Map<Path, Map<String,String>> map;
+    private final Map<Path, Map<String, String>> map;
     private final Path currentPath;
 
     public Annotations() {
-        this(new HashMap<Path, Map<String,String>>(), Path.EMPTY_PATH);
+        this(new HashMap<>(), Path.EMPTY_PATH);
     }
-    private Annotations(Map<Path, Map<String,String>> annotations, Path path) {
+
+    private Annotations(Map<Path, Map<String, String>> annotations, Path path) {
         this.map = annotations;
         this.currentPath = path;
     }
 
     /**
      * Get the annotation map for the specified absolute path.
+     *
      * @param absolutePath the absolute path (not relative to the current path)
      * @param create true if the map should be created and stored, otherwise false.
      * @return the map, not null (possibly an unmodifiable empty map).
      */
     private Map<String, String> getMap(Path absolutePath, boolean create) {
         Map<String, String> annotations = map.get(absolutePath);
-        if (annotations == null){
+        if (annotations == null) {
             if (create) {
                 annotations = new HashMap<>();
                 map.put(absolutePath, annotations);
@@ -73,17 +76,21 @@ public class Annotations {
         }
         return annotations;
     }
+
     /**
      * Get the annotation map for the current path.
+     *
      * @param create true if the map should be created and stored, otherwise false.
      * @return the map, not null (possibly an unmodifiable empty map).
      */
     private Map<String, String> getMap(boolean create) {
-    	return getMap(currentPath, create);
+        return getMap(currentPath, create);
     }
 
-    /** Returns the annotation map for the current path.
-     * <p>Note: this is a unmodifiable map.
+    /**
+     * Returns the annotation map for the current path.
+     * <p>
+     * Note: this is a unmodifiable map.
      *
      * @return the map from annotation name to annotation value, not null.
      */
@@ -91,7 +98,8 @@ public class Annotations {
         return Collections.unmodifiableMap(getMap(false));
     }
 
-    /** Navigate to the specified sub path.
+    /**
+     * Navigate to the specified sub path.
      *
      * @param path the path to navigate to
      * @return the annotations collection for the specified path.
@@ -100,7 +108,8 @@ public class Annotations {
         return new Annotations(map, currentPath.append(path));
     }
 
-    /** Put an annotation name-value pair for the current path.
+    /**
+     * Put an annotation name-value pair for the current path.
      *
      * @param name the annotation name, not null.
      * @param value the annotation value, not null.
@@ -110,18 +119,18 @@ public class Annotations {
     }
 
     public void putAll(Properties properties) {
-    	for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-    		String name = (String) entry.getKey();
-    		String value = (String) entry.getValue();
-    		int atIdx = name.indexOf('@');
-    		if (atIdx == -1) {
-    			continue;
-    		}
-    		String annot = name.substring(atIdx + 1);
-    		name = name.substring(0, atIdx);
-    		Path path = currentPath.append(name.split("\\."));
-    		getMap(path, true).put(annot, value);
-    	}
+        for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            String name = (String) entry.getKey();
+            String value = (String) entry.getValue();
+            int atIdx = name.indexOf('@');
+            if (atIdx == -1) {
+                continue;
+            }
+            String annot = name.substring(atIdx + 1);
+            name = name.substring(0, atIdx);
+            Path path = currentPath.append(name.split("\\."));
+            getMap(path, true).put(annot, value);
+        }
     }
 
     /**
@@ -132,21 +141,20 @@ public class Annotations {
      * @return the properties, not null.
      */
     public Properties toProperties() {
-    	Properties properties = new Properties();
-    	for (Map.Entry<Path, Map<String,String>> entry : map.entrySet()) {
-    		Path path = entry.getKey();
-    		if (!path.startsWith(currentPath)) {
-    			continue;
-    		}
-    		path = path.subPath(currentPath.length());
-    		String namePrefix = path.toString();
-    		for (Map.Entry<String, String> annot : entry.getValue().entrySet()) {
-    			properties.put(namePrefix + "@" + annot.getKey(), annot.getValue());
-    		}
-    	}
-    	return properties;
+        Properties properties = new Properties();
+        for (Map.Entry<Path, Map<String, String>> entry : map.entrySet()) {
+            Path path = entry.getKey();
+            if (!path.startsWith(currentPath)) {
+                continue;
+            }
+            path = path.subPath(currentPath.length());
+            String namePrefix = path.toString();
+            for (Map.Entry<String, String> annot : entry.getValue().entrySet()) {
+                properties.put(namePrefix + "@" + annot.getKey(), annot.getValue());
+            }
+        }
+        return properties;
     }
-
 
     @Override
     public String toString() {
@@ -163,7 +171,8 @@ public class Annotations {
         return str.toString();
     }
 
-    /** Returns a string representation for the annotation name-value pair.
+    /**
+     * Returns a string representation for the annotation name-value pair.
      *
      * @param name the annotation name, not null.
      * @param value the annotation value, not null.
@@ -180,39 +189,40 @@ public class Annotations {
 
     /**
      * Escape an annotation value.
+     *
      * @param str the string to escape, not null
      * @return the escaped string, not null
      */
     public static String escape(String str) {
-    	StringBuilder sb = new StringBuilder((int) (str.length() * 1.2));
-    	int length = str.length();
-    	for (int i = 0; i < length; i++) {
-    		char ch = str.charAt(i);
-    		switch (ch) {
-    		case '"':
-    			sb.append("\\\"");
-    			break;
-    		case '\\':
-    			sb.append("\\\\");
-    			break;
-    		case '\n':
-    			sb.append("\\n");
-    			break;
-    		case '\r':
-    			sb.append("\\r");
-    			break;
-    		case '\t':
-    			sb.append("\\t");
-    			break;
-    		case '\0':
-    			sb.append("\\0");
-    			break;
-			default:
-				sb.append(ch);
-				break;
-    		}
-    	}
-    	return sb.toString();
+        StringBuilder sb = new StringBuilder((int) (str.length() * 1.2));
+        int length = str.length();
+        for (int i = 0; i < length; i++) {
+            char ch = str.charAt(i);
+            switch (ch) {
+                case '"':
+                    sb.append("\\\"");
+                    break;
+                case '\\':
+                    sb.append("\\\\");
+                    break;
+                case '\n':
+                    sb.append("\\n");
+                    break;
+                case '\r':
+                    sb.append("\\r");
+                    break;
+                case '\t':
+                    sb.append("\\t");
+                    break;
+                case '\0':
+                    sb.append("\\0");
+                    break;
+                default:
+                    sb.append(ch);
+                    break;
+            }
+        }
+        return sb.toString();
     }
 
 }

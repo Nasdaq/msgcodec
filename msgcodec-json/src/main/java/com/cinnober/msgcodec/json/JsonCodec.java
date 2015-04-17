@@ -29,7 +29,6 @@ import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.MsgCodecInstantiationException;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Sequence;
 import com.cinnober.msgcodec.io.ByteSink;
@@ -133,18 +132,18 @@ public class JsonCodec implements MsgCodec {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private JsonValueHandler createValueHandler(Schema dictionary, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass) {
-        type = dictionary.resolveToType(type, true);
-        GroupDef group = dictionary.resolveToGroup(type);
+    private JsonValueHandler createValueHandler(Schema schema, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass) {
+        type = schema.resolveToType(type, true);
+        GroupDef group = schema.resolveToGroup(type);
         switch (type.getType()) {
         case SEQUENCE:
             if (javaClass.isArray()) {
                 return new JsonValueHandler.ArraySequenceHandler(
-                        createValueHandler(dictionary, ((Sequence)type).getComponentType(), componentJavaClass, null),
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null),
                         componentJavaClass);
             } else { // collection
                 return new JsonValueHandler.ListSequenceHandler(
-                        createValueHandler(dictionary, ((Sequence)type).getComponentType(), componentJavaClass, null));
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null));
             }
         case REFERENCE:
             return lookupGroupByName(group.getName());

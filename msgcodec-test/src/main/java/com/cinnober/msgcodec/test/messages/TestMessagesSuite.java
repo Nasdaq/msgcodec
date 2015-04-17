@@ -51,7 +51,7 @@ import org.junit.Assert;
  *         super(rootClass, createCodec());
  *     }
  *     private static StreamCodec createCodec() {
- *         return new FooCodec(TestProtocol.getProtocolDictionary());
+ *         return new FooCodec(TestProtocol.getSchema());
  *     }
  * }
  *

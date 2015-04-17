@@ -33,7 +33,7 @@ import org.junit.Test;
  *
  * @author fredrik.bromee, Cinnober Financial Technology
  */
-public class AnnotatedProtocolDictionaryTest {
+public class AnnotatedSchemaTest {
 
     String executionReportGroupName = "ExecutionReport";
     String clientOrderIdFieldName = "clOrdID";
@@ -42,7 +42,7 @@ public class AnnotatedProtocolDictionaryTest {
     @Test
     public void testRawGroupDef() throws Exception {
         GroupDef groupDef = ExecutionReport.groupDef();
-        Schema dict = new Schema(Collections.singletonList(groupDef),null);
+        Schema schema = new Schema(Collections.singletonList(groupDef),null);
         String groupLevelDocForExecReport =
                 "An execution report is used for a bunch of things, like confirming the receipt of an order";
         Annotations annotations = new Annotations();
@@ -54,15 +54,15 @@ public class AnnotatedProtocolDictionaryTest {
         annotations.toProperties().store(System.out, "Annotations");
         System.out.println();
 
-        dict = dict.replaceAnnotations(annotations);
-        System.out.println(dict.toString());
-        Assert.assertEquals(groupLevelDocForExecReport, dict.getGroup(executionReportGroupName)
+        schema = schema.replaceAnnotations(annotations);
+        System.out.println(schema.toString());
+        Assert.assertEquals(groupLevelDocForExecReport, schema.getGroup(executionReportGroupName)
                 .getAnnotation(annotationName));
-        Assert.assertEquals(fieldLevelDocForClientOrderId, getClientOrderId(dict).getAnnotation(annotationName));
+        Assert.assertEquals(fieldLevelDocForClientOrderId, getClientOrderId(schema).getAnnotation(annotationName));
     }
 
-    private FieldDef getClientOrderId(Schema dictionary) {
-        return dictionary.getGroup(executionReportGroupName).getField(clientOrderIdFieldName);
+    private FieldDef getClientOrderId(Schema schema) {
+        return schema.getGroup(executionReportGroupName).getField(clientOrderIdFieldName);
     }
 
 }

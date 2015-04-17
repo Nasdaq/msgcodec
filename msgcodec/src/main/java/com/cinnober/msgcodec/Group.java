@@ -37,17 +37,17 @@ import java.util.WeakHashMap;
  */
 public class Group {
 
-    private static final WeakHashMap<Object, DictionaryInfo> dictInfoByDictUID = new WeakHashMap<>();
+    private static final WeakHashMap<Object, SchemaInfo> schemaInfoBySchemaUID = new WeakHashMap<>();
     private static final GroupTypeAccessorImpl GROUP_TYPE_ACCESSOR = new GroupTypeAccessorImpl();
 
     private final GroupInfo groupInfo;
     private final Object[] fieldValues;
 
 
-    private static GroupInfo getGroupInfo(Schema dictionary, String groupName) {
-        DictionaryInfo dictInfo = dictInfoByDictUID.get(dictionary.getUID());
+    private static GroupInfo getGroupInfo(Schema schema, String groupName) {
+        SchemaInfo dictInfo = schemaInfoBySchemaUID.get(schema.getUID());
         if (dictInfo == null) {
-            throw new IllegalArgumentException("Dictionary not bound to Group");
+            throw new IllegalArgumentException("Schema not bound to Group");
         }
         GroupInfo groupInfo = dictInfo.getGroupInfo(groupName);
         if (groupInfo == null) {
@@ -59,11 +59,11 @@ public class Group {
     /**
      * Create a new group.
      *
-     * @param dictionary the dictionary bound to {@link Group}, not null.
+     * @param schema the schema bound to {@link Group}, not null.
      * @param groupName the group name, not null.
      */
-    public Group(Schema dictionary, String groupName) {
-        this(getGroupInfo(dictionary, groupName));
+    public Group(Schema schema, String groupName) {
+        this(getGroupInfo(schema, groupName));
     }
 
     private Group(GroupInfo groupInfo) {
@@ -129,25 +129,25 @@ public class Group {
     }
 
     /**
-     * Bind the protocol dictionary to {@link Group} instances for group objects.
+     * Bind the protocol schema to {@link Group} instances for group objects.
      *
-     * @param dictionary the dictionary to be bound, not null.
-     * @return the bound dictionary
+     * @param schema the schema to be bound, not null.
+     * @return the bound schema
      */
-    public static Schema bind(Schema dictionary) {
+    public static Schema bind(Schema schema) {
         Map<String, GroupInfo> groupInfos = new HashMap<>();
         ArrayList<FieldIndexAccessor> fieldAccessors = new ArrayList<>();
-        List<GroupDef> groups = new ArrayList<>(dictionary.getGroups().size());
-        for (GroupDef group : dictionary.getGroups()) {
-            groups.add(bind(group, dictionary, groupInfos, fieldAccessors));
+        List<GroupDef> groups = new ArrayList<>(schema.getGroups().size());
+        for (GroupDef group : schema.getGroups()) {
+            groups.add(bind(group, schema, groupInfos, fieldAccessors));
         }
         SchemaBinding binding = new SchemaBinding(GROUP_TYPE_ACCESSOR);
-        Schema boundDict =
-                new Schema(groups, dictionary.getNamedTypes(), dictionary.getAnnotations(), binding);
+        Schema boundSchema =
+                new Schema(groups, schema.getNamedTypes(), schema.getAnnotations(), binding);
 
-        DictionaryInfo dictInfo = new DictionaryInfo(groupInfos);
-        dictInfoByDictUID.put(boundDict.getUID(), dictInfo);
-        return boundDict;
+        SchemaInfo schemaInfo = new SchemaInfo(groupInfos);
+        schemaInfoBySchemaUID.put(boundSchema.getUID(), schemaInfo);
+        return boundSchema;
     }
 
     private static FieldIndexAccessor getAccessor(List<FieldIndexAccessor> accessors, int index) {
@@ -157,7 +157,7 @@ public class Group {
         return accessors.get(index);
     }
 
-    private static GroupDef bind(GroupDef group, Schema dictionary,
+    private static GroupDef bind(GroupDef group, Schema schema,
             Map<String, GroupInfo> groupInfoByName, List<FieldIndexAccessor> accessors) {
         GroupInfo superGroupInfo = group.getSuperGroup() != null ? groupInfoByName.get(group.getSuperGroup()) : null;
         List<FieldDef> allFields = new ArrayList<>();
@@ -168,7 +168,7 @@ public class Group {
             }
         }
         for (FieldDef field : group.getFields()) {
-            TypeDef type = dictionary.resolveToType(field.getType(), true);
+            TypeDef type = schema.resolveToType(field.getType(), true);
             FieldDef boundField = field.bind(new FieldBinding(getAccessor(accessors, allFields.size()),
                     type.getDefaultJavaType(), type.getDefaultJavaComponentType()));
             allFields.add(boundField);
@@ -187,10 +187,10 @@ public class Group {
     }
 
 
-    private static class DictionaryInfo {
+    private static class SchemaInfo {
         private final Map<String, GroupInfo> groupsByName;
 
-        public DictionaryInfo(Map<String, GroupInfo> groupsByName) {
+        public SchemaInfo(Map<String, GroupInfo> groupsByName) {
             this.groupsByName = groupsByName;
         }
 

@@ -83,7 +83,7 @@ public class Schema implements Annotatable<Schema> {
      *
      * @param groups the group definitions (the protocol messages), not null.
      * @param namedTypes any named types, or null if none.
-     * @param binding the protocol dictionary binding, or null if unbound
+     * @param binding the protocol schema binding, or null if unbound
      */
     public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
         SchemaBinding binding) {
@@ -96,7 +96,7 @@ public class Schema implements Annotatable<Schema> {
      * @param groups the group definitions (the protocol messages), not null.
      * @param namedTypes any named types, or null if none.
      * @param annotations the group annotations.
-     * @param binding the protocol dictionary binding, or null if unbound
+     * @param binding the protocol schema binding, or null if unbound
      */
     public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
         Map<String, String> annotations, SchemaBinding binding) {
@@ -256,16 +256,16 @@ public class Schema implements Annotatable<Schema> {
     }
 
     /**
-     * Returns true if this dictionary is completely bound.
-     * @return true if this dictionary is completely bound, otherwise false.
+     * Returns true if this schema is completely bound.
+     * @return true if this schema is completely bound, otherwise false.
      */
     public boolean isBound() {
         return getBindingStatus() == BindingStatus.BOUND;
     }
 
     /**
-     * Returns true if this dictionary is completely unbound.
-     * @return true if this dictionary is completely unbound, otherwise false.
+     * Returns true if this schema is completely unbound.
+     * @return true if this schema is completely unbound, otherwise false.
      */
     public boolean isUnbound() {
         return getBindingStatus() == BindingStatus.UNBOUND;
@@ -283,8 +283,8 @@ public class Schema implements Annotatable<Schema> {
     }
 
     /**
-     * Returns the unbound version of this dictionary.
-     * @return the unbound version of this dictionary.
+     * Returns the unbound version of this schema.
+     * @return the unbound version of this schema.
      */
     public Schema unbind() {
         if (isUnbound()) {
@@ -442,7 +442,7 @@ public class Schema implements Annotatable<Schema> {
 
     /** Assign group ids for all groups with unassigned group id.
      * The {@link String#hashCode()} of the name is used. If the hash code is -1 then zero is chosen.
-     * @return a new ProtocolDictionay with group identifiers assigned.
+     * @return a new Schema with group identifiers assigned.
      * @throws IllegalArgumentException if duplicate identifiers were generated
      */
     public Schema assignGroupIds() {
@@ -468,9 +468,9 @@ public class Schema implements Annotatable<Schema> {
     }
 
     /**
-     * Returns a unique identifier for this protocol dictionary instance.
-     * It is guaranteed that the UID object of two protocol dictionaries are equal
-     * iff the protocol dictionaries are the same instance.
+     * Returns a unique identifier for this schema instance.
+     * It is guaranteed that the UID object of two schema are equal
+     * iff the schemas are the same instance.
      * @return the UID, not null.
      */
     public Object getUID() {
@@ -498,7 +498,7 @@ public class Schema implements Annotatable<Schema> {
     }
 
     /**
-     * Returns a human readable string representation of this protocol dictionary.
+     * Returns a human readable string representation of this schema.
      */
     @Override
     public String toString() {
@@ -539,7 +539,7 @@ public class Schema implements Annotatable<Schema> {
      * Replace all annotations in this object with the specified annotations.
      *
      * @param annotations the annotations.
-     * @return a new copy of this dictionary, with the specified annotations set.
+     * @return a new copy of this schema, with the specified annotations set.
      */
     @Override
     public Schema replaceAnnotations(Annotations annotations) {
@@ -559,7 +559,7 @@ public class Schema implements Annotatable<Schema> {
      * Add the specified annotations to this object.
      *
      * @param annotations the annotations.
-     * @return a new copy of this dictionary, with the specified annotations set.
+     * @return a new copy of this schema, with the specified annotations set.
      */
     @Override
     public Schema addAnnotations(Annotations annotations) {

@@ -31,19 +31,19 @@ import static org.junit.Assert.*;
  *
  * @author mikael.brannstrom
  */
-public class ProtocolDictionaryTest {
+public class SchemaTest {
 
-    public ProtocolDictionaryTest() {
+    public SchemaTest() {
     }
 
     @Test
     public void testEqualsAndHashCode() {
-        Schema dict1 = new SchemaBuilder().build(FooMessage.class, BarMessage.class);
-        Schema dict2 = new SchemaBuilder().build(FooMessage.class, BarMessage.class);
+        Schema schema1 = new SchemaBuilder().build(FooMessage.class, BarMessage.class);
+        Schema schema2 = new SchemaBuilder().build(FooMessage.class, BarMessage.class);
 
-        assertEquals(dict1, dict2);
-        assertEquals(dict1.hashCode(), dict2.hashCode());
-        assertNotEquals(dict1.getUID(), dict2.getUID());
+        assertEquals(schema1, schema2);
+        assertEquals(schema1.hashCode(), schema2.hashCode());
+        assertNotEquals(schema1.getUID(), schema2.getUID());
     }
 
 }
