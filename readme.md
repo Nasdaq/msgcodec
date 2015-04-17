@@ -3,8 +3,6 @@
 
 A library to encode and decode messages in various formats where messages are defined as plain old java objects. 
 
-This library is maintained by [Mikael Brännström ](mailto:mikael.brannstrom@cinnober.com). Feedback is very welcome. 
-
 ## Usage ##
 Given a POJO:
 
@@ -21,8 +19,8 @@ Given a POJO:
 
 We can generate a Blink message like this:
 
-    ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
-    StreamCodec codec = new BlinkCodecFactory(dictionary).createStreamCodec();
+    Schema schema = new SchemaBuilder().build(Hello.class);
+    MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
 
     Hello msg = new Hello("hello world");
     ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -33,11 +31,11 @@ We can generate a Blink message like this:
     Hello decoded = (Hello) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
     System.out.println(decoded.greeting.equals(msg.greeting) + " = true");
 
-Note that the same dictionary can be used with another encoder to produce for example TAP messages. See javadoc and examples for more information.
+Note that the same schema can be used with another encoder to produce for example JSON messages. See javadoc and examples for more information.
 
 ### Artifacts  ###
 
-To use msgcodec you will need to include the artifacts in the group=`com.cinnober.msgcodec`; `msgcodec` and `msgcodec-{format}` in your application's runtime. Format is one of `xml`, `json`, `blink` or `tap`.
+To use msgcodec you will need to include the artifacts in the group=`com.cinnober.msgcodec`; `msgcodec` and `msgcodec-{format}` in your application's runtime. Format is one of `xml`, `json` or `blink`.
 
 The versions of the artifacts follows [semantic versioning](http://semver.org), which means that a minor version upgrade is always backwards compatible.
 
@@ -56,7 +54,6 @@ The code is divided into the following projects:
 - `msgcodec-json`: JSON codec
 - `msgcodec-xml`: XML codec
 - `msgcodec-blink`: Blink (compact format) codec
-- `msgcodec-tap`: TAP codec
 - `msgcodec-javadoc`: Javadoc doclet for extracting javadoc comments from messages.
 - `msgcodec-examples`: Examples of how to use msgcodec.
 

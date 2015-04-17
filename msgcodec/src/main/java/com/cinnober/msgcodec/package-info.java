@@ -26,7 +26,7 @@
  * and interfaces for encoding and decoding messages.
  *
  * <p>Msgcodec is an API for how to describe protocol messages and their fields with meta data. The actual
- * coding is left to specific msgcodec implementations, such as JSON, XML, Blink or TAP message formats.
+ * coding is left to specific msgcodec implementations, such as JSON, XML or Blink message formats.
  *
  * <p>The protocol messages are described in a {@link com.cinnober.msgcodec.Schema}.
  * The schema can be created by hand or generated. Based on the schema a specific
