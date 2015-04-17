@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
  * <p>When applied to a sequence, the meaning of this annotation is transferred to the element type of the sequence.
  *
  * @author mikael.brannstrom
- *
+ * @see com.cinnober.msgcodec.TypeDef.Type#DECIMAL
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD})
