@@ -17,7 +17,7 @@ Given a POJO:
     }
 
 
-We can generate a Blink message like this:
+We can generate a [Blink][] message like this:
 
     ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(Hello.class);
     StreamCodec codec = new BlinkCodecFactory(dictionary).createStreamCodec();
@@ -45,6 +45,8 @@ In a gradle project one would include the libs in dependencies section of your `
         compile group: 'com.cinnober.msgcodec', name: 'msgcodec', version: '{version}'
         compile group: 'com.cinnober.msgcodec', name: 'msgcodec-blink', version: '{version}'
     }
+
+[Blink]: [http://blinkprotocol.org]
 
 ## Project Structure ##
 
