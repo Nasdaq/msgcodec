@@ -46,8 +46,17 @@ public abstract class GroupDefVisitor implements AnnotatedVisitor {
         if (gv != null) {
             gv.visitAnnotation(key, value);
         }
-
     }
+
+    /**
+     * Visit a field.
+     * @param name the name, not null.
+     * @param id the id, or -1 if unspecified.
+     * @param required true if required, otherwise false.
+     * @param type the type, not null.
+     * @param binding the binding, or null if unbound.
+     * @return the field definition visitor to receive further events, or null.
+     */
     public FieldDefVisitor visitField(String name, int id, boolean required, TypeDef type, FieldBinding binding) {
         if (gv != null) {
             return gv.visitField(name, id, required, type, binding);
@@ -55,6 +64,9 @@ public abstract class GroupDefVisitor implements AnnotatedVisitor {
         return null;
     }
 
+    /**
+     * Visit the end of this group definition.
+     */
     public void visitEnd() {
         if (gv != null) {
             gv.visitEnd();

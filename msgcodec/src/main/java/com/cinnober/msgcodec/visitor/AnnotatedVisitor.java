@@ -29,6 +29,10 @@ package com.cinnober.msgcodec.visitor;
  * @author mikael.brannstrom
  */
 public interface AnnotatedVisitor {
-    
+    /**
+     * Visit a annotation on this element.
+     * @param key the key, not null
+     * @param value the value, not null
+     */
     void visitAnnotation(String key, String value);
 }

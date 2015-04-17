@@ -19,11 +19,8 @@
 package com.cinnober.msgcodec.visitor;
 
 import com.cinnober.msgcodec.GroupBinding;
-import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinding;
 import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.messages.MetaProtocol;
-import com.cinnober.msgcodec.messages.MetaSchema;
 
 /**
  * A visitor to visit a schema.
@@ -45,6 +42,10 @@ public abstract class SchemaVisitor implements AnnotatedVisitor {
         this(null);
     }
 
+    /**
+     * Visit the beginning of the schema.
+     * @param binding the schema binding, or null.
+     */
     public void visit(SchemaBinding binding) {
         if (sv != null) {
             sv.visit(binding);
@@ -58,6 +59,12 @@ public abstract class SchemaVisitor implements AnnotatedVisitor {
         }
     }
 
+    /**
+     * Visit a named type.
+     * @param name the name, not null.
+     * @param type the type, not null.
+     * @return the named type visitor to receive further events, or null.
+     */
     public NamedTypeVisitor visitNamedType(String name, TypeDef type) {
         if (sv != null) {
             return sv.visitNamedType(name, type);
@@ -65,6 +72,14 @@ public abstract class SchemaVisitor implements AnnotatedVisitor {
         return null;
     }
 
+    /**
+     * Visit a group.
+     * @param name the name, not null.
+     * @param id the id, or -1 for unspecified.
+     * @param superGroup the super group name, or null if none.
+     * @param binding the binding, or null if none.
+     * @return the group definition visitor to recieve further events, or null.
+     */
     public GroupDefVisitor visitGroup(String name, int id, String superGroup, GroupBinding binding) {
         if (sv != null) {
             return sv.visitGroup(name, id, superGroup, binding);
@@ -72,90 +87,12 @@ public abstract class SchemaVisitor implements AnnotatedVisitor {
         return null;
     }
 
+    /**
+     * Visit the end of the schema.
+     */
     public void visitEnd() {
         if (sv != null) {
             sv.visitEnd();
         }
     }
-
-
-    public static void accept(Schema schema, SchemaVisitor sv) {
-        sv.visit(schema.getBinding());
-        schema.getAnnotations().forEach(sv::visitAnnotation);
-        schema.getNamedTypes().forEach(t -> {
-            NamedTypeVisitor tv = sv.visitNamedType(t.getName(), t.getType());
-            if (tv != null) {
-                t.getAnnotations().forEach(tv::visitAnnotation);
-                tv.visitEnd();
-            }
-        });
-        schema.getGroups().forEach(g -> {
-            GroupDefVisitor gv = sv.visitGroup(
-                    g.getName(),
-                    g.getId(),
-                    g.getSuperGroup(),
-                    g.getBinding());
-            if (gv != null) {
-                g.getAnnotations().forEach(gv::visitAnnotation);
-                g.getFields().forEach(f -> {
-                    FieldDefVisitor fv = gv.visitField(
-                            f.getName(),
-                            f.getId(),
-                            f.isRequired(),
-                            f.getType(),
-                            f.getBinding());
-                    if (fv != null) {
-                        f.getAnnotations().forEach(fv::visitAnnotation);
-                    }
-                    fv.visitEnd();
-                });
-                gv.visitEnd();
-            }
-        });
-        sv.visitEnd();
-    }
-
-    public static void accept(MetaSchema schema, SchemaVisitor sv) {
-        sv.visit(null);
-        schema.annotations.forEach(a -> sv.visitAnnotation(a.name, a.value));
-        schema.namedTypes.forEach(t -> {
-            NamedTypeVisitor tv = sv.visitNamedType(t.name, t.type.toTypeDef());
-            if (tv != null) {
-                t.annotations.forEach(a -> tv.visitAnnotation(a.name, a.value));
-                tv.visitEnd();
-            }
-        });
-        schema.groups.forEach(g -> {
-            GroupDefVisitor gv = sv.visitGroup(g.name, g.id, g.superGroup, null);
-            if (gv != null) {
-                g.annotations.forEach(a -> gv.visitAnnotation(a.name, a.value));
-                g.fields.forEach(f -> {
-                    FieldDefVisitor fv = gv.visitField(f.name, f.id, f.required, f.type.toTypeDef(), null);
-                    if (fv != null) {
-                        f.annotations.forEach(a -> fv.visitAnnotation(a.name, a.value));
-                        fv.visitEnd();
-                    }
-                });
-                gv.visitEnd();
-            }
-        });
-    }
-
-//    public static Schema assignGroupIds(Schema schema) {
-//        SchemaProducer sp = new SchemaProducer();
-//        SchemaVisitor sv = new SchemaVisitor(sp) {
-//            @Override
-//            public GroupDefVisitor visitGroup(String name, int id, String superGroup, GroupBinding binding) {
-//                if (id == -1) {
-//                    id = name.hashCode();
-//                    if (id == -1) {
-//                        id = -2;
-//                    }
-//                }
-//                return super.visitGroup(name, id, superGroup, binding);
-//            }
-//        };
-//        accept(schema, sv);
-//        return sp.getSchema();
-//    }
 }

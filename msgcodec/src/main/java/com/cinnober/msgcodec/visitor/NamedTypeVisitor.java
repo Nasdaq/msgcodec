@@ -26,7 +26,7 @@ package com.cinnober.msgcodec.visitor;
  *
  * @author mikael.brannstrom
  */
-public abstract class NamedTypeVisitor {
+public abstract class NamedTypeVisitor implements AnnotatedVisitor {
 
     protected NamedTypeVisitor fv;
 
@@ -38,12 +38,16 @@ public abstract class NamedTypeVisitor {
         this(null);
     }
 
+    @Override
     public void visitAnnotation(String key, String value) {
         if (fv != null) {
             fv.visitAnnotation(key, value);
         }
-        
     }
+
+    /**
+     * Visit the end of this named type.
+     */
     public void visitEnd() {
         if (fv != null) {
             fv.visitEnd();

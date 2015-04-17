@@ -37,6 +37,10 @@ import com.cinnober.msgcodec.TypeDef.Ref;
 import com.cinnober.msgcodec.messages.MetaGroupDef;
 import com.cinnober.msgcodec.messages.MetaNamedType;
 import com.cinnober.msgcodec.messages.MetaSchema;
+import com.cinnober.msgcodec.visitor.FieldDefVisitor;
+import com.cinnober.msgcodec.visitor.GroupDefVisitor;
+import com.cinnober.msgcodec.visitor.NamedTypeVisitor;
+import com.cinnober.msgcodec.visitor.SchemaVisitor;
 import java.util.List;
 import java.util.Objects;
 
@@ -591,6 +595,50 @@ public class Schema implements Annotatable<Schema> {
     @Override
     public Map<String, String> getAnnotations() {
         return annotations;
+    }
+
+    /**
+     * Visit this schema with the specified schema visitor.
+     * @param sv the schema visitor, not null.
+     */
+    public void visit(SchemaVisitor sv) {
+        visit(this, sv);
+    }
+
+    private static void visit(Schema schema, SchemaVisitor sv) {
+        sv.visit(schema.getBinding());
+        schema.getAnnotations().forEach(sv::visitAnnotation);
+        schema.getNamedTypes().forEach(t -> {
+            NamedTypeVisitor tv = sv.visitNamedType(t.getName(), t.getType());
+            if (tv != null) {
+                t.getAnnotations().forEach(tv::visitAnnotation);
+                tv.visitEnd();
+            }
+        });
+        schema.getGroups().forEach(g -> {
+            GroupDefVisitor gv = sv.visitGroup(
+                    g.getName(),
+                    g.getId(),
+                    g.getSuperGroup(),
+                    g.getBinding());
+            if (gv != null) {
+                g.getAnnotations().forEach(gv::visitAnnotation);
+                g.getFields().forEach(f -> {
+                    FieldDefVisitor fv = gv.visitField(
+                            f.getName(),
+                            f.getId(),
+                            f.isRequired(),
+                            f.getType(),
+                            f.getBinding());
+                    if (fv != null) {
+                        f.getAnnotations().forEach(fv::visitAnnotation);
+                    }
+                    fv.visitEnd();
+                });
+                gv.visitEnd();
+            }
+        });
+        sv.visitEnd();
     }
 
     /** Sort GroupDefs by parentCount ascending, followed by id ascending.

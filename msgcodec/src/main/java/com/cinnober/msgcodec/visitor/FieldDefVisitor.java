@@ -43,13 +43,15 @@ public abstract class FieldDefVisitor implements AnnotatedVisitor {
         if (fv != null) {
             fv.visitAnnotation(key, value);
         }
-        
     }
+
+    /**
+     * Visit the end of this field definition.
+     */
     public void visitEnd() {
         if (fv != null) {
             fv.visitEnd();
         }
-        
     }
 
 }

@@ -33,6 +33,10 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
+import com.cinnober.msgcodec.visitor.FieldDefVisitor;
+import com.cinnober.msgcodec.visitor.GroupDefVisitor;
+import com.cinnober.msgcodec.visitor.NamedTypeVisitor;
+import com.cinnober.msgcodec.visitor.SchemaVisitor;
 import java.util.List;
 
 /**
@@ -92,4 +96,39 @@ public class MetaSchema extends MetaAnnotated {
     public Schema toSchema() {
         return new Schema(toGroupDefs(), toNamedTypes(), toAnnotationsMap(), null);
     }
+
+    /**
+     * Visit this schema with the specified schema visitor.
+     * @param sv the schema visitor, not null.
+     */
+    public void visit(SchemaVisitor sv) {
+        visit(this, sv);
+    }
+
+    private static void visit(MetaSchema schema, SchemaVisitor sv) {
+        sv.visit(null);
+        schema.annotations.forEach(a -> sv.visitAnnotation(a.name, a.value));
+        schema.namedTypes.forEach(t -> {
+            NamedTypeVisitor tv = sv.visitNamedType(t.name, t.type.toTypeDef());
+            if (tv != null) {
+                t.annotations.forEach(a -> tv.visitAnnotation(a.name, a.value));
+                tv.visitEnd();
+            }
+        });
+        schema.groups.forEach(g -> {
+            GroupDefVisitor gv = sv.visitGroup(g.name, g.id, g.superGroup, null);
+            if (gv != null) {
+                g.annotations.forEach(a -> gv.visitAnnotation(a.name, a.value));
+                g.fields.forEach(f -> {
+                    FieldDefVisitor fv = gv.visitField(f.name, f.id, f.required, f.type.toTypeDef(), null);
+                    if (fv != null) {
+                        f.annotations.forEach(a -> fv.visitAnnotation(a.name, a.value));
+                        fv.visitEnd();
+                    }
+                });
+                gv.visitEnd();
+            }
+        });
+    }
+
 }

@@ -33,7 +33,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- *
+ * Schema visitor that can produce a schema instance.
+ * 
+ * @see #getSchema() 
  * @author mikael.brannstrom
  */
 public class SchemaProducer extends SchemaVisitor {
@@ -80,11 +82,17 @@ public class SchemaProducer extends SchemaVisitor {
         schema = createSchema();
     }
 
+    /**
+     * Returns the created schema for the most recently visited schema.
+     * The schema is created when {@link #visitEnd()} is called.
+     * 
+     * @return the schema, or null if no schema has been visited.
+     */
     public Schema getSchema() {
         return schema;
     }
 
-    Schema createSchema() {
+    private Schema createSchema() {
         return new Schema(
                 groups.stream().map(GroupDefProducer::createGroupDef).collect(Collectors.toList()),
                 namedTypes.stream().map(NamedTypeProducer::createNamedType).collect(Collectors.toList()),
