@@ -99,11 +99,11 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
             if (size < 1<<7) {
                 buf.shift(start+2, size, -1);
                 buf.position(start);
-                BlinkOutput.writeVLC(buf, size, 1);
+                BlinkOutput.writeVLC7(buf, size);
                 buf.position(end-1);
             } else if (size < 1<<14) {
                 buf.position(start);
-                BlinkOutput.writeVLC(buf, size, 2);
+                BlinkOutput.writeVLC14(buf, size);
                 buf.position(end);
             } else {
                 int sizeOfSize = BlinkOutput.sizeOfUnsignedVLC(size);

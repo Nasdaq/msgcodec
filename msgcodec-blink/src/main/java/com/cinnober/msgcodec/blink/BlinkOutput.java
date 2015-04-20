@@ -518,7 +518,47 @@ public class BlinkOutput {
      * @throws IOException if the underlying stream throws an exception
      */
     public static void writeSignedVLC(ByteSink out, long value) throws IOException {
-        writeVLC(out, value, sizeOfSignedVLC(value));
+        if (value < 0) {
+            if (value >= 0xffffffffffffffc0L) {
+                writeVLC7(out, value);
+            } else if (value >= 0xffffffffffffe000L) { 
+                writeVLC14(out, value);
+            } else if (value >= 0xffffffffffff8000L) {
+                writeVLC16(out, value);
+            } else if (value >= 0xffffffffff800000L) {
+                writeVLC24(out, value);
+            } else if (value >= 0xffffffff80000000L) {
+                writeVLC32(out, value);
+            } else if (value >= 0xffffff8000000000L) {
+                writeVLC40(out, value);
+            } else if (value >= 0xffff800000000000L) {
+                writeVLC48(out, value);
+            } else if (value >= 0xff80000000000000L) {
+                writeVLC56(out, value);
+            } else {
+                writeVLC64(out, value);
+            }
+        } else {
+            if (value < 0x0000000000000040L) {
+                writeVLC7(out, value);
+            } else if (value < 0x0000000000002000L) {
+                writeVLC14(out, value);
+            } else if (value < 0x0000000000008000L) {
+                writeVLC16(out, value);
+            } else if (value < 0x0000000000800000L) {
+                writeVLC24(out, value);
+            } else if (value < 0x0000000080000000L) {
+                writeVLC32(out, value);
+            } else if (value < 0x0000008000000000L) {
+                writeVLC40(out, value);
+            } else if (value < 0x0000800000000000L) {
+                writeVLC48(out, value);
+            } else if (value < 0x0080000000000000L) {
+                writeVLC56(out, value);
+            } else {
+                writeVLC64(out, value);
+            }
+        }
     }
     /**
      * Write an unsigned variable-length code value.
@@ -528,7 +568,97 @@ public class BlinkOutput {
      * @throws IOException if the underlying stream throws an exception
      */
     public static void writeUnsignedVLC(ByteSink out, long value) throws IOException {
-        writeVLC(out, value, sizeOfUnsignedVLC(value));
+        if((value & 0xffffffffffffff80L) == 0) {
+            writeVLC7(out, value);
+        } else if((value & 0xffffffffffffc000L) == 0) {
+            writeVLC14(out, value);
+        } else if((value & 0xffffffffffff0000L) == 0) {
+            writeVLC16(out, value);
+        } else if((value & 0xffffffffff000000L) == 0) {
+            writeVLC24(out, value);
+        } else if((value & 0xffffffff00000000L) == 0) {
+            writeVLC32(out, value);
+        } else if((value & 0xffffff0000000000L) == 0) {
+            writeVLC40(out, value);
+        } else if((value & 0xffff000000000000L) == 0) {
+            writeVLC48(out, value);
+        } else if((value & 0xff00000000000000L) == 0) {
+            writeVLC56(out, value);
+        } else {
+            writeVLC64(out, value);
+        }
+    }
+
+    static void writeVLC7(ByteSink out, long value) throws IOException {
+        out.write((int)value & 0x7f);
+    }
+
+    static void writeVLC14(ByteSink out, long value) throws IOException {
+        out.write(((int)value & 0x3f) | 0x80);
+        out.write((int)(value >> 6) & 0xff);
+    }
+
+    static void writeVLC16(ByteSink out, long value) throws IOException {
+        out.write(((3-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+    }
+
+    static void writeVLC24(ByteSink out, long value) throws IOException {
+        out.write(((4-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+        out.write((int)(value >> 16) & 0xff);
+    }
+
+    static void writeVLC32(ByteSink out, long value) throws IOException {
+        out.write(((5-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+        out.write((int)(value >> 16) & 0xff);
+        out.write((int)(value >> 24) & 0xff);
+    }
+
+    static void writeVLC40(ByteSink out, long value) throws IOException {
+        out.write(((6-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+        out.write((int)(value >> 16) & 0xff);
+        out.write((int)(value >> 24) & 0xff);
+        out.write((int)(value >> 32) & 0xff);
+    }
+    
+    static void writeVLC48(ByteSink out, long value) throws IOException {
+        out.write(((7-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+        out.write((int)(value >> 16) & 0xff);
+        out.write((int)(value >> 24) & 0xff);
+        out.write((int)(value >> 32) & 0xff);
+        out.write((int)(value >> 40) & 0xff);
+    }
+
+    static void writeVLC56(ByteSink out, long value) throws IOException {
+        out.write(((8-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+        out.write((int)(value >> 16) & 0xff);
+        out.write((int)(value >> 24) & 0xff);
+        out.write((int)(value >> 32) & 0xff);
+        out.write((int)(value >> 40) & 0xff);
+        out.write((int)(value >> 48) & 0xff);
+    }
+
+    static void writeVLC64(ByteSink out, long value) throws IOException {
+        out.write(((9-1) & 0x3f) | 0xc0);
+        out.write((int)value & 0xff);
+        out.write((int)(value >> 8) & 0xff);
+        out.write((int)(value >> 16) & 0xff);
+        out.write((int)(value >> 24) & 0xff);
+        out.write((int)(value >> 32) & 0xff);
+        out.write((int)(value >> 40) & 0xff);
+        out.write((int)(value >> 48) & 0xff);
+        out.write((int)(value >> 56) & 0xff);
     }
 
     /**
@@ -542,67 +672,31 @@ public class BlinkOutput {
     static void writeVLC(ByteSink out, long value, int size) throws IOException {
         switch (size) {
             case 1:
-                out.write((int)value & 0x7f);
+                writeVLC7(out, value);
                 break;
             case 2:
-                out.write(((int)value & 0x3f) | 0x80);
-                out.write((int)(value >> 6) & 0xff);
+                writeVLC14(out, value);
                 break;
             case 3:
-                out.write(((3-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
+                writeVLC16(out, value);
                 break;
             case 4:
-                out.write(((4-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
-                out.write((int)(value >> 16) & 0xff);
+                writeVLC24(out, value);
                 break;
             case 5:
-                out.write(((5-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
-                out.write((int)(value >> 16) & 0xff);
-                out.write((int)(value >> 24) & 0xff);
+                writeVLC32(out, value);
                 break;
             case 6:
-                out.write(((6-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
-                out.write((int)(value >> 16) & 0xff);
-                out.write((int)(value >> 24) & 0xff);
-                out.write((int)(value >> 32) & 0xff);
+                writeVLC40(out, value);
                 break;
             case 7:
-                out.write(((7-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
-                out.write((int)(value >> 16) & 0xff);
-                out.write((int)(value >> 24) & 0xff);
-                out.write((int)(value >> 32) & 0xff);
-                out.write((int)(value >> 40) & 0xff);
+                writeVLC48(out, value);
                 break;
             case 8:
-                out.write(((8-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
-                out.write((int)(value >> 16) & 0xff);
-                out.write((int)(value >> 24) & 0xff);
-                out.write((int)(value >> 32) & 0xff);
-                out.write((int)(value >> 40) & 0xff);
-                out.write((int)(value >> 48) & 0xff);
+                writeVLC56(out, value);
                 break;
             case 9:
-                out.write(((9-1) & 0x3f) | 0xc0);
-                out.write((int)value & 0xff);
-                out.write((int)(value >> 8) & 0xff);
-                out.write((int)(value >> 16) & 0xff);
-                out.write((int)(value >> 24) & 0xff);
-                out.write((int)(value >> 32) & 0xff);
-                out.write((int)(value >> 40) & 0xff);
-                out.write((int)(value >> 48) & 0xff);
-                out.write((int)(value >> 56) & 0xff);
+                writeVLC64(out, value);
                 break;
             default:
                 throw new IllegalArgumentException("Illegal size: " + size);
