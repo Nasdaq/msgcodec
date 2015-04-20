@@ -86,32 +86,32 @@ public class BenchmarkIntegerCoding {
         };
         System.out.println("Integer values:");
         System.out.println("  Num: " + intValues.length);
-        int sizeOfVlcInts = writeVlcInt32();
+        int sizeOfVlcInts = writeVlcUInt32();
         System.out.println("  VLC Size: " + sizeOfVlcInts);
-        int sizeOfNioInts = writePutInt32();
+        int sizeOfNioInts = writePutUInt32();
         System.out.println("  NIO Size: " + sizeOfNioInts);
     }
 
     @Benchmark
-    public int writeVlcInt32() throws IOException {
+    public int writeVlcUInt32() throws IOException {
         vlcBuf.clear();
         for (int i=0; i<intValues.length; i++) {
-            BlinkOutput.writeInt32(vlcBuf, intValues[i]);
+            BlinkOutput.writeUInt32(vlcBuf, intValues[i]);
         }
         return vlcBuf.position();
     }
     @Benchmark
-    public int readVlcInt32() throws IOException {
+    public int readVlcUInt32() throws IOException {
         vlcBuf.clear();
         int sum = 0;
         for (int i=0; i<intValues.length; i++) {
-            int value = BlinkInput.readInt32(vlcBuf);
+            int value = BlinkInput.readUInt32(vlcBuf);
             sum += value;
         }
         return sum;
     }
     @Benchmark
-    public int writePutInt32() throws IOException {
+    public int writePutUInt32() throws IOException {
         nioBuf.clear();
         for (int i=0; i<intValues.length; i++) {
             nioBuf.putInt(intValues[i]);
@@ -119,7 +119,7 @@ public class BenchmarkIntegerCoding {
         return nioBuf.position();
     }
     @Benchmark
-    public int readGetInt32() throws IOException {
+    public int readGetUInt32() throws IOException {
         nioBuf.clear();
         int sum = 0;
         for (int i=0; i<intValues.length; i++) {
