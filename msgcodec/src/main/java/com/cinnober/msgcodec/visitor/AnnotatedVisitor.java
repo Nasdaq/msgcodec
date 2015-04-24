@@ -25,7 +25,8 @@
 package com.cinnober.msgcodec.visitor;
 
 /**
- *
+ * Visitor interface for elements with annotations.
+ * 
  * @author mikael.brannstrom
  */
 public interface AnnotatedVisitor {

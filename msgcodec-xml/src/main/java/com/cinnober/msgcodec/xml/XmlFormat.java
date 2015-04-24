@@ -28,7 +28,7 @@ package com.cinnober.msgcodec.xml;
  * @author mikael.brannstrom
  *
  */
-public interface XmlFormat<T> {
+interface XmlFormat<T> {
     public String format(T value) throws FormatException;
     public T parse(String str) throws FormatException;
 }

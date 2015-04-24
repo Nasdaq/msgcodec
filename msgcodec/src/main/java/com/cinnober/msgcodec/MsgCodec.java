@@ -32,7 +32,7 @@ import java.io.OutputStream;
 /** 
  * A codec that can encode and decode messages.
  * 
- * <p>NOTE: A stream codec implementation is NOT thread-safe, unless the documentation says so.</p>
+ * <p>NOTE: A message codec implementation is NOT thread-safe, unless the documentation says so.</p>
  *
  * <p>Codec implementations may support encoding and decoding null values. Trying to encode a null
  * value with an implementation that does not support it, will cause an unchecked exception to be thrown,

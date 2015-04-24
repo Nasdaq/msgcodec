@@ -34,7 +34,7 @@ import com.cinnober.msgcodec.TypeDef.Symbol;
  * @author mikael.brannstrom
  *
  */
-public abstract class XmlEnumFormat<T> implements XmlFormat<T> {
+abstract class XmlEnumFormat<T> implements XmlFormat<T> {
 
     static class IntEnumFormat extends XmlEnumFormat<Integer> {
         private final Map<String, Integer> idByName;
@@ -73,7 +73,7 @@ public abstract class XmlEnumFormat<T> implements XmlFormat<T> {
 
         private final EnumSymbols<E> enumSymbols;
         public JavaEnumFormat(TypeDef.Enum typeDef, Class<E> enumClass) {
-            this.enumSymbols = new EnumSymbols<E>(typeDef, enumClass);
+            this.enumSymbols = new EnumSymbols<>(typeDef, enumClass);
         }
 
         @Override

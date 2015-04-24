@@ -142,10 +142,10 @@ abstract class MsgObjectValueHandler<T> {
             timeFormat = TimeFormat.getTimeFormat(unit(time), epoch(time));
         }
 
-        protected TimeUnit unit(Time time) {
+        protected final TimeUnit unit(Time time) {
             return time != null ? time.unit() : TimeUnit.MILLISECONDS;
         }
-        protected Epoch epoch(Time time) {
+        protected final Epoch epoch(Time time) {
             return time != null ? time.epoch() : Epoch.UNIX;
         }
 

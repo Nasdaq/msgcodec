@@ -47,20 +47,20 @@ public class GroupDefDoc {
         this.className = classDoc.qualifiedName();
 
         // fields
-        fields = new ArrayList<FieldDefDoc>();
+        fields = new ArrayList<>();
         for (FieldDoc field : getFields(classDoc)) {
             if (field.isStatic()) {
                 continue;
             }
-            String name = DocAnnotationDoclet.getNameAnnotation(field.annotations(), field.name());
+            String fieldName = DocAnnotationDoclet.getNameAnnotation(field.annotations(), field.name());
 
-            fields.add(new FieldDefDoc(name, field));
+            fields.add(new FieldDefDoc(fieldName, field));
         }
 
     }
 
     private static Collection<FieldDoc> getFields(ClassDoc classDoc) {
-        ArrayList<FieldDoc> fields = new ArrayList<FieldDoc>();
+        ArrayList<FieldDoc> fields = new ArrayList<>();
         addFields(classDoc, fields);
         return fields;
     }

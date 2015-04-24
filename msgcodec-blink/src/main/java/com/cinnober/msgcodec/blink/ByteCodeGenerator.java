@@ -686,35 +686,31 @@ class ByteCodeGenerator {
             for (final FieldDef field : group.getFields()) {
                 final Class<?> javaClass = field.getJavaClass();
 
-                // "lambda" that can generate code for reading the value
-                Runnable readValue = new Runnable() {
-                    @Override
-                    public void run() {
-                        Label tryStart = new Label();
-                        Label tryEnd = new Label();
-                        Label tryCatch = new Label();
-                        Label tryAfter = new Label();
-                        mv.visitTryCatchBlock(tryStart, tryEnd, tryCatch, "java/lang/Exception");
-
-                        mv.visitLabel(tryStart);
-                        mv.visitVarInsn(ALOAD, 1); // input stream
-                        generateDecodeValue(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass,
-                                field.getComponentJavaClass(), schema, genClassInternalName,
-                                group.getName() + "." + field.getName(), javaClassCodec);
-                        mv.visitLabel(tryEnd);
-                        mv.visitJumpInsn(GOTO, tryAfter);
-                        mv.visitLabel(tryCatch);
-                        int caughtExVar = nextVar.next();
-                        mv.visitVarInsn(ASTORE, caughtExVar);
-                        mv.visitTypeInsn(NEW, "com/cinnober/msgcodec/blink/FieldDecodeException");
-                        mv.visitInsn(DUP);
-                        mv.visitLdcInsn(field.getName());
-                        mv.visitVarInsn(ALOAD, caughtExVar);
-                        mv.visitMethodInsn(INVOKESPECIAL, "com/cinnober/msgcodec/blink/FieldDecodeException",
-                                "<init>", "(Ljava/lang/String;Ljava/lang/Throwable;)V", false);
-                        mv.visitInsn(ATHROW);
-                        mv.visitLabel(tryAfter);
-                    }
+                Runnable readValue = () -> {
+                    Label tryStart = new Label();
+                    Label tryEnd = new Label();
+                    Label tryCatch = new Label();
+                    Label tryAfter = new Label();
+                    mv.visitTryCatchBlock(tryStart, tryEnd, tryCatch, "java/lang/Exception");
+                    
+                    mv.visitLabel(tryStart);
+                    mv.visitVarInsn(ALOAD, 1); // input stream
+                    generateDecodeValue(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass,
+                            field.getComponentJavaClass(), schema, genClassInternalName,
+                            group.getName() + "." + field.getName(), javaClassCodec);
+                    mv.visitLabel(tryEnd);
+                    mv.visitJumpInsn(GOTO, tryAfter);
+                    mv.visitLabel(tryCatch);
+                    int caughtExVar = nextVar.next();
+                    mv.visitVarInsn(ASTORE, caughtExVar);
+                    mv.visitTypeInsn(NEW, "com/cinnober/msgcodec/blink/FieldDecodeException");
+                    mv.visitInsn(DUP);
+                    mv.visitLdcInsn(field.getName());
+                    mv.visitVarInsn(ALOAD, caughtExVar);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/cinnober/msgcodec/blink/FieldDecodeException",
+                            "<init>", "(Ljava/lang/String;Ljava/lang/Throwable;)V", false);
+                    mv.visitInsn(ATHROW);
+                    mv.visitLabel(tryAfter);
                 };
 
                 Accessor<?,?> accessor = field.getAccessor();

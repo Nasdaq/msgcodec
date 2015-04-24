@@ -27,6 +27,7 @@ package com.cinnober.msgcodec.util;
  * Pool of objects.
  * 
  * @author mikael.brannstrom
+ * @param <T> the type of the pooled objects.
  *
  */
 public interface Pool<T> {

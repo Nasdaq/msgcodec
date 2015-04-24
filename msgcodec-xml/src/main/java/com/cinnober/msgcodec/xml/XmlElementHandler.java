@@ -39,7 +39,7 @@ import java.util.List;
  * @author mikael.brannstrom
  *
  */
-public class XmlElementHandler {
+class XmlElementHandler {
 
     private final NsName nsName;
 

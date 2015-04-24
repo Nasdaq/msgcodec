@@ -18,8 +18,6 @@
 
 package com.cinnober.msgcodec.io;
 
-import com.cinnober.msgcodec.io.ByteBuf;
-import com.cinnober.msgcodec.io.ByteSink;
 import java.io.IOException;
 
 /**

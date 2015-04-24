@@ -25,7 +25,7 @@
 package com.cinnober.msgcodec;
 
 /**
- * Thrown when a StreamCodec could not be instantiated.
+ * Thrown when a MsgCodec could not be instantiated.
  *
  * @author mikael.brannstrom
  */
@@ -33,13 +33,13 @@ public class MsgCodecInstantiationException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Create a new CodecInstantiationException.
+     * Create a new MsgCodecInstantiationException.
      */
     public MsgCodecInstantiationException() {
     }
 
     /**
-     * Create a new CodecInstantiationException.
+     * Create a new MsgCodecInstantiationException.
      *
      * @param message the detail message.
      */
@@ -48,7 +48,7 @@ public class MsgCodecInstantiationException extends RuntimeException {
     }
 
     /**
-     * Create a new CodecInstantiationException.
+     * Create a new MsgCodecInstantiationException.
      *
      * @param message the detail message.
      * @param cause the cause.
@@ -58,7 +58,7 @@ public class MsgCodecInstantiationException extends RuntimeException {
     }
 
     /**
-     * Create a new CodecInstantiationException.
+     * Create a new MsgCodecInstantiationException.
      * 
      * @param cause the cause.
      */

@@ -18,7 +18,6 @@
 
 package com.cinnober.msgcodec.io;
 
-import com.cinnober.msgcodec.io.ByteBuf;
 import static com.cinnober.msgcodec.io.ByteSource.UTF8;
 import java.io.IOException;
 import java.nio.ByteBuffer;

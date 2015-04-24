@@ -29,7 +29,7 @@ import java.util.Objects;
  * @author mikael.brannstrom
  *
  */
-public class NsName {
+class NsName {
     private final String namespace;
     private final String name;
     /**

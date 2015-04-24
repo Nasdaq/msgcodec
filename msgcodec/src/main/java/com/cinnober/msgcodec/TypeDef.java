@@ -35,7 +35,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.messages.MetaTypeDef;
 
-/** Type definition.
+/**
+ * Type definition.
  * TypeDef is immutable.
  *
  * <p>The following data types are supported. Some types are parametrizable, such as sequence, enum and reference.

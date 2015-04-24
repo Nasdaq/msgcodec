@@ -34,6 +34,9 @@ import java.util.Map.Entry;
 import com.cinnober.msgcodec.messages.MetaNamedType;
 
 /**
+ * A named type.
+ * NamedType is immutable.
+ *
  * @author Mikael Brannstrom
  *
  */

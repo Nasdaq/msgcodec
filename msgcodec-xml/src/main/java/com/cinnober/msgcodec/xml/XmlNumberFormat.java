@@ -31,7 +31,7 @@ import java.math.BigInteger;
  * @author mikael.brannstrom
  *
  */
-public abstract class XmlNumberFormat<T> implements XmlFormat<T> {
+abstract class XmlNumberFormat<T> implements XmlFormat<T> {
 
     public static final Int8NumberFormat INT8 = new Int8NumberFormat();
     public static final Int16NumberFormat INT16 = new Int16NumberFormat();
