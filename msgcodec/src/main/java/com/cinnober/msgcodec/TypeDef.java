@@ -295,6 +295,30 @@ public abstract class TypeDef {
         return null;
     }
 
+    public static boolean iskDecimal(BigDecimal value) {
+        int exp = -value.scale();
+        if (exp < -128 || exp > 127) {
+            return false;
+        }
+        BigInteger bigMantissa = value.unscaledValue();
+        if(bigMantissa.bitLength() > 63) {
+            return false;
+        }
+        return true;
+    }
+    
+    public static BigDecimal checkDecimal(BigDecimal value) throws IllegalArgumentException {
+        int exp = -value.scale();
+        if (exp < -128 || exp > 127) {
+            throw new IllegalArgumentException("Decimal exponent out of range [-128, 127]: " + exp);
+        }
+        BigInteger bigMantissa = value.unscaledValue();
+        if(bigMantissa.bitLength() > 63) {
+            throw new IllegalArgumentException("Decimal unscaled value too large: " + bigMantissa);
+        }
+        return value;
+    }
+
     /** Simple no-arg type.
      * @see Type
      */

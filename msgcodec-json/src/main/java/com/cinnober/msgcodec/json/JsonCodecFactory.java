@@ -36,6 +36,7 @@ import com.cinnober.msgcodec.MsgCodecFactory;
 public class JsonCodecFactory implements MsgCodecFactory {
 
     private final Schema schema;
+    private boolean jsSafe = true;
 
     /**
      * Create a JSON codec factory.
@@ -49,9 +50,22 @@ public class JsonCodecFactory implements MsgCodecFactory {
         this.schema = schema;
     }
 
+    /**
+     * Ensure that encoded numbers are safe to use in JavaScript.
+     * In JavaScript numbers are stored as doubles.
+     * Some values of types in64, uin64, bigint, decimal and big decimal do not fit into a double.
+     * If <code>jsSafe</code> is true then these values are encoded as strings.
+     * @param jsSafe true if JavaScript safe numbers should be used.
+     * @return this factory.
+     */
+    public JsonCodecFactory setJavaScriptSafe(boolean jsSafe) {
+        this.jsSafe = jsSafe;
+        return this;
+    }
+
     @Override
     public JsonCodec createCodec() throws MsgCodecInstantiationException {
-        return new JsonCodec(schema);
+        return new JsonCodec(schema, jsSafe);
     }
     
 }

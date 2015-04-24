@@ -62,7 +62,7 @@ import java.util.Map;
  * <table>
  * <caption>Mapping between msgcodec and JSON data types.</caption>
  * <tr style="text-align: left"><th>Msgcodec type</th><th>JSON type</th></tr>
- * <tr><td>int, float and decimal</td><td>number</td></tr>
+ * <tr><td>int, float and decimal</td><td>number or string (see below)</td></tr>
  * <tr><td>boolean</td><td>true/false</td></tr>
  * <tr><td>string</td><td>string</td></tr>
  * <tr><td>binary</td><td>string (base64)</td></tr>
@@ -77,10 +77,22 @@ import java.util.Map;
  * <br>PENDING: relax this to a suggestion for improved performance?</td>
  * </tr>
  * </table>
+ *
+ * <p>Optional fields with null values are left out in the encoded output (field is absent).
+ *
+ * <p>Numbers must be encoded as strings in the following situations:
+ * <ul>
+ * <li>The float32 and float64 values NaN, Infinity and -Infinity are encoded as the strings
+ * "NaN", "Infinity" and "-Infinity" respectively.
+ * <li>If safe JavaScript numbers (see {@link JsonCodecFactory#setJavaScriptSafe(boolean)}) are enabled (default),
+ * then the following number values are also encoded as strings:
+ * <ul>
+ * <li>Values of int64, uint64 and bigint that are outside the range [-9007199254740991, 9007199254740991]
+ * <li>Values of decimal and big decimal that have an mantissa with more than 15 decimals.
+ * </ul>
+ * </ul>
  * 
- * <p><b>TODO:</b> required fields are currently not checked
- * <p><b>TODO:</b> add option to encode/decode large integers as strings (JavaScript interop)
- * <p><b>TODO:</b> add option to encode/decode non-integer (non-safe) decimals as strings (JavaScript interop)
+ *
  * <p><b>TODO:</b> do not enforce the $type field to appear first (only optimize performance when it is first)
  *
  * @author mikael.brannstrom
@@ -96,7 +108,7 @@ public class JsonCodec implements MsgCodec {
     private final DynamicGroupHandler dynamicGroupHandler;
 
     @SuppressWarnings("rawtypes")
-    JsonCodec(Schema schema) {
+    JsonCodec(Schema schema, boolean jsSafe) {
         if (!schema.isBound()) {
             throw new IllegalArgumentException("Schema not bound");
         }
@@ -122,9 +134,24 @@ public class JsonCodec implements MsgCodec {
                 fields.putAll(superGroupInstruction.getFields());
             }
 
+            int nextRequiredSlot = 1 +
+                    fields.values().stream().mapToInt(FieldHandler::getRequiredSlot).filter(i -> i>=0).max().orElse(-1);
+
             for (FieldDef fieldDef : groupDef.getFields()) {
-                JsonValueHandler valueHandler = createValueHandler(schema, fieldDef.getType(), fieldDef.getJavaClass(), fieldDef.getComponentJavaClass());
-                FieldHandler fieldHandler = new FieldHandler(fieldDef, valueHandler);
+                JsonValueHandler valueHandler = createValueHandler(
+                        schema,
+                        fieldDef.getType(),
+                        fieldDef.getJavaClass(),
+                        fieldDef.getComponentJavaClass(),
+                        jsSafe);
+                boolean required = fieldDef.isRequired();
+                FieldHandler fieldHandler = new FieldHandler(
+                        fieldDef.getName(),
+                        fieldDef.getBinding().getAccessor(),
+                        required,
+                        required ? nextRequiredSlot++ : -1,
+                        valueHandler
+                );
                 fields.put(fieldDef.getName(), fieldHandler);
             }
             groupInstruction.init(fields);
@@ -132,25 +159,30 @@ public class JsonCodec implements MsgCodec {
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
-    private JsonValueHandler createValueHandler(Schema schema, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass) {
+    private JsonValueHandler createValueHandler(
+            Schema schema,
+            TypeDef type,
+            Class<?> javaClass,
+            Class<?> componentJavaClass,
+            boolean jsSafe) {
         type = schema.resolveToType(type, true);
         GroupDef group = schema.resolveToGroup(type);
         switch (type.getType()) {
         case SEQUENCE:
             if (javaClass.isArray()) {
                 return new JsonValueHandler.ArraySequenceHandler(
-                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null),
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, jsSafe),
                         componentJavaClass);
             } else { // collection
                 return new JsonValueHandler.ListSequenceHandler(
-                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null));
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, jsSafe));
             }
         case REFERENCE:
             return lookupGroupByName(group.getName());
         case DYNAMIC_REFERENCE:
             return dynamicGroupHandler; // TODO: restrict to some base type (if group is not null)
         default:
-            return JsonValueHandler.getValueHandler(type, javaClass);
+            return JsonValueHandler.getValueHandler(type, javaClass, jsSafe);
         }
     }
 

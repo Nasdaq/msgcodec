@@ -23,6 +23,7 @@
  */
 package com.cinnober.msgcodec.json;
 
+import com.cinnober.msgcodec.DecodeException;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
@@ -34,6 +35,8 @@ import org.junit.Test;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.anot.Required;
+import java.io.IOException;
 
 /**
  * @author Mikael Brannstrom
@@ -45,7 +48,7 @@ public class JsonCodecTest {
     public void test() throws Exception {
         SchemaBuilder builder = new SchemaBuilder();
         Schema schema = builder.build(Hello.class);
-        MsgCodec codec = new JsonCodec(schema);
+        MsgCodec codec = new JsonCodec(schema, false);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Hello msg = new Hello("Hello world!");
         codec.encode(msg, out);
@@ -61,8 +64,29 @@ public class JsonCodecTest {
         assertEquals(msg, msg2);
     }
 
+    @Test(expected = DecodeException.class)
+    public void testDecodeMissingRequiredField() throws IOException {
+        SchemaBuilder builder = new SchemaBuilder();
+        Schema schema = builder.build(Hello.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+
+        ByteArrayInputStream in = new ByteArrayInputStream(
+                "{\"$type\":\"Hello\"}".getBytes(Charset.forName("UTF8")));
+        codec.decode(in);
+    }
+    @Test(expected = IllegalArgumentException.class)
+    public void testEncodeMissingRequiredField() throws IOException {
+        SchemaBuilder builder = new SchemaBuilder();
+        Schema schema = builder.build(Hello.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Hello msg = new Hello(null);
+        codec.encode(msg, out);
+    }
 
     public static class Hello {
+        @Required
         private String greeting;
         public Hello() {
         }

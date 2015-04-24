@@ -23,24 +23,12 @@
  */
 package com.cinnober.msgcodec.json;
 
-import org.junit.Test;
-
-import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.MsgCodec;
-import com.cinnober.msgcodec.messages.MetaProtocol;
+import org.junit.runner.RunWith;
 
 /**
  * @author mikael.brannstrom
  *
  */
-public class MetaMessagesTest {
-
-    @Test
-    public void test() throws Exception {
-        Schema schema = MetaProtocol.getSchema();
-        System.out.println(schema);
-        MsgCodec codec = new JsonCodec(schema, false);
-        codec.encode(schema.toMessage(), System.out);
-    }
-
+@RunWith(JsonSafeTestMessagesSuiteImpl.class)
+public class JsonSafeTestMessagesSuite {
 }
