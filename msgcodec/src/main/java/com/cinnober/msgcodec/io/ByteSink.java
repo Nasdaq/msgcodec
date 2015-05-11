@@ -39,8 +39,26 @@ public interface ByteSink {
             write(b[i]);
         }
     }
+
     default void write(byte[] b) throws IOException {
         write(b, 0, b.length);
     }
 
+    default void writeIntLE(int v) throws IOException {
+        write(v);
+        write(v >> 8);
+        write(v >> 16);
+        write(v >> 24);
+    }
+
+    default void writeLongLE(long v) throws IOException {
+        write((int) v);
+        write((int) (v >> 8));
+        write((int) (v >> 16));
+        write((int) (v >> 24));
+        write((int) (v >> 32));
+        write((int) (v >> 40));
+        write((int) (v >> 48));
+        write((int) (v >> 56));
+    }
 }

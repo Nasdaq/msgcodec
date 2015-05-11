@@ -21,6 +21,7 @@ package com.cinnober.msgcodec.io;
 import static com.cinnober.msgcodec.io.ByteSource.UTF8;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * TODO: javadoc
@@ -152,4 +153,27 @@ public class ByteBufferBuf implements ByteBuf {
             return ByteBuf.super.readStringUtf8(len);
         }
     }
+
+    @Override
+    public void writeIntLE(int v) throws IOException {
+        buf.putInt(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v));
+    }
+
+    @Override
+    public void writeLongLE(long v) throws IOException {
+        buf.putLong(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v));
+    }
+
+    @Override
+    public int readIntLE() throws IOException {
+        int v = buf.getInt();
+        return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v);
+    }
+
+    @Override
+    public long readLongLE() throws IOException {
+        long v = buf.getLong();
+        return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v);
+    }
+
 }

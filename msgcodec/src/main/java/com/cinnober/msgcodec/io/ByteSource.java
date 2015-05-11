@@ -49,4 +49,20 @@ public interface ByteSource {
             read();
         }
     }
+
+    default int readIntLE() throws IOException {
+        return read() | read() << 8 | read() << 16 | read() << 24;
+    }
+
+    default long readLongLE() throws IOException {
+        return
+                read() |
+                read() << 8 |
+                read() << 16 |
+                read() << 24 |
+                (long)read() << 32 |
+                (long)read() << 40 |
+                (long)read() << 48 |
+                (long)read() << 56;
+    }
 }

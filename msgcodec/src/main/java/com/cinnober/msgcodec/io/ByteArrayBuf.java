@@ -136,4 +136,26 @@ public class ByteArrayBuf implements ByteBuf {
         out.write(data, pos, limit-pos);
     }
 
+    @Override
+    public void writeIntLE(int v) throws IOException {
+        data[pos] = (byte) v;
+        data[pos+1] = (byte) (v >> 8);
+        data[pos+2] = (byte) (v >> 16);
+        data[pos+3] = (byte) (v >> 24);
+        pos += 4;
+    }
+
+    @Override
+    public void writeLongLE(long v) throws IOException {
+        data[pos] = (byte) v;
+        data[pos+1] = (byte) (v >> 8);
+        data[pos+2] = (byte) (v >> 16);
+        data[pos+3] = (byte) (v >> 24);
+        data[pos+4] = (byte) (v >> 32);
+        data[pos+5] = (byte) (v >> 40);
+        data[pos+6] = (byte) (v >> 48);
+        data[pos+7] = (byte) (v >> 56);
+        pos += 8;
+    }
+
 }
