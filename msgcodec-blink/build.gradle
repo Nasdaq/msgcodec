@@ -7,6 +7,12 @@ jmh {
   humanOutputFile=null
   //jvmArgsAppend "-Xprof"
 }
+if (project.hasProperty('jmh.include')) {
+  jmh.include = project.properties['jmh.include']
+}
+if (project.hasProperty('jmh.exclude')) {
+  jmh.exclude = project.properties['jmh.exclude']
+}
 
 dependencies {
   jmh group: 'org.openjdk.jmh', name:'jmh-core', version:jmh.jmhVersion
