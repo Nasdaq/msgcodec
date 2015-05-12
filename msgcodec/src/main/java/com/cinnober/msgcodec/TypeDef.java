@@ -224,10 +224,12 @@ public abstract class TypeDef {
          */
         BIGDECIMAL,
         /** String (Unicode is the default charset). Java type: String.
+         * @see TypeDef.StringUnicode
          * @see TypeDef#STRING
          */
         STRING,
         /** Binary data. Java type: byte[].
+         * @see TypeDef.Binary
          * @see TypeDef#BINARY
          */
         BINARY,
@@ -266,8 +268,8 @@ public abstract class TypeDef {
     public static final TypeDef BOOLEAN = new Simple(Type.BOOLEAN, Boolean.class, "boolean", MetaTypeDef.BOOLEAN);
     public static final TypeDef OBJECT = new DynamicReference(null);
 
-    public static final TypeDef STRING = new Simple(Type.STRING, String.class, "string", MetaTypeDef.STRING);
-    public static final TypeDef BINARY = new Simple(Type.BINARY, byte[].class, "binary", MetaTypeDef.BINARY);
+    public static final TypeDef.StringUnicode STRING = new StringUnicode();
+    public static final TypeDef.Binary BINARY = new Binary();
     public static final TypeDef DATETIME_MILLIS_UTC =
             new Time(TimeUnit.MILLISECONDS, Epoch.UNIX, TimeZone.getTimeZone("UTC"));
     public static final TypeDef DATETIME_MILLIS = new Time(TimeUnit.MILLISECONDS, Epoch.UNIX, null);
@@ -295,7 +297,7 @@ public abstract class TypeDef {
         return null;
     }
 
-    public static boolean iskDecimal(BigDecimal value) {
+    public static boolean isDecimal(BigDecimal value) {
         int exp = -value.scale();
         if (exp < -128 || exp > 127) {
             return false;
@@ -359,7 +361,141 @@ public abstract class TypeDef {
 
     // --- parameterized ---
 
-    /** Time type.
+    /**
+     * String type.
+     *
+     * The string can be configured with a (unsigned) max size in bytes.
+     */
+    public static class StringUnicode extends TypeDef {
+        private final int maxSize;
+
+        /**
+         * @param maxSize the max size as an unsigned integer in bytes, or -1 for unlimited.
+         */
+        public StringUnicode(int maxSize) {
+            super(Type.STRING);
+            this.maxSize = maxSize;
+        }
+        /**
+         * Create a string with no (unlimited) max size.
+         */
+        public StringUnicode() {
+            this(-1);
+        }
+        /**
+         * Returns the max size.
+         * The value -1 (0xffffffff) is interpreted as unlimited.
+         * @return the max size in bytes, as an unsigned integer.
+         */
+        public int getMaxSize() {
+            return maxSize;
+        }
+        /**
+         * Returns true if there is a max size.
+         * @return true if there is a max size, false for unlimited.
+         */
+        public boolean hasMaxSize() {
+            return maxSize != -1;
+        }
+        @Override
+        public MetaTypeDef toMessage() {
+            return new MetaTypeDef.MetaString(maxSize != -1 ? maxSize : null);
+        }
+        @Override
+        public Class<?> getDefaultJavaType() {
+            return String.class;
+        }
+        @Override
+        public String toString() {
+            return hasMaxSize() ?
+                    "string (" + (0xffffffffL & maxSize) + ")" :
+                    "string";
+        }
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 37 * hash + this.maxSize;
+            return hash;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            final StringUnicode other = (StringUnicode) obj;
+            return this.maxSize == other.maxSize;
+        }
+    }
+
+    /**
+     * Binary type.
+     *
+     * The binary can be configured with a (unsigned) max size in bytes.
+     */
+    public static class Binary extends TypeDef {
+        private final int maxSize;
+
+        /**
+         * @param maxSize the max size as an unsigned integer in bytes, or -1 for unlimited.
+         */
+        public Binary(int maxSize) {
+            super(Type.BINARY);
+            this.maxSize = maxSize;
+        }
+        /**
+         * Create a string with no (unlimited) max size.
+         */
+        public Binary() {
+            this(-1);
+        }
+        /**
+         * Returns the max size.
+         * The value -1 (0xffffffff) is interpreted as unlimited.
+         * @return the max size in bytes, as an unsigned integer.
+         */
+        public int getMaxSize() {
+            return maxSize;
+        }
+        /**
+         * Returns true if there is a max size.
+         * @return true if there is a max size, false for unlimited.
+         */
+        public boolean hasMaxSize() {
+            return maxSize != -1;
+        }
+        @Override
+        public MetaTypeDef toMessage() {
+            return new MetaTypeDef.MetaBinary(maxSize != -1 ? maxSize : null);
+        }
+
+        @Override
+        public Class<?> getDefaultJavaType() {
+            return byte[].class;
+        }
+        @Override
+        public String toString() {
+            return hasMaxSize() ?
+                    "binary (" + (0xffffffffL & maxSize) + ")" :
+                    "binary";
+        }
+        @Override
+        public int hashCode() {
+            int hash = 5;
+            hash = 37 * hash + this.maxSize;
+            return hash;
+        }
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || getClass() != obj.getClass()) {
+                return false;
+            }
+            final Binary other = (Binary) obj;
+            return this.maxSize == other.maxSize;
+        }
+    }
+
+    /**
+     * Time type.
      *
      * The time type is configured with <em>unit</em>, <em>epoch</em> and an optional <em>time zone</em>.
      * An UTC timestamp in milliseconds can be expressed as {@link TimeUnit#MILLISECONDS}, {@link Epoch#UNIX} and

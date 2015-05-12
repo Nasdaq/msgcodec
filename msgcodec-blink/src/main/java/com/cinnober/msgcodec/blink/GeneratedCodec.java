@@ -24,12 +24,10 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
-import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.io.ByteArrayBuf;
+import com.cinnober.msgcodec.io.ByteBuf;
 import java.io.IOException;
 
 /**
@@ -44,17 +42,10 @@ import java.io.IOException;
  */
 public abstract class GeneratedCodec { // PENDING: This should be package private
 
-    /** Reference to the blink codec. */
-    protected final BlinkCodec codec;
+    protected final int maxBinarySize;
 
-    /**
-     * Constructor.
-     * The constructor of the subclass should have the signature <code>(BlinkCodec, Schema)</code>.
-     * 
-     * @param codec the blink codec, not null.
-     */
-    public GeneratedCodec(BlinkCodec codec) {
-        this.codec = codec;
+    protected GeneratedCodec(int maxBinarySize) {
+        this.maxBinarySize = maxBinarySize;
     }
     
     /**
@@ -88,45 +79,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @param group the group to encode, not null
      * @throws IOException if the underlying stream throws an exception.
      */
-    public void writeDynamicGroup(ByteSink out, Object group) throws IOException, IllegalArgumentException {
-        if (out instanceof ByteBuf) {
-            ByteBuf buf = (ByteBuf) out;
-            int start = buf.position();
-            buf.skip(2); // size
-            writeStaticGroupWithId(buf, group);
-            int end = buf.position();
-            int size = end - start - 2;
-            if (size < 1<<7) {
-                buf.shift(start+2, size, -1);
-                buf.position(start);
-                BlinkOutput.writeVLC7(buf, size);
-                buf.position(end-1);
-            } else if (size < 1<<14) {
-                buf.position(start);
-                BlinkOutput.writeVLC14(buf, size);
-                buf.position(end);
-            } else {
-                int sizeOfSize = BlinkOutput.sizeOfUnsignedVLC(size);
-                buf.shift(start+2, size, sizeOfSize-2);
-                buf.position(start);
-                BlinkOutput.writeVLC(buf, size, sizeOfSize);
-                buf.position(end + sizeOfSize - 2);
-            }
-        } else {
-            byte[] tmpBuf = codec.bufferPool().get();
-            try {
-                ByteArrayBuf tmpOut = new ByteArrayBuf(tmpBuf);
-                writeDynamicGroup(tmpOut, group);
-                tmpOut.flip();
-                tmpOut.copyTo(out);
-            } finally {
-                codec.bufferPool().release(tmpBuf);
-            }
-//            ByteSink out2 = codec.preambleBegin();
-//            writeStaticGroupWithId(out2, group);
-//            codec.preambleEnd(out);
-        }
-    }
+    public abstract void writeDynamicGroup(ByteSink out, Object group) throws IOException, IllegalArgumentException;
 
     /**
      * Write a nullable dynamic group to the specified output stream.
@@ -134,13 +87,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @param group the group to encode, not null
      * @throws IOException if the underlying stream throws an exception.
      */
-    public void writeDynamicGroupNull(ByteSink out, Object group) throws IOException {
-        if (group == null) {
-            BlinkOutput.writeNull(out);
-        } else {
-            writeDynamicGroup(out, group);
-        }
-    }
+    public abstract void writeDynamicGroupNull(ByteSink out, Object group) throws IOException, IllegalArgumentException;
     
     /** 
      * Read a dynamic group.
@@ -148,60 +95,18 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @return the group, not null.
      * @throws IOException if the underlying stream throws an exception.
      */
-    public Object readDynamicGroup(ByteSource in) throws IOException {
-        int size = BlinkInput.readUInt32(in);
-        return readDynamicGroup(size, in);
-    }
+    public abstract Object readDynamicGroup(ByteSource in) throws IOException;
+    
     /** 
      * Read a nullable dynamic group.
      * @param in the stream to read from.
      * @return the group, or null.
      * @throws IOException if the underlying stream throws an exception.
      */
-    public Object readDynamicGroupNull(ByteSource in) throws IOException {
-        Integer sizeObj = BlinkInput.readUInt32Null(in);
-        if (sizeObj == null) {
-            return null;
-        }
-        int size = sizeObj.intValue();
-        return readDynamicGroup(size, in);
-    }
-
-    private Object readDynamicGroup(int size, ByteSource in) throws IOException {
-        // TODO: limit
-//        int limit = in.limit();
-        try {
-//            if (limit >= 0) {
-//                if (size > limit) {
-//                    // there is already a limit that is smaller than this message size
-//                    throw new DecodeException("Dynamic group size preamble (" + size +
-//                            ") goes beyond current stream limit (" + limit + ").");
-//                } else {
-//                    limit -= size;
-//                    in.limit(size);
-//                }
-//            }
-            int groupId = BlinkInput.readUInt32(in);
-            Object group;
-            try {
-                group = readStaticGroup(groupId, in);
-            } catch (Exception e) {
-                GroupDef groupDef = codec.getSchema().getGroup(groupId);
-                if (groupDef != null) {
-                    throw new GroupDecodeException(groupDef.getName(), e);
-                } else {
-                    throw e;
-                }
-            }
-//            in.skip(in.limit());
-            return group;
-        } finally {
-//            in.limit(limit); // restore old limit
-        }
-    }
+    public abstract Object readDynamicGroupNull(ByteSource in) throws IOException;
 
     protected int getMaxBinarySize() {
-        return codec.getMaxBinarySize();
+        return maxBinarySize;
     }
 
     // --- UTILITY METHODS FOR CREATING EXCEPTIONS ---

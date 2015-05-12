@@ -43,7 +43,7 @@ import java.util.Map;
  *
  * @author mikael.brannstrom
  */
-class InstructionCodec extends GeneratedCodec {
+class InstructionCodec extends GeneratedCompactCodec {
     private final GroupTypeAccessor groupTypeAccessor;
     private final Map<Object, StaticGroupInstruction> groupInstructionsByGroupType;
     /** The compiled static groups by group id. */

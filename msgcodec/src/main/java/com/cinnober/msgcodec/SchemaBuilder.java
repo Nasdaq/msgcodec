@@ -22,6 +22,7 @@ import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.MaxSize;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
@@ -486,6 +487,7 @@ public class SchemaBuilder {
                 Dynamic dynamicAnot = field.getAnnotation(Dynamic.class);
                 Unsigned unsignedAnot = field.getAnnotation(Unsigned.class);
                 SmallDecimal smallDecimalAnot = field.getAnnotation(SmallDecimal.class);
+                MaxSize maxSizeAnot = field.getAnnotation(MaxSize.class);
                 Class<?> componentType;
                 if (sequenceAnot != null) {
                     Class<?> listComponentType = getListComponentType(field, genericParameters);
@@ -495,7 +497,7 @@ public class SchemaBuilder {
                 }
 
                 TypeDef typeDef = getTypeDef(type, componentType, sequenceAnot, enumAnot, timeAnot,
-                        dynamicAnot, unsignedAnot, smallDecimalAnot,
+                        dynamicAnot, unsignedAnot, smallDecimalAnot, maxSizeAnot,
                         namedTypes, groups);
                 
                 FieldDefVisitor fv = null;
@@ -614,7 +616,7 @@ public class SchemaBuilder {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private TypeDef getTypeDef(Class<?> type, Class<?> componentType, Sequence sequenceAnot, Enumeration enumAnot, Time timeAnot,
-            Dynamic dynamicAnot, Unsigned unsignedAnot, SmallDecimal smallDecimalAnot,
+            Dynamic dynamicAnot, Unsigned unsignedAnot, SmallDecimal smallDecimalAnot, MaxSize maxSizeAnot,
             Map<String, NamedType> namedTypes, Set<Class<?>> groups) {
         // sequence
         if (sequenceAnot != null || (type.isArray() && !type.equals(byte[].class))) {
@@ -632,7 +634,7 @@ public class SchemaBuilder {
             }
 
             TypeDef elementType = getTypeDef(componentType, null, null, enumAnot, timeAnot,
-                    dynamicAnot, unsignedAnot, smallDecimalAnot, namedTypes, groups);
+                    dynamicAnot, unsignedAnot, smallDecimalAnot, maxSizeAnot, namedTypes, groups);
             if (elementType.getType() == TypeDef.Type.SEQUENCE) {
                 throw new IllegalArgumentException("Sequence of sequence is not allowed");
             }
@@ -656,14 +658,14 @@ public class SchemaBuilder {
             NamedType namedType = new NamedType(enumType.getSimpleName(), new TypeDef.Enum(symbols), null);
             namedTypes.put(namedType.getName(), namedType);
 
-            assertNotAnnotated("Enum", timeAnot, dynamicAnot, unsignedAnot, smallDecimalAnot);
+            assertNotAnnotated("Enum", timeAnot, dynamicAnot, unsignedAnot, smallDecimalAnot, maxSizeAnot);
 
             return new TypeDef.Reference(enumType.getSimpleName());
         }
 
         // time
         if (type.equals(Date.class) || timeAnot != null) {
-            assertNotAnnotated("Time", dynamicAnot, unsignedAnot, smallDecimalAnot);
+            assertNotAnnotated("Time", dynamicAnot, unsignedAnot, smallDecimalAnot, maxSizeAnot);
             if (timeAnot == null) {
                 return TypeDef.DATETIME_MILLIS_UTC;
             } else {
@@ -678,46 +680,54 @@ public class SchemaBuilder {
         // basic types
         boolean isUnsigned = unsignedAnot != null;
         if (type.equals(byte.class) || type.equals(Byte.class)) {
-            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return isUnsigned ? TypeDef.UINT8 : TypeDef.INT8;
         } else if (type.equals(short.class) || type.equals(Short.class)) {
-            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return isUnsigned ? TypeDef.UINT16 : TypeDef.INT16;
         } else if (type.equals(int.class) || type.equals(Integer.class)) {
-            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return isUnsigned ? TypeDef.UINT32 : TypeDef.INT32;
         } else if (type.equals(long.class) || type.equals(Long.class)) {
-            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return isUnsigned ? TypeDef.UINT64 : TypeDef.INT64;
         } else if (type.equals(BigInteger.class)) {
-            assertNotAnnotated("BigInteger", unsignedAnot, dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated("BigInteger", unsignedAnot, dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return TypeDef.BIGINT;
         } else if (type.equals(BigDecimal.class)) {
-            assertNotAnnotated("BigInteger", unsignedAnot, dynamicAnot);
+            assertNotAnnotated("BigDecimal", unsignedAnot, dynamicAnot, maxSizeAnot);
             if (smallDecimalAnot != null) {
                 return TypeDef.DECIMAL;
             } else {
                 return TypeDef.BIGDECIMAL;
             }
         } else if (type.equals(float.class) || type.equals(Float.class)) {
-            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return TypeDef.FLOAT32;
         } else if (type.equals(double.class) || type.equals(Double.class)) {
-            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return TypeDef.FLOAT64;
         } else if (type.equals(String.class)) {
             assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
-            return TypeDef.STRING;
+            if (maxSizeAnot != null) {
+                return new TypeDef.StringUnicode(maxSizeAnot.value());
+            } else {
+                return TypeDef.STRING;
+            }
         } else if (type.equals(byte[].class)) {
             assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
-            return TypeDef.BINARY;
+            if (maxSizeAnot != null) {
+                return new TypeDef.Binary(maxSizeAnot.value());
+            } else {
+                return TypeDef.BINARY;
+            }
         } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
-            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot);
+            assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return TypeDef.BOOLEAN;
         }
 
         // reference
-        assertNotAnnotated("Group", unsignedAnot, smallDecimalAnot);
+        assertNotAnnotated("Group", unsignedAnot, smallDecimalAnot, maxSizeAnot);
         if (type.equals(Object.class)) {
             if (strict && dynamicAnot != null) {
                 throw new IllegalArgumentException("@Dynamic is not needed for Object.");
@@ -774,7 +784,7 @@ public class SchemaBuilder {
             } else if (id2 == -1) {
                 return -1;
             } else {
-                return Long.compare(0xffffffffL & id1, 0xffffffffL & id2);
+                return Integer.compareUnsigned(id1, id2);
             }
         }
     }

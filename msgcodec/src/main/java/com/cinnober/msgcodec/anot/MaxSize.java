@@ -21,50 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cinnober.msgcodec.anot;
 
-package com.cinnober.msgcodec.io;
-
-import java.io.IOException;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * TODO: javadoc
+ * Specifies the max size in bytes of a string or binary field.
+ * Default is unlimited.
+ * 
+ * <p>When applied to a sequence, the meaning of this annotation is transferred to the element type of the sequence.
  *
  * @author mikael.brannstrom
+ *
  */
-public interface ByteSink {
-    void write(int b) throws IOException;
-
-    default void write(byte[] b, int off, int len) throws IOException {
-        for (int i=off; i<len; i++) {
-            write(b[i]);
-        }
-    }
-
-    default void write(byte[] b) throws IOException {
-        write(b, 0, b.length);
-    }
-
-    default void writeIntLE(int v) throws IOException {
-        write(v);
-        write(v >> 8);
-        write(v >> 16);
-        write(v >> 24);
-    }
-
-    default void writeLongLE(long v) throws IOException {
-        write((int) v);
-        write((int) (v >> 8));
-        write((int) (v >> 16));
-        write((int) (v >> 24));
-        write((int) (v >> 32));
-        write((int) (v >> 40));
-        write((int) (v >> 48));
-        write((int) (v >> 56));
-    }
-
-    default void pad(int n) throws IOException {
-        for (int i=0; i<n; i++) {
-            write(0);
-        }
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.FIELD})
+public @interface MaxSize {
+    /**
+     * The max size.
+     * @return max size.
+     */
+    int value();
 }
