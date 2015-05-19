@@ -39,3 +39,11 @@ Added visitor package:
  - com.cinnober.msgcodec.visitor
 
 Removed TAP format support (msgcodec-tap).
+
+Schema changes:
+
+ - Added maxSize to String and Binary types. New annotation MaxSize.
+ 
+Blink:
+
+ - Added experimental support for the Native Blink format.
