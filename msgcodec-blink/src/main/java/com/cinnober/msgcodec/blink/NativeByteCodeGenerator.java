@@ -93,9 +93,9 @@ class NativeByteCodeGenerator extends BaseByteCodeGenerator {
             if (group.getId() != -1) {
                 // write with id
                 mv.visitVarInsn(ALOAD, 1); // out
-                mv.visitLdcInsn(group.getId());
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeUInt32",
-                        "(Lcom/cinnober/msgcodec/io/ByteSink;I)V", false);
+                mv.visitLdcInsn(group.getId() & 0xffffffffL);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeUInt64",
+                        "(Lcom/cinnober/msgcodec/io/ByteSink;J)V", false);
 
                 // add extension offset (four zero bytes)
                 mv.visitVarInsn(ALOAD, 1); // out

@@ -123,8 +123,10 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec { // PENDING: 
 //                    in.limit(size);
 //                }
 //            }
-            int groupId = NativeBlinkInput.readUInt32(in);
-            in.skip(4); // discard extension offset
+
+            // PENDING: currently msgcodec only supports int32 as group id
+            int groupId = (int) NativeBlinkInput.readUInt64(in);
+            in.skip(4); // discard extension offset (not supported)
             Object group;
             try {
                 group = readStaticGroup(groupId, in);
