@@ -317,6 +317,8 @@ public class XmlCodec implements MsgCodec {
             boolean attribute = !ANOTVALUE_FIELD_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
             boolean inline = ANOTVALUE_FIELD_INLINE_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
 
+            // PENDING: only inline strings with a maxSize <= 255.
+
             if (inline) {
                 putInline(inlineField, fieldInstr);
             } else if (attribute) {
