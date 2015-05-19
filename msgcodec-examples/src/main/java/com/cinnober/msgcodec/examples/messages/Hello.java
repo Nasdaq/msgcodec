@@ -28,6 +28,7 @@ import java.util.Objects;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.MaxSize;
 import com.cinnober.msgcodec.anot.Required;
 
 /** Simple hello message.
@@ -38,7 +39,7 @@ import com.cinnober.msgcodec.anot.Required;
 public class Hello extends MsgObject {
     @Id(1) // <- Numeric identifier for this field
     @Required // <- Make the field required
-    @Annotate({"maxLength=100"}) // <- some codecs interpret this as max string length
+    @MaxSize(100) // <- max string length in bytes
     public String greeting;
 
     public Hello() { // <- A default constructor must exist.

@@ -40,7 +40,6 @@ import com.cinnober.msgcodec.anot.Unsigned;
 @Name("EnterOrder")
 public class Ouch42EnterOrder extends MsgObject {
     @Id(1)
-    @Annotate("maxLength=14")
     @MaxSize(14)
     @Required
     public String token;
@@ -51,7 +50,6 @@ public class Ouch42EnterOrder extends MsgObject {
     @Unsigned
     public int shares;
     @Id(4)
-    @Annotate("maxLength=8")
     @MaxSize(8)
     @Required
     public String stock;
@@ -62,7 +60,6 @@ public class Ouch42EnterOrder extends MsgObject {
     @Unsigned
     public int timeInForce;
     @Id(7)
-    @Annotate("maxLength=4")
     @MaxSize(4)
     @Required
     public String firm;
