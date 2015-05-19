@@ -24,6 +24,7 @@
 package com.cinnober.msgcodec.util;
 
 import java.io.EOFException;
+// PENDING: remove this class?
 
 /**
  * This exception is thrown when the limit of a {@link LimitInputStream} has been reached. 

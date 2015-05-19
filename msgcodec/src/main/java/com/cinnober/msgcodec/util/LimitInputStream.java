@@ -26,7 +26,7 @@ package com.cinnober.msgcodec.util;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-
+// PENDING: remove this class?
 /**
  * This class is an input stream that provides an optional read limit.
  *

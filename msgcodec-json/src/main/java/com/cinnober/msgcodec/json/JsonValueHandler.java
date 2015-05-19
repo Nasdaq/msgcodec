@@ -49,6 +49,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import java.text.ParseException;
+import java.util.BitSet;
 import java.util.List;
 
 /**
@@ -63,21 +64,28 @@ public abstract class JsonValueHandler<T> {
     public static final JsonValueHandler<Byte> INT8 = new Int8Handler();
     public static final JsonValueHandler<Short> INT16 = new Int16Handler();
     public static final JsonValueHandler<Integer> INT32 = new Int32Handler();
-    public static final JsonValueHandler<Long> INT64 = new Int64Handler();
+    public static final JsonValueHandler<Long> INT64 = new Int64Handler(false);
+    public static final JsonValueHandler<Long> INT64_SAFE = new Int64Handler(true);
 
     public static final JsonValueHandler<Byte> UINT8 = new UInt8Handler();
     public static final JsonValueHandler<Short> UINT16 = new UInt16Handler();
     public static final JsonValueHandler<Integer> UINT32 = new UInt32Handler();
-    public static final JsonValueHandler<Long> UINT64 = new UInt64Handler();
+    public static final JsonValueHandler<Long> UINT64 = new UInt64Handler(false);
+    public static final JsonValueHandler<Long> UINT64_SAFE = new UInt64Handler(true);
     public static final JsonValueHandler<String> STRING = new StringHandler();
     public static final JsonValueHandler<byte[]> BINARY = new BinaryHandler();
     public static final JsonValueHandler<Boolean> BOOLEAN = new BooleanHandler();
-    public static final JsonValueHandler<BigDecimal> DECIMAL = new DecimalHandler();
-    public static final JsonValueHandler<BigDecimal> BIGDECIMAL = new BigDecimalHandler();
-    public static final JsonValueHandler<BigInteger> BIGINT = new BigIntHandler();
+    public static final JsonValueHandler<BigDecimal> DECIMAL = new DecimalHandler(false);
+    public static final JsonValueHandler<BigDecimal> DECIMAL_SAFE = new DecimalHandler(true);
+    public static final JsonValueHandler<BigDecimal> BIGDECIMAL = new BigDecimalHandler(false);
+    public static final JsonValueHandler<BigDecimal> BIGDECIMAL_SAFE = new BigDecimalHandler(true);
+    public static final JsonValueHandler<BigInteger> BIGINT = new BigIntHandler(false);
+    public static final JsonValueHandler<BigInteger> BIGINT_SAFE = new BigIntHandler(true);
     public static final JsonValueHandler<Float> FLOAT32 = new Float32Handler();
     public static final JsonValueHandler<Double> FLOAT64 = new Float64Handler();
 
+    static final long MAX_SAFE_INTEGER = 9007199254740991L;
+    static final long MIN_SAFE_INTEGER = -9007199254740991L;
 
     /**
      * Returns a the basic value handler for the specified type definition and Java class.
@@ -90,7 +98,22 @@ public abstract class JsonValueHandler<T> {
      * @return the json value handler, not null.
      */
     @SuppressWarnings("unchecked")
-    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass) {
+    public static <T> JsonValueHandler<T> getValueHandlerXXX(TypeDef type, Class<T> javaClass) {
+        return getValueHandler(type, javaClass, true);
+    }
+    /**
+     * Returns a the basic value handler for the specified type definition and Java class.
+     *
+     * <p><b>Note:</b> the types SEQUENCE, REFERENCE and DYNAMIC_REFERENCE are not supported.
+     *
+     * @param <T> the java type
+     * @param type the type definition, not null.
+     * @param javaClass the java class, not null.
+     * @param jsSafe true if unsafe JavaScript numeric values should be encoded as strings, otherwise false.
+     * @return the json value handler, not null.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, boolean jsSafe) {
         switch (type.getType()) {
         case INT8:
             checkType(javaClass, byte.class, Byte.class);
@@ -103,7 +126,7 @@ public abstract class JsonValueHandler<T> {
             return (JsonValueHandler<T>) JsonValueHandler.INT32;
         case INT64:
             checkType(javaClass, long.class, Long.class);
-            return (JsonValueHandler<T>) JsonValueHandler.INT64;
+            return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.INT64_SAFE : JsonValueHandler.INT64);
         case UINT8:
             checkType(javaClass, byte.class, Byte.class);
             return (JsonValueHandler<T>) JsonValueHandler.UINT8;
@@ -115,7 +138,7 @@ public abstract class JsonValueHandler<T> {
             return (JsonValueHandler<T>) JsonValueHandler.UINT32;
         case UINT64:
             checkType(javaClass, long.class, Long.class);
-            return (JsonValueHandler<T>) JsonValueHandler.UINT64;
+            return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.UINT64_SAFE : JsonValueHandler.UINT64);
         case STRING:
             checkType(javaClass, String.class);
             return (JsonValueHandler<T>) JsonValueHandler.STRING;
@@ -127,13 +150,13 @@ public abstract class JsonValueHandler<T> {
             return (JsonValueHandler<T>) JsonValueHandler.BINARY;
         case DECIMAL:
             checkType(javaClass, BigDecimal.class);
-            return (JsonValueHandler<T>) JsonValueHandler.DECIMAL;
+            return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.DECIMAL_SAFE : JsonValueHandler.DECIMAL);
         case BIGDECIMAL:
             checkType(javaClass, BigDecimal.class);
-            return (JsonValueHandler<T>) JsonValueHandler.BIGDECIMAL;
+            return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.BIGDECIMAL_SAFE : JsonValueHandler.BIGDECIMAL);
         case BIGINT:
             checkType(javaClass, BigInteger.class);
-            return (JsonValueHandler<T>) JsonValueHandler.BIGINT;
+            return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.BIGINT_SAFE : JsonValueHandler.BIGINT);
         case FLOAT32:
             checkType(javaClass, float.class, Float.class);
             return (JsonValueHandler<T>) JsonValueHandler.FLOAT32;
@@ -174,6 +197,21 @@ public abstract class JsonValueHandler<T> {
             }
         }
         throw new IllegalArgumentException("Illegal type java class: " + type);
+    }
+
+    static boolean isJavaScriptSafeSigned(long value) {
+        return MIN_SAFE_INTEGER <= value && value <= MAX_SAFE_INTEGER;
+    }
+    static boolean isJavaScriptSafeUnsigned(long value) {
+        return 0L <= value && value <= MAX_SAFE_INTEGER;
+    }
+    static boolean isJavaScriptSafeSigned(BigInteger value) {
+        int bitlen = value.bitLength();
+        return bitlen <= 52 || (bitlen == 53 && isJavaScriptSafeSigned(value.longValue()));
+    }
+    static boolean isJavaScriptSafeSigned(BigDecimal value) {
+        // the number of decimal digits a double can uniquely identify is 15
+        return value.precision() <= 15;
     }
 
     /**
@@ -225,14 +263,29 @@ public abstract class JsonValueHandler<T> {
         }
     }
     static class Int64Handler extends JsonValueHandler<Long> {
-        private Int64Handler() {}
+        private final boolean jsSafe;
+        private Int64Handler(boolean jsSafe) {
+            this.jsSafe = jsSafe;
+        }
         @Override
         public void writeValue(Long value, JsonGenerator g) throws IOException {
-            g.writeNumber(value);
+            long v = value.longValue();
+            if (jsSafe && !isJavaScriptSafeUnsigned(v)) {
+                g.writeString(Long.toString(v));
+            } else {
+                g.writeNumber(v);
+            }
         }
         @Override
         public Long readValue(JsonParser p) throws IOException {
-            return p.getValueAsLong();
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_INT:
+                    return p.getValueAsLong();
+                case VALUE_STRING:
+                    return Long.parseLong(p.getValueAsString());
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing an int64");
+            }
         }
     }
     static class UInt8Handler extends JsonValueHandler<Byte> {
@@ -269,21 +322,39 @@ public abstract class JsonValueHandler<T> {
         }
     }
     static class UInt64Handler extends JsonValueHandler<Long> {
-        private UInt64Handler() {}
+        private static final BigInteger TWO_POW_64 = BigInteger.ONE.shiftLeft(64);
+        private final boolean jsSafe;
+        private UInt64Handler(boolean jsSafe) {
+            this.jsSafe = jsSafe;
+        }
         @Override
         public void writeValue(Long value, JsonGenerator g) throws IOException {
             long v = value.longValue();
-            if (v < 0) {
-                // TODO: write via BigInteger
-                g.writeNumber(v);
+            if (jsSafe && !isJavaScriptSafeUnsigned(value)) {
+                if (value < 0) {
+                    g.writeString(TWO_POW_64.add(BigInteger.valueOf(v)).toString());
+                } else {
+                    g.writeString(Long.toString(v));
+                }
             } else {
-                g.writeNumber(v);
+                if (v < 0) {
+                    g.writeNumber(TWO_POW_64.add(BigInteger.valueOf(v)).toString());
+                } else {
+                    g.writeNumber(v);
+                }
             }
         }
         @Override
         public Long readValue(JsonParser p) throws IOException {
-            // TODO: read via BigInteger?
-            return p.getValueAsLong();
+            // TODO: we're not validating that the parsed value is positive and less than 2^64
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_INT:
+                    return p.getBigIntegerValue().longValue();
+                case VALUE_STRING:
+                    return new BigInteger(p.getValueAsString()).longValue();
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing an uint64");
+            }
         }
     }
     static class StringHandler extends JsonValueHandler<String> {
@@ -320,36 +391,88 @@ public abstract class JsonValueHandler<T> {
         }
     }
     static class DecimalHandler extends JsonValueHandler<BigDecimal> {
-        private DecimalHandler() {}
+        private final boolean jsSafe;
+        private DecimalHandler(boolean jsSafe) {
+            this.jsSafe = jsSafe;
+        }
         @Override
         public void writeValue(BigDecimal value, JsonGenerator g) throws IOException {
-            g.writeNumber(value); // TODO: validate range
+            TypeDef.checkDecimal(value);
+            if (jsSafe && !isJavaScriptSafeSigned(value)) {
+                g.writeString(value.toString());
+            } else {
+                g.writeNumber(value);
+            }
         }
         @Override
         public BigDecimal readValue(JsonParser p) throws IOException {
-            return p.getDecimalValue(); // TODO: validate range
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_INT:
+                case VALUE_NUMBER_FLOAT:
+                    return checkRange(p.getDecimalValue());
+                case VALUE_STRING:
+                    return checkRange(new BigDecimal(p.getValueAsString()));
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a decimal");
+            }
+        }
+        private static BigDecimal checkRange(BigDecimal value) throws DecodeException {
+            try {
+                return TypeDef.checkDecimal(value);
+            } catch (IllegalArgumentException e) {
+                throw new DecodeException(e.getMessage());
+            }
         }
     }
     static class BigDecimalHandler extends JsonValueHandler<BigDecimal> {
-        private BigDecimalHandler() {}
+        private final boolean jsSafe;
+        private BigDecimalHandler(boolean jsSafe) {
+            this.jsSafe = jsSafe;
+        }
         @Override
         public void writeValue(BigDecimal value, JsonGenerator g) throws IOException {
-            g.writeNumber(value);
+            if (jsSafe && !isJavaScriptSafeSigned(value)) {
+                g.writeString(value.toString());
+            } else {
+                g.writeNumber(value);
+            }
         }
         @Override
         public BigDecimal readValue(JsonParser p) throws IOException {
-            return p.getDecimalValue();
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_INT:
+                case VALUE_NUMBER_FLOAT:
+                    return p.getDecimalValue();
+                case VALUE_STRING:
+                    return new BigDecimal(p.getValueAsString());
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big decimal");
+            }
         }
     }
     static class BigIntHandler extends JsonValueHandler<BigInteger> {
-        private BigIntHandler() {}
+        private final boolean jsSafe;
+        private BigIntHandler(boolean jsSafe) {
+            this.jsSafe = jsSafe;
+        }
         @Override
         public void writeValue(BigInteger value, JsonGenerator g) throws IOException {
-            g.writeNumber(value);
+            if (jsSafe && !isJavaScriptSafeSigned(value)) {
+                g.writeString(value.toString());
+            } else {
+                g.writeNumber(value);
+            }
         }
         @Override
         public BigInteger readValue(JsonParser p) throws IOException {
-            return p.getBigIntegerValue();
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_INT:
+                    return p.getBigIntegerValue();
+                case VALUE_STRING:
+                    return new BigInteger(p.getValueAsString());
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big integer");
+            }
         }
     }
     static class Float32Handler extends JsonValueHandler<Float> {
@@ -360,7 +483,24 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Float readValue(JsonParser p) throws IOException {
-            return p.getFloatValue();
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_FLOAT:
+                case VALUE_NUMBER_INT:
+                    return p.getFloatValue();
+                case VALUE_STRING:
+                    switch (p.getValueAsString()) {
+                        case "NaN":
+                            return Float.NaN;
+                        case "Infinity":
+                            return Float.POSITIVE_INFINITY;
+                        case "-Infinity":
+                            return Float.NEGATIVE_INFINITY;
+                        default:
+                            throw new DecodeException("Illegal float32 string value: " + p.getValueAsString());
+                    }
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big integer");
+            }
         }
     }
     static class Float64Handler extends JsonValueHandler<Double> {
@@ -371,7 +511,24 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Double readValue(JsonParser p) throws IOException {
-            return p.getDoubleValue();
+            switch (p.getCurrentToken()) {
+                case VALUE_NUMBER_FLOAT:
+                case VALUE_NUMBER_INT:
+                    return p.getDoubleValue();
+                case VALUE_STRING:
+                    switch (p.getValueAsString()) {
+                        case "NaN":
+                            return Double.NaN;
+                        case "Infinity":
+                            return Double.POSITIVE_INFINITY;
+                        case "-Infinity":
+                            return Double.NEGATIVE_INFINITY;
+                        default:
+                            throw new DecodeException("Illegal float64 string value: " + p.getValueAsString());
+                    }
+                default:
+                    throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big integer");
+            }
         }
     }
 
@@ -646,10 +803,16 @@ public abstract class JsonValueHandler<T> {
     public static class FieldHandler {
         private final String name;
         private final Accessor accessor;
+        private final boolean required;
+        private final int requiredSlot;
         private final JsonValueHandler valueHandler;
-        FieldHandler(FieldDef field, JsonValueHandler valueHandler) {
-            this.name = field.getName();
-            this.accessor = field.getBinding().getAccessor();
+
+        public FieldHandler(String name, Accessor accessor, boolean required, int requiredSlot,
+                JsonValueHandler valueHandler) {
+            this.name = name;
+            this.accessor = accessor;
+            this.required = required;
+            this.requiredSlot = requiredSlot;
             this.valueHandler = valueHandler;
         }
 
@@ -658,12 +821,27 @@ public abstract class JsonValueHandler<T> {
             if (value != null) {
                 g.writeFieldName(name);
                 valueHandler.writeValue(value, g);
+            } else if (required) {
+                throw new IllegalArgumentException("Missing required field value");
             }
         }
 
         void readValue(Object group, JsonParser p) throws IOException {
             Object value = valueHandler.readValue(p);
             accessor.setValue(group, value);
+        }
+        void readNull() throws IOException {
+            if (required) {
+                throw new DecodeException("Found null for non-optional field");
+            }
+        }
+
+        boolean isRequired() {
+            return required;
+        }
+
+        int getRequiredSlot() {
+            return requiredSlot;
         }
 
         public JsonValueHandler getValueHandler() {
@@ -676,6 +854,7 @@ public abstract class JsonValueHandler<T> {
         private final String name;
         private final Factory factory;
         private Map<String, FieldHandler> fields;
+        private int numRequiredFields;
         StaticGroupHandler(GroupDef group) {
             this.name = group.getName();
             this.factory = group.getBinding().getFactory();
@@ -683,6 +862,9 @@ public abstract class JsonValueHandler<T> {
 
         void init(Map<String, FieldHandler> fields) {
             this.fields = fields;
+            this.numRequiredFields =
+                    (int) fields.values().stream().mapToInt(FieldHandler::getRequiredSlot).filter(i -> i>=0).count();
+            
         }
 
         void writeValue(Object value, JsonGenerator g, boolean dynamic) throws IOException {
@@ -711,15 +893,26 @@ public abstract class JsonValueHandler<T> {
 
         void readValue(Object group, JsonParser p) throws IOException {
             // startObject has already been read
+            BitSet requiredFields = new BitSet(numRequiredFields);
+            requiredFields.set(0, numRequiredFields);
             while (p.nextToken() == JsonToken.FIELD_NAME) {
                 String fieldName = p.getCurrentName();
-                if (p.nextToken() != JsonToken.VALUE_NULL) {
-                    FieldHandler fieldHandler = fields.get(fieldName);
-                    if (fieldHandler == null) {
-                        throw new DecodeException("Unknown field: " + fieldName);
-                    }
-                    fieldHandler.readValue(group, p);
+                FieldHandler fieldHandler = fields.get(fieldName);
+                if (fieldHandler == null) {
+                    throw new DecodeException("Unknown field: " + fieldName);
                 }
+                if (p.nextToken() == JsonToken.VALUE_NULL) {
+                    fieldHandler.readNull();
+                } else {
+                    fieldHandler.readValue(group, p);
+                    if (fieldHandler.isRequired()) {
+                        requiredFields.clear(fieldHandler.getRequiredSlot());
+                    }
+                }
+            }
+
+            if (!requiredFields.isEmpty()) {
+                throw new DecodeException("Some required fields are missing");
             }
         }
 

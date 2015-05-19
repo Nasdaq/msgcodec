@@ -1,7 +1,0 @@
-description = 'TAP format support for msgcodec'
-
-dependencies {
-  compile project(':msgcodec')
-  testCompile project(':msgcodec-test')
-  testCompile group: 'junit', name: 'junit', version:junit_version
-}

@@ -27,6 +27,7 @@ package com.cinnober.msgcodec.blink;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.MaxSize;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Unsigned;
@@ -38,33 +39,49 @@ import com.cinnober.msgcodec.anot.Unsigned;
 @Id('O')
 @Name("EnterOrder")
 public class Ouch42EnterOrder extends MsgObject {
+    @Id(1)
     @Annotate("maxLength=14")
+    @MaxSize(14)
     @Required
     public String token;
+    @Id(2)
     @Unsigned
     public byte buySell;
+    @Id(3)
     @Unsigned
     public int shares;
+    @Id(4)
     @Annotate("maxLength=8")
+    @MaxSize(8)
     @Required
     public String stock;
+    @Id(5)
     @Unsigned
     public int price;
+    @Id(6)
     @Unsigned
     public int timeInForce;
+    @Id(7)
     @Annotate("maxLength=4")
+    @MaxSize(4)
     @Required
     public String firm;
+    @Id(8)
     @Unsigned
     public byte display;
+    @Id(9)
     @Unsigned
     public byte capacity;
+    @Id(10)
     @Unsigned
     public byte intermarketSweep;
+    @Id(11)
     @Unsigned
     public int minimumQuantity;
+    @Id(12)
     @Unsigned
     public byte crossType;
+    @Id(13)
     @Unsigned
     public byte customerType;
 

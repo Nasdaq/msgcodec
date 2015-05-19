@@ -29,7 +29,7 @@ import java.util.Stack;
  * @author mikael.brannstrom
  *
  */
-public class XmlContext {
+class XmlContext {
     private final Stack<Object> context = new Stack<>();
 
     public void pushValue(Object value) {

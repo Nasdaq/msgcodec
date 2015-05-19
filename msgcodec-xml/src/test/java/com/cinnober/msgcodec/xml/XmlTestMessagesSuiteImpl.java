@@ -25,7 +25,7 @@ package com.cinnober.msgcodec.xml;
 
 import org.junit.runners.model.InitializationError;
 
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
 import com.cinnober.msgcodec.test.messages.TestProtocol;
 import java.util.logging.Level;
@@ -44,9 +44,9 @@ public class XmlTestMessagesSuiteImpl extends TestMessagesSuite {
         super(rootClass, createCodec());
     }
 
-    private static StreamCodec createCodec() {
+    private static MsgCodec createCodec() {
         try {
-            return new XmlCodec(TestProtocol.getProtocolDictionary());
+            return new XmlCodec(TestProtocol.getSchema());
         } catch (ParserConfigurationException | SAXException ex) {
             throw new RuntimeException(ex);
         }

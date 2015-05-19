@@ -36,6 +36,7 @@ import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
+import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
  * @author mikael.brannstrom
@@ -189,11 +190,27 @@ public class MetaTypeDef extends MetaAnnotated {
 
     @Name("String") @Id(16008)
     public static class MetaString extends MetaTypeDef {
+        @Unsigned
+        @Id(1)
+        public Integer maxSize;
+        public MetaString(Integer maxSize) {
+            this.maxSize = maxSize;
+        }
+        public MetaString() {
+        }
         @Override
         public TypeDef toTypeDef() { return TypeDef.STRING; }
     }
     @Name("Binary") @Id(16009)
     public static class MetaBinary extends MetaTypeDef {
+        @Unsigned
+        @Id(1)
+        public Integer maxSize;
+        public MetaBinary(Integer maxSize) {
+            this.maxSize = maxSize;
+        }
+        public MetaBinary() {
+        }
         @Override
         public TypeDef toTypeDef() { return TypeDef.BINARY; }
     }

@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Defines an absolute location in a {@link ProtocolDictionary}
+ * Defines an absolute location in a {@link Schema}
  *
  * @author fredrik.bromee, Cinnober Financial Technology
  */

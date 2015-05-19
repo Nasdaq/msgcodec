@@ -25,7 +25,7 @@ package com.cinnober.msgcodec.blink;
 
 import org.junit.runners.model.InitializationError;
 
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
 import com.cinnober.msgcodec.test.messages.TestProtocol;
 
@@ -40,8 +40,8 @@ public class BytecodeBlinkTestMessagesSuiteImpl extends TestMessagesSuite {
         super(rootClass, createCodec());
     }
 
-    private static StreamCodec createCodec() {
-        return new BlinkCodecFactory(TestProtocol.getProtocolDictionary()).
-                setCodecOption(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY).createStreamCodec();
+    private static MsgCodec createCodec() {
+        return new BlinkCodecFactory(TestProtocol.getSchema()).
+                setCodecOption(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY).createCodec();
     }
 }

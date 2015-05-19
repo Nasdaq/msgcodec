@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * Specifies the numeric id of the group, field or enumeration constant.
  *
  * <dl>
- * <dt>Group</dt><dd>The id of a group must be unique within the protocol dictionary.
+ * <dt>Group</dt><dd>The id of a group must be unique within the schema.
  * The default value is unspecified (-1).</dd>
  *
  * <dt>Field</dt><dd>The id of a field must be unique within a group, including any super groups.

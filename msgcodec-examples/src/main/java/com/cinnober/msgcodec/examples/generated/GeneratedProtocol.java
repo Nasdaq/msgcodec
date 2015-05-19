@@ -31,7 +31,7 @@ import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupBinding;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.NamedType;
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import java.util.Arrays;
@@ -42,15 +42,15 @@ import java.util.Arrays;
  * @author mikael.brannstrom
  */
 public class GeneratedProtocol {
-    private static final ProtocolDictionary instance = createProtocol();
+    private static final Schema instance = createProtocol();
 
-    public static ProtocolDictionary getInstance() {
+    public static Schema getInstance() {
         return instance;
     }
 
-    private static ProtocolDictionary createProtocol() {
+    private static Schema createProtocol() {
         try {
-            return new ProtocolDictionary(
+            return new Schema(
                 Arrays.asList(new GroupDef[] { // allow for comma at the end
                     createGroupUser(),
                     createGroupAnimal(),
@@ -77,7 +77,7 @@ public class GeneratedProtocol {
                     }
                 ),
                 null,
-                new GroupBinding(new ConstructorFactory<User>(User.class.getConstructor()), User.class)
+                new GroupBinding(new ConstructorFactory<>(User.class.getConstructor()), User.class)
             );
     }
 
@@ -91,7 +91,7 @@ public class GeneratedProtocol {
                     }
                 ),
                 null,
-                new GroupBinding(new ConstructorFactory<Animal>(Animal.class.getConstructor()), Animal.class)
+                new GroupBinding(new ConstructorFactory<>(Animal.class.getConstructor()), Animal.class)
             );
     }
 

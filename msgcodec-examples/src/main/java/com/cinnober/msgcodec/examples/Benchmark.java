@@ -25,9 +25,9 @@
 package com.cinnober.msgcodec.examples;
 
 import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Sequence;
@@ -36,8 +36,8 @@ import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
 import com.cinnober.msgcodec.blink.BlinkCodec;
 import com.cinnober.msgcodec.blink.BlinkCodecFactory;
-import com.cinnober.msgcodec.util.ByteBufferInputStream;
-import com.cinnober.msgcodec.util.ByteBufferOutputStream;
+import com.cinnober.msgcodec.io.ByteBufferInputStream;
+import com.cinnober.msgcodec.io.ByteBufferOutputStream;
 import com.cinnober.msgcodec.util.LimitInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,14 +57,14 @@ import java.util.logging.LogManager;
  */
 public class Benchmark {
 
-    private final StreamCodec codec;
+    private final MsgCodec codec;
     private final Object[] messages;
 
     private OutputStream out;
     private InputStream in;
     private ByteBuffer buf;
 
-    public Benchmark(StreamCodec codec, ArrayList<Object> messages) {
+    public Benchmark(MsgCodec codec, ArrayList<Object> messages) {
         this.codec = codec;
         this.messages = messages.toArray();
 
@@ -126,10 +126,10 @@ public class Benchmark {
             }
         }
 
-        ProtocolDictionary dict = new ProtocolDictionaryBuilder(true).build(EnterDoubleSidedTrade.class);
+        Schema dict = new SchemaBuilder(true).build(EnterDoubleSidedTrade.class);
         System.out.println("dict: \n" + dict);
 
-        BlinkCodec codec = new BlinkCodecFactory(dict).createStreamCodec();
+        BlinkCodec codec = new BlinkCodecFactory(dict).createCodec();
 
         Benchmark benchmark = new Benchmark(codec, messages);
 

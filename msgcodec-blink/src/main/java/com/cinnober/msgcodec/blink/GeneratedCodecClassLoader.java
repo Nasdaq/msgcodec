@@ -24,7 +24,7 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import java.util.WeakHashMap;
 import java.util.logging.Logger;
 
@@ -41,34 +41,56 @@ class GeneratedCodecClassLoader extends ClassLoader {
         return instance;
     }
 
-    private final ByteCodeGenerator codeGenerator;
-    private final WeakHashMap<Object, Class<GeneratedCodec>> codecClassesByDictionaryUID = new WeakHashMap<>();
+    private final CompactByteCodeGenerator compactCodeGenerator;
+    private final NativeByteCodeGenerator nativeCodeGenerator;
+    private final WeakHashMap<Object, Class<GeneratedCompactCodec>> codecClassesBySchemaUID = new WeakHashMap<>();
+    private final WeakHashMap<Object, Class<GeneratedNativeCodec>> nativeCodecClassesBySchemaUID = new WeakHashMap<>();
     private int nextClassSuffix = 0;
     
     private GeneratedCodecClassLoader() {
         super(GeneratedCodecClassLoader.class.getClassLoader());
-        codeGenerator = new ByteCodeGenerator();
+        compactCodeGenerator = new CompactByteCodeGenerator();
+        nativeCodeGenerator = new NativeByteCodeGenerator();
     }
 
-    public Class<GeneratedCodec> getGeneratedCodecClass(ProtocolDictionary dictionary) {
+    public Class<GeneratedCompactCodec> getGeneratedCodecClass(Schema schema) {
         synchronized (this) {
-            final Object uid = dictionary.getUID();
-            Class<GeneratedCodec> codecClass = codecClassesByDictionaryUID.get(uid);
-            if (codecClass == null && !codecClassesByDictionaryUID.containsKey(uid)) {
-                codecClass = generateCodecClass(dictionary, nextClassSuffix++);
-                codecClassesByDictionaryUID.put(uid, codecClass);
+            final Object uid = schema.getUID();
+            Class<GeneratedCompactCodec> codecClass = codecClassesBySchemaUID.get(uid);
+            if (codecClass == null && !codecClassesBySchemaUID.containsKey(uid)) {
+                codecClass = generateCodecClass(schema, nextClassSuffix++);
+                codecClassesBySchemaUID.put(uid, codecClass);
+            }
+            return codecClass;
+        }
+    }
+
+    public Class<GeneratedNativeCodec> getGeneratedNativeCodecClass(Schema schema) {
+        synchronized (this) {
+            final Object uid = schema.getUID();
+            Class<GeneratedNativeCodec> codecClass = nativeCodecClassesBySchemaUID.get(uid);
+            if (codecClass == null && !nativeCodecClassesBySchemaUID.containsKey(uid)) {
+                codecClass = generateNativeCodecClass(schema, nextClassSuffix++);
+                nativeCodecClassesBySchemaUID.put(uid, codecClass);
             }
             return codecClass;
         }
     }
 
     @SuppressWarnings("unchecked")
-    private Class<GeneratedCodec> generateCodecClass(ProtocolDictionary dictionary, int suffix) {
-        String generatedClassName = codeGenerator.getGeneratedClassName(suffix);
-        byte[] generatedClassBytes = codeGenerator.generateClass(dictionary, suffix);
+    private Class<GeneratedCompactCodec> generateCodecClass(Schema schema, int suffix) {
+        String generatedClassName = compactCodeGenerator.getGeneratedClassName(suffix);
+        byte[] generatedClassBytes = compactCodeGenerator.generateClass(schema, suffix);
         Class<?> generatedClass = defineClass(generatedClassName, generatedClassBytes, 0, generatedClassBytes.length);
-        return (Class<GeneratedCodec>) generatedClass;
+        return (Class<GeneratedCompactCodec>) generatedClass;
     }
 
+    @SuppressWarnings("unchecked")
+    private Class<GeneratedNativeCodec> generateNativeCodecClass(Schema schema, int suffix) {
+        String generatedClassName = nativeCodeGenerator.getGeneratedClassName(suffix);
+        byte[] generatedClassBytes = nativeCodeGenerator.generateClass(schema, suffix);
+        Class<?> generatedClass = defineClass(generatedClassName, generatedClassBytes, 0, generatedClassBytes.length);
+        return (Class<GeneratedNativeCodec>) generatedClass;
+    }
     
 }

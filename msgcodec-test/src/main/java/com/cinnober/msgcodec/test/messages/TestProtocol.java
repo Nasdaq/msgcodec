@@ -26,16 +26,16 @@ package com.cinnober.msgcodec.test.messages;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
 
 /**
  * @author mikael.brannstrom
  *
  */
 public class TestProtocol {
-    public static ProtocolDictionary getProtocolDictionary() {
-        return new ProtocolDictionaryBuilder().build(
+    public static Schema getSchema() {
+        return new SchemaBuilder().build(
             new Class<?>[] {
                 Hello.class,
                 Person.class,

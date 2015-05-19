@@ -23,8 +23,8 @@
  */
 package com.cinnober.msgcodec.messages;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,8 +34,8 @@ import java.util.Collections;
  *
  */
 public class MetaProtocol {
-    private static final Collection<Class<?>> protocolMessageClasses = Collections.unmodifiableCollection(Arrays.asList(
-        (Class<?>)MetaProtocolDictionary.class,
+    private static final Collection<Class<?>> messageClasses = Collections.unmodifiableCollection(Arrays.asList(
+        (Class<?>)MetaSchema.class,
         MetaAnnotated.class,
         MetaAnnotation.class,
         MetaNamedType.class,
@@ -65,39 +65,33 @@ public class MetaProtocol {
         MetaTypeDef.MetaEnum.class,
         MetaTypeDef.MetaSymbol.class
     ));
-    private static final ProtocolDictionary protocolDictionary = createProtocolDictionary();
+    private static final Schema schema = createSchema();
 
 
     private MetaProtocol() { }
 
-    /**
-     * @return the protocol dictionary
-     */
-    private static ProtocolDictionary createProtocolDictionary() {
-        ProtocolDictionaryBuilder builder = new ProtocolDictionaryBuilder(true);
-        ProtocolDictionary dictionary =  builder.build(protocolMessageClasses);
-        return dictionary;
+    private static Schema createSchema() {
+        SchemaBuilder builder = new SchemaBuilder(true);
+        Schema s =  builder.build(messageClasses);
+        return s;
+    }
+
+    public static Schema getSchema() {
+        return schema;
     }
 
     /**
-     * @return the protocolDictionary
-     */
-    public static ProtocolDictionary getProtocolDictionary() {
-        return protocolDictionary;
-    }
-
-    /**
-     * Returns all protocol messages classes in the protocol.
+     * Returns all messages classes in the protocol.
      *
-     * The protocol dictionary can be created like this:
+     * The schema can be created like this:
      * <pre>
-     * ProtocolDictionary dictionary = new ProtocolDictionaryBuilder(true).build(getprotocolMessageClasses());
+     * Schema schema = new SchemaBuilder(true).build(getMessageClasses());
      * </pre>
      *
-     * @return all protocol messages classes in the protocol.
+     * @return all messages classes in the protocol.
      */
-    public static Collection<Class<?>> getProtocolMessageClasses() {
-        return protocolMessageClasses;
+    public static Collection<Class<?>> getMessageClasses() {
+        return messageClasses;
     }
 
 }

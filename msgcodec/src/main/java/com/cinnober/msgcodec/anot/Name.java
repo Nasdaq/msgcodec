@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * Specifies the name of the group, field or name.
  *
  * <dl>
- * <dt>Group</dt><dd>The name of a group must be unique within the protocol dictionary.
+ * <dt>Group</dt><dd>The name of a group must be unique within the schema.
  * The default value is the unqualified name of the class.</dd>
  *
  * <dt>Field</dt><dd>The id of a field must be unique within a group, including any super groups.

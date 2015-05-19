@@ -24,34 +24,48 @@
 
 package com.cinnober.msgcodec.json;
 
-import com.cinnober.msgcodec.StreamCodecInstantiationException;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodecFactory;
+import com.cinnober.msgcodec.MsgCodecInstantiationException;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodecFactory;
 
 /**
  * Factory for JsonCodec.
  * 
  * @author mikael.brannstrom
  */
-public class JsonCodecFactory implements StreamCodecFactory {
+public class JsonCodecFactory implements MsgCodecFactory {
 
-    private final ProtocolDictionary dictionary;
+    private final Schema schema;
+    private boolean jsSafe = true;
 
     /**
      * Create a JSON codec factory.
      * 
-     * @param dictionary the protocol dictionary to be used by all codec instances, not null.
+     * @param schema the schema to be used by all codec instances, not null.
      */
-    public JsonCodecFactory(ProtocolDictionary dictionary) {
-        if (!dictionary.isBound()) {
-            throw new IllegalArgumentException("Dictionary must be bound");
+    public JsonCodecFactory(Schema schema) {
+        if (!schema.isBound()) {
+            throw new IllegalArgumentException("Schema must be bound");
         }
-        this.dictionary = dictionary;
+        this.schema = schema;
+    }
+
+    /**
+     * Ensure that encoded numbers are safe to use in JavaScript.
+     * In JavaScript numbers are stored as doubles.
+     * Some values of types in64, uin64, bigint, decimal and big decimal do not fit into a double.
+     * If <code>jsSafe</code> is true then these values are encoded as strings.
+     * @param jsSafe true if JavaScript safe numbers should be used.
+     * @return this factory.
+     */
+    public JsonCodecFactory setJavaScriptSafe(boolean jsSafe) {
+        this.jsSafe = jsSafe;
+        return this;
     }
 
     @Override
-    public JsonCodec createStreamCodec() throws StreamCodecInstantiationException {
-        return new JsonCodec(dictionary);
+    public JsonCodec createCodec() throws MsgCodecInstantiationException {
+        return new JsonCodec(schema, jsSafe);
     }
     
 }

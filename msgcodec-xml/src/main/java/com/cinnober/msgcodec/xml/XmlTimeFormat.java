@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * @author mikael.brannstrom
  *
  */
-public abstract class XmlTimeFormat<T> implements XmlFormat<T> {
+abstract class XmlTimeFormat<T> implements XmlFormat<T> {
 
     private final TimeFormat timeFormat;
 
@@ -60,7 +60,7 @@ public abstract class XmlTimeFormat<T> implements XmlFormat<T> {
         }
     }
 
-    public static class UInt64TimeFormat extends XmlTimeFormat<Long> {
+    static class UInt64TimeFormat extends XmlTimeFormat<Long> {
 
         public UInt64TimeFormat(TypeDef.Time type) {
             super(type);
@@ -76,7 +76,7 @@ public abstract class XmlTimeFormat<T> implements XmlFormat<T> {
         }
     }
 
-    public static class UInt32TimeFormat extends XmlTimeFormat<Integer> {
+    static class UInt32TimeFormat extends XmlTimeFormat<Integer> {
 
         public UInt32TimeFormat(TypeDef.Time type) {
             super(type);

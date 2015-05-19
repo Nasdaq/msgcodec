@@ -30,8 +30,8 @@ import java.io.IOException;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.ProtocolDictionaryBuilder;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.anot.Id;
 
 /**
@@ -42,7 +42,7 @@ public class RtcPositionMessageTest {
 
     @Test
     public void testEncodeDecode() throws IOException {
-        ProtocolDictionary dictionary = new ProtocolDictionaryBuilder().build(
+        Schema schema = new SchemaBuilder().build(
                 AmPosition.class,
                 AmPositionExt.class,
                 PositionInfo.class,
@@ -50,8 +50,8 @@ public class RtcPositionMessageTest {
                 RtcCustomDetails.class,
                 BiMessageData.class
                 );
-        System.out.println("Dictionary:\n" + dictionary);
-        BlinkCodec codec = new BlinkCodec(dictionary);
+        System.out.println("Schema:\n" + schema);
+        BlinkCodec codec = new BlinkCodec(schema);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         AmPosition msg = new AmPosition();

@@ -25,8 +25,8 @@ package com.cinnober.msgcodec.xml;
 
 import org.junit.Test;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 
 /**
@@ -37,10 +37,10 @@ public class MetaMessagesTest {
 
     @Test
     public void test() throws Exception {
-        ProtocolDictionary dictionary = MetaProtocol.getProtocolDictionary();
-        System.out.println(dictionary);
-        StreamCodec codec = new XmlCodec(dictionary);
-        codec.encode(dictionary.toMessage(), System.out);
+        Schema schema = MetaProtocol.getSchema();
+        System.out.println(schema);
+        MsgCodec codec = new XmlCodec(schema);
+        codec.encode(schema.toMessage(), System.out);
     }
 
 }

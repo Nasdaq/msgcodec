@@ -24,21 +24,21 @@
 
 package com.cinnober.msgcodec.examples;
 
-import com.cinnober.msgcodec.ProtocolDictionary;
+import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.examples.generated.GeneratedProtocol;
 
 /**
  * Example of how to use generated code for messages with msgcodec.
- * See the class GeneratedProtocol for how the protocol dictionary can be built.
+ * See the class GeneratedProtocol for how the schema can be built.
  *
  * @author mikael.brannstrom
  */
 public class GeneratedCodeExample {
     public static void main(String... args) throws Exception {
-        ProtocolDictionary dict = GeneratedProtocol.getInstance();
+        Schema schema = GeneratedProtocol.getInstance();
 
-        System.out.println("The generated protocol:\n" + dict);
+        System.out.println("The generated schema:\n" + schema);
 
-        // Now this dict can be used as usual
+        // Now this schema can be used as usual
     }
 }

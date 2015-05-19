@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
 import java.util.Arrays;
-import com.cinnober.msgcodec.MsgObjectValueHandler.*;
 import static com.cinnober.msgcodec.MsgObjectValueHandler.*;
 import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.Time;

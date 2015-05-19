@@ -38,7 +38,7 @@ import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 
-import com.cinnober.msgcodec.StreamCodec;
+import com.cinnober.msgcodec.MsgCodec;
 import org.junit.Assert;
 
 /**
@@ -51,7 +51,7 @@ import org.junit.Assert;
  *         super(rootClass, createCodec());
  *     }
  *     private static StreamCodec createCodec() {
- *         return new FooCodec(TestProtocol.getProtocolDictionary());
+ *         return new FooCodec(TestProtocol.getSchema());
  *     }
  * }
  *
@@ -64,11 +64,11 @@ import org.junit.Assert;
  */
 public abstract class TestMessagesSuite extends Suite {
 
-    protected TestMessagesSuite(Class<?> rootClass, StreamCodec codec) throws InitializationError {
+    protected TestMessagesSuite(Class<?> rootClass, MsgCodec codec) throws InitializationError {
         super(rootClass, createRunners(codec));
     }
 
-    private static List<Runner> createRunners(StreamCodec codec) {
+    private static List<Runner> createRunners(MsgCodec codec) {
         List<Runner> runners = new ArrayList<>();
         for (Map.Entry<String, Object> messageEntry : TestProtocol.createMessages().entrySet()) {
             runners.add(new EncodeDecodeTest(codec, messageEntry.getKey(), messageEntry.getValue()));
@@ -78,12 +78,12 @@ public abstract class TestMessagesSuite extends Suite {
 
     public static class EncodeDecodeTest extends Runner {
 
-        private final StreamCodec codec;
+        private final MsgCodec codec;
         private final String label;
         private final Object message;
         private final Description description;
 
-        private EncodeDecodeTest(StreamCodec codec, String label, Object message) {
+        private EncodeDecodeTest(MsgCodec codec, String label, Object message) {
             this.codec = codec;
             this.label = label;
             this.message = message;

@@ -24,9 +24,9 @@
 
 package com.cinnober.msgcodec.xml;
 
-import com.cinnober.msgcodec.StreamCodecInstantiationException;
-import com.cinnober.msgcodec.ProtocolDictionary;
-import com.cinnober.msgcodec.StreamCodecFactory;
+import com.cinnober.msgcodec.MsgCodecInstantiationException;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.MsgCodecFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
@@ -35,28 +35,28 @@ import org.xml.sax.SAXException;
  * 
  * @author mikael.brannstrom
  */
-public class XmlCodecFactory implements StreamCodecFactory {
+public class XmlCodecFactory implements MsgCodecFactory {
 
-    private final ProtocolDictionary dictionary;
+    private final Schema schema;
 
     /**
-     * Create a Blink codec factory.
+     * Create an XML codec factory.
      * 
-     * @param dictionary the protocol dictionary to be used by all codec instances, not null.
+     * @param schema the schema to be used by all codec instances, not null.
      */
-    public XmlCodecFactory(ProtocolDictionary dictionary) {
-        if (!dictionary.isBound()) {
-            throw new IllegalArgumentException("Dictionary must be bound");
+    public XmlCodecFactory(Schema schema) {
+        if (!schema.isBound()) {
+            throw new IllegalArgumentException("Schema must be bound");
         }
-        this.dictionary = dictionary;
+        this.schema = schema;
     }
 
     @Override
-    public XmlCodec createStreamCodec() throws StreamCodecInstantiationException {
+    public XmlCodec createCodec() throws MsgCodecInstantiationException {
         try {
-            return new XmlCodec(dictionary);
+            return new XmlCodec(schema);
         } catch (ParserConfigurationException | SAXException e) {
-            throw new StreamCodecInstantiationException("Could not create codec", e);
+            throw new MsgCodecInstantiationException("Could not create codec", e);
         }
     }
     

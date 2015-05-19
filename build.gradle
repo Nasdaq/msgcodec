@@ -14,7 +14,7 @@ buildscript {
 }
 
 allprojects { 
-  ext.nextVersion = 'minor'
+  ext.nextVersion = 'major'
   apply plugin: 'com.cinnober.gradle.semver-git'
   group = 'com.cinnober.msgcodec'
 }
@@ -23,7 +23,7 @@ subprojects {
   apply plugin: 'maven'
   apply plugin: 'java'
   apply plugin: 'signing'
-  sourceCompatibility = '1.7'
+  sourceCompatibility = '1.8'
   ext.junit_version = '4.11'
   
   task javadocJar(type: Jar) {

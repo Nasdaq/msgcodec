@@ -29,7 +29,7 @@ package com.cinnober.msgcodec.xml;
  * @author mikael.brannstrom
  *
  */
-public class XmlStringFormat implements XmlFormat<String> {
+class XmlStringFormat implements XmlFormat<String> {
 
     public static final XmlStringFormat STRING = new XmlStringFormat();
 

@@ -5,6 +5,5 @@ dependencies {
   compile project(':msgcodec-blink')
   compile project(':msgcodec-json')
   compile project(':msgcodec-xml')
-  compile project(':msgcodec-tap')
   testCompile group: 'junit', name: 'junit', version:junit_version
 }

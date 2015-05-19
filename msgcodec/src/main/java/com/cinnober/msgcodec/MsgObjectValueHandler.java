@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Time;
-import com.cinnober.msgcodec.util.ByteArrays;
+import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.util.TimeFormat;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -142,10 +142,10 @@ abstract class MsgObjectValueHandler<T> {
             timeFormat = TimeFormat.getTimeFormat(unit(time), epoch(time));
         }
 
-        protected TimeUnit unit(Time time) {
+        protected final TimeUnit unit(Time time) {
             return time != null ? time.unit() : TimeUnit.MILLISECONDS;
         }
-        protected Epoch epoch(Time time) {
+        protected final Epoch epoch(Time time) {
             return time != null ? time.epoch() : Epoch.UNIX;
         }
 
