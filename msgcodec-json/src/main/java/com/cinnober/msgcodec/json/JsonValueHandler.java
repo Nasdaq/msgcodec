@@ -141,13 +141,17 @@ public abstract class JsonValueHandler<T> {
             return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.UINT64_SAFE : JsonValueHandler.UINT64);
         case STRING:
             checkType(javaClass, String.class);
-            return (JsonValueHandler<T>) JsonValueHandler.STRING;
+            return ((TypeDef.StringUnicode)type).hasMaxSize() ?
+                    (JsonValueHandler<T>) new StringHandler(((TypeDef.StringUnicode)type).getMaxSize()) :
+                    (JsonValueHandler<T>) JsonValueHandler.STRING;
         case BOOLEAN:
             checkType(javaClass, boolean.class, Boolean.class);
             return (JsonValueHandler<T>) JsonValueHandler.BOOLEAN;
         case BINARY:
             checkType(javaClass, byte[].class);
-            return (JsonValueHandler<T>) JsonValueHandler.BINARY;
+            return ((TypeDef.Binary)type).hasMaxSize() ?
+                    (JsonValueHandler<T>) new BinaryHandler(((TypeDef.Binary)type).getMaxSize()) :
+                    (JsonValueHandler<T>) JsonValueHandler.BINARY;
         case DECIMAL:
             checkType(javaClass, BigDecimal.class);
             return (JsonValueHandler<T>) (jsSafe ? JsonValueHandler.DECIMAL_SAFE : JsonValueHandler.DECIMAL);
@@ -358,25 +362,53 @@ public abstract class JsonValueHandler<T> {
         }
     }
     static class StringHandler extends JsonValueHandler<String> {
-        private StringHandler() {}
+        final int maxSize;
+        private StringHandler() {
+            this(-1);
+        }
+        private StringHandler(int maxSize) {
+            this.maxSize = maxSize;
+        }
         @Override
         public void writeValue(String value, JsonGenerator g) throws IOException {
+            if (maxSize != -1 && value.length() > maxSize) {
+                // PENDING: should actually check number of bytes (not chars), but that is expensive
+                throw new IllegalArgumentException("String length ("+value.length()+") exceeds max size "+maxSize);
+            }
             g.writeString(value);
         }
         @Override
         public String readValue(JsonParser p) throws IOException {
-            return p.getValueAsString();
+            String value = p.getValueAsString();
+            if (maxSize != -1 && value.length() > maxSize) {
+                // PENDING: should actually check number of bytes (not chars), but that is expensive
+                throw new DecodeException("String length ("+value.length()+") exceeds max size "+maxSize);
+            }
+            return value;
         }
     }
     static class BinaryHandler extends JsonValueHandler<byte[]> {
-        private BinaryHandler() {}
+        final int maxSize;
+        private BinaryHandler() {
+            this(-1);
+        }
+        private BinaryHandler(int maxSize) {
+            this.maxSize = maxSize;
+        }
         @Override
         public void writeValue(byte[] value, JsonGenerator g) throws IOException {
+            if (maxSize != -1 && value.length > maxSize) {
+                throw new IllegalArgumentException("Binary length ("+value.length+") exceeds max size "+maxSize);
+            }
             g.writeBinary(value);
         }
         @Override
         public byte[] readValue(JsonParser p) throws IOException {
-            return p.getBinaryValue();
+            byte[] value = p.getBinaryValue();
+            if (maxSize != -1 && value.length > maxSize) {
+                throw new DecodeException("Binary length ("+value.length+") exceeds max size "+maxSize);
+            }
+            return value;
         }
     }
     static class BooleanHandler extends JsonValueHandler<Boolean> {
