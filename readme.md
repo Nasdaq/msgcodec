@@ -61,7 +61,7 @@ The code is divided into the following projects:
 ## Build ##
 
 	# First clone a copy of the repo:
-	git clone git@gitrepo.cinnober.com:platform/msgcodec.git
+	git clone git@github.com:cinnober/msgcodec.git
 	cd msgcodec
 	
 	# Compile, build and test:
