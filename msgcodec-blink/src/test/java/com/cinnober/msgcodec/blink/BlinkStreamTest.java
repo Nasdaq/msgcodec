@@ -23,8 +23,8 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import static com.cinnober.msgcodec.blink.TestUtil.assertEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -189,7 +189,7 @@ public class BlinkStreamTest {
         bout.reset();
         streamOp.writeValue(value, out);
         byte[] actualEncoded = bout.toByteArray();
-        assertEquals("Encoded value", encoded, actualEncoded);
+        assertArrayEquals("Encoded value", encoded, actualEncoded);
 
         // decode
         ByteArrayInputStream bin = new ByteArrayInputStream(encoded);

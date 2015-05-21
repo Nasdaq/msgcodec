@@ -29,16 +29,11 @@ import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.io.ByteArrayBuf;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
-import com.cinnober.msgcodec.io.ByteBufferInputStream;
-import com.cinnober.msgcodec.io.ByteBufferOutputStream;
 import com.cinnober.msgcodec.io.ByteBuffers;
 import java.io.IOException;
-import java.math.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.runner.*;
-import org.openjdk.jmh.runner.options.*;
 
 
 @BenchmarkMode(Mode.AverageTime)
@@ -70,7 +65,7 @@ public class BenchmarkNativeOuch42EnterOrder {
     @Setup
     public void setup() throws IOException {
         Schema dict = new SchemaBuilder(true).build(Ouch42EnterOrder.class);
-        codec = new NativeBlinkCodec(dict);
+        codec = new NativeBlinkCodecFactory(dict).createCodec();
         final int bufferSize = 1024;
         switch (bufType) {
             case ARRAY:

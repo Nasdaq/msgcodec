@@ -55,10 +55,6 @@ public class BenchmarkOuch42EnterOrder {
         DIRECT_BUFFER,
     }
 
-    @Param({"true"})
-    //@Param({"true", "false"})
-    public boolean bytecode;
-
     @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
     public BufferType bufType;
 
@@ -75,9 +71,6 @@ public class BenchmarkOuch42EnterOrder {
     public void setup() throws IOException {
         Schema dict = new SchemaBuilder(true).build(Ouch42EnterOrder.class);
         BlinkCodecFactory factory = new BlinkCodecFactory(dict);
-        factory.setCodecOption(bytecode ? 
-                CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
-                CodecOption.INSTRUCTION_CODEC_ONLY);
         codec = factory.createCodec();
         final int bufferSize = 1024;
         switch (bufType) {

@@ -51,7 +51,7 @@ public class RtcPositionMessageTest {
                 BiMessageData.class
                 );
         System.out.println("Schema:\n" + schema);
-        BlinkCodec codec = new BlinkCodec(schema);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         AmPosition msg = new AmPosition();

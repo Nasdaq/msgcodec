@@ -36,7 +36,7 @@ import java.util.Objects;
  * 
  * @author mikael.brannstrom
  */
-public class BlinkCodecFactory implements MsgCodecFactory {
+public class NativeBlinkCodecFactory implements MsgCodecFactory {
 
     private final Schema schema;
     private Pool<byte[]> bufferPool;
@@ -48,12 +48,12 @@ public class BlinkCodecFactory implements MsgCodecFactory {
      * 
      * @param schema the protocol schema to be used by all codec instances, not null.
      */
-    public BlinkCodecFactory(Schema schema) {
+    public NativeBlinkCodecFactory(Schema schema) {
         if (!schema.isBound()) {
             throw new IllegalArgumentException("Schema must be bound");
         }
         this.schema = schema;
-        this.bufferPool = new ConcurrentBufferPool(1048576, 10);
+        this.bufferPool = new ConcurrentBufferPool(1_048_576, 10);
     }
 
     /**
@@ -62,7 +62,7 @@ public class BlinkCodecFactory implements MsgCodecFactory {
      * @param bufferPool the buffer pool to be used by all codec instances, not null.
      * @return this factory.
      */
-    public BlinkCodecFactory setBufferPool(Pool<byte[]> bufferPool) {
+    public NativeBlinkCodecFactory setBufferPool(Pool<byte[]> bufferPool) {
         this.bufferPool = Objects.requireNonNull(bufferPool);
         return this;
     }
@@ -73,7 +73,7 @@ public class BlinkCodecFactory implements MsgCodecFactory {
      * @param maxBinarySize the maximum binary size (including strings) allowed while decoding, or -1 for no limit.
      * @return this factory.
      */
-    public BlinkCodecFactory setMaxBinarySize(int maxBinarySize) {
+    public NativeBlinkCodecFactory setMaxBinarySize(int maxBinarySize) {
         this.maxBinarySize = maxBinarySize;
         return this;
     }
@@ -84,14 +84,14 @@ public class BlinkCodecFactory implements MsgCodecFactory {
      * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
      * @return this factory.
      */
-    public BlinkCodecFactory setMaxSequenceLength(int maxSequenceLength) {
+    public NativeBlinkCodecFactory setMaxSequenceLength(int maxSequenceLength) {
         this.maxSequenceLength = maxSequenceLength;
         return this;
     }
 
     @Override
-    public BlinkCodec createCodec() throws MsgCodecInstantiationException {
-        return new BlinkCodec(schema, bufferPool, maxBinarySize, maxSequenceLength);
+    public NativeBlinkCodec createCodec() throws MsgCodecInstantiationException {
+        return new NativeBlinkCodec(schema, bufferPool, maxBinarySize, maxSequenceLength);
     }
     
 }

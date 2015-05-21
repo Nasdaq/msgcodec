@@ -23,12 +23,24 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import org.junit.runner.RunWith;
+import org.junit.runners.model.InitializationError;
+
+import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
+import com.cinnober.msgcodec.test.messages.TestProtocol;
 
 /**
  * @author mikael.brannstrom
  *
  */
-@RunWith(BytecodeBlinkTestMessagesSuiteImpl.class)
-public class BytecodeBlinkTestMessagesSuite {
+public class CompactBlinkTestMessagesSuiteImpl extends TestMessagesSuite {
+
+    public CompactBlinkTestMessagesSuiteImpl(Class<?> rootClass)
+            throws InitializationError {
+        super(rootClass, createCodec());
+    }
+
+    private static MsgCodec createCodec() {
+        return new BlinkCodecFactory(TestProtocol.getSchema()).createCodec();
+    }
 }

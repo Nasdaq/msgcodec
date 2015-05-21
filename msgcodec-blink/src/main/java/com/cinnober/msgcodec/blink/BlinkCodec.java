@@ -37,8 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
-import java.util.Objects;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -65,65 +63,33 @@ public class BlinkCodec implements MsgCodec {
     private final int maxSequenceLength;
 
     /**
-     * Create a Blink codec, with an internal buffer pool of 8192 bytes.
-     *
-     * @param schema the definition of the messages to be understood by the codec.
-     */
-    BlinkCodec(Schema schema) throws MsgCodecInstantiationException {
-        this(schema, new ConcurrentBufferPool(8192, 1));
-    }
-    /**
-     * Create a Blink codec.
-     *
-     * @param schema the definition of the messages to be understood by the codec.
-     * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
-     */
-    public BlinkCodec(Schema schema, Pool<byte[]> bufferPool) throws MsgCodecInstantiationException {
-        this(schema, bufferPool, 10 * 1048576, 1_000_000, CodecOption.AUTOMATIC);
-    }
-    /**
      * Create a Blink codec.
      *
      * @param schema the definition of the messages to be understood by the codec.
      * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
      * @param maxBinarySize the maximum binary size (including strings) allowed while decoding, or -1 for no limit.
      * @param maxSequenceLength the maximum sequence length allowed while decoding, or -1 for no limit.
-     * @param codecOption controls which kind of underlying codec to use, not null.
      */
     BlinkCodec(Schema schema, Pool<byte[]> bufferPool,
-            int maxBinarySize, int maxSequenceLength, CodecOption codecOption) throws MsgCodecInstantiationException {
+            int maxBinarySize, int maxSequenceLength) throws MsgCodecInstantiationException {
         if (!schema.isBound()) {
             throw new IllegalArgumentException("Schema not bound");
         }
         this.bufferPool = bufferPool;
-        Objects.requireNonNull(codecOption);
 
         this.maxBinarySize = maxBinarySize;
         this.maxSequenceLength = maxSequenceLength;
         this.schema = schema;
 
-        GeneratedCodec generatedCodecTmp = null;
-        if (codecOption != CodecOption.INSTRUCTION_CODEC_ONLY) {
-            try {
-                Class<GeneratedCompactCodec> generatedCodecClass =
-                        GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(schema);
-                Constructor<GeneratedCompactCodec> constructor =
-                        generatedCodecClass.getConstructor(new Class<?>[]{ BlinkCodec.class, Schema.class });
-                generatedCodecTmp = constructor.newInstance(this, schema);
-            } catch (Exception e) {
-                log.log(Level.WARNING,
-                        "Could instantiate generated codec for schema UID " + schema.getUID(), e);
-                if (codecOption == CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY) {
-                    throw new MsgCodecInstantiationException(e);
-                }
-                log.log(Level.INFO, "Fallback to (slower) instruction based codec for schema UID {0}",
-                        schema.getUID());
-            }
+        try {
+            Class<GeneratedCompactCodec> generatedCodecClass =
+                    GeneratedCodecClassLoader.getInstance().getGeneratedCodecClass(schema);
+            Constructor<GeneratedCompactCodec> constructor =
+                    generatedCodecClass.getConstructor(new Class<?>[]{ BlinkCodec.class, Schema.class });
+            generatedCodec = constructor.newInstance(this, schema);
+        } catch (Exception e) {
+            throw new MsgCodecInstantiationException(e);
         }
-        if (generatedCodecTmp == null) {
-            generatedCodecTmp = new InstructionCodec(this, schema);
-        }
-        generatedCodec = generatedCodecTmp;
     }
 
     Pool<byte[]> bufferPool() {

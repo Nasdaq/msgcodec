@@ -64,23 +64,6 @@ public class NativeBlinkCodec implements MsgCodec {
     private final int maxSequenceLength;
 
     /**
-     * Create a Blink codec, with an internal buffer pool of 8192 bytes.
-     *
-     * @param schema the definition of the messages to be understood by the codec.
-     */
-    NativeBlinkCodec(Schema schema) throws MsgCodecInstantiationException {
-        this(schema, new ConcurrentBufferPool(8192, 1));
-    }
-    /**
-     * Create a Blink codec.
-     *
-     * @param schema the definition of the messages to be understood by the codec.
-     * @param bufferPool the buffer pool, needed for temporary storage while <em>encoding</em>.
-     */
-    public NativeBlinkCodec(Schema schema, Pool<byte[]> bufferPool) throws MsgCodecInstantiationException {
-        this(schema, bufferPool, 10 * 1048576, 1_000_000);
-    }
-    /**
      * Create a Blink codec.
      *
      * @param schema the definition of the messages to be understood by the codec.

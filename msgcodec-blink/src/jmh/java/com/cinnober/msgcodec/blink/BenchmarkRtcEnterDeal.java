@@ -61,10 +61,6 @@ public class BenchmarkRtcEnterDeal {
         DIRECT_BUFFER,
     }
 
-    @Param({"true"})
-    //@Param({"true", "false"})
-    public boolean bytecode;
-
 //    @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
     @Param({"ARRAY"})
     public BufferType bufType;
@@ -89,9 +85,6 @@ public class BenchmarkRtcEnterDeal {
                 TradeExternalData.class
         ).assignGroupIds();
         BlinkCodecFactory factory = new BlinkCodecFactory(dict);
-        factory.setCodecOption(bytecode ? 
-                CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
-                CodecOption.INSTRUCTION_CODEC_ONLY);
         codec = factory.createCodec();
         final int bufferSize = 1024;
         switch (bufType) {

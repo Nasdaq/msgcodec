@@ -35,7 +35,7 @@ import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Time;
-import static com.cinnober.msgcodec.blink.TestUtil.*;
+import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,54 +51,39 @@ import org.junit.Test;
  */
 public class BlinkCodecTest {
 
-    @Test
-    public void testHelloExampleBytecode() throws IOException {
-        testHelloExample(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testHelloExampleInstruction() throws IOException {
-        testHelloExample(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
 
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
      */
-    private void testHelloExample(CodecOption codecOption) throws IOException {
+    @Test
+    public void testHelloExample() throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
         Schema schema = new SchemaBuilder().build(Hello.class);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec.encode(new Hello("Hello World"), bout);
-        assertEquals("Encoded Hello World", expected, bout.toByteArray());
+        assertArrayEquals("Encoded Hello World", expected, bout.toByteArray());
 
         // ensure that the message can be parsed as well
         Hello msg = (Hello) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals("Hello greeting", "Hello World", msg.getGreeting());
     }
 
-    @Test
-    public void testHelloExample2Bytecode() throws IOException {
-        testHelloExample2(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testHelloExample2Instruction() throws IOException {
-        testHelloExample2(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-
     /** Example from the Blink Specification beta2 - 2013-02-05, chapter 1.
      * Here the schema is bound to Group objects.
      */
-    private void testHelloExample2(CodecOption codecOption) throws IOException {
+    @Test
+    public void testHelloExample2() throws IOException {
         byte[] expected = new byte[]
                 { 0x0d, 0x01, 0x0b, 0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64 };
         Schema schema = new SchemaBuilder().build(Hello.class);
         schema = Group.bind(schema);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         Group hello = new Group(schema, "Hello");
         hello.set("greeting", "Hello World");
         codec.encode(hello, bout);
-        assertEquals("Encoded Hello World", expected, bout.toByteArray());
+        assertArrayEquals("Encoded Hello World", expected, bout.toByteArray());
 
         // ensure that the message can be parsed as well
         Group msg = (Group) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
@@ -106,17 +91,9 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testBrokenHelloEncodeBytecode() throws Exception {
-        testBrokenHelloEncode(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testBrokenHelloEncodeInstruction() throws Exception {
-        testBrokenHelloEncode(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-
-    private void testBrokenHelloEncode(CodecOption codecOption) throws Exception {
+    public void testBrokenHelloEncode() throws Exception {
         Schema schema = new SchemaBuilder().build(Hello.class);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         
         Hello msg1 = new Hello(); // missing required field
@@ -137,17 +114,9 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testBrokenHelloDecodeNullBytecode() throws Exception {
-        testBrokenHelloDecodeNull(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testBrokenHelloDecodeNullInstruction() throws Exception {
-        testBrokenHelloDecodeNull(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-
-    private void testBrokenHelloDecodeNull(CodecOption codecOption) throws Exception {
+    public void testBrokenHelloDecodeNull() throws Exception {
         Schema schema = new SchemaBuilder().build(Hello.class);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
 
         byte[] dataNull = new byte[]
                 { 0x0d, // length
@@ -168,17 +137,9 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testBrokenHelloDecodeEofBytecode() throws Exception {
-        testBrokenHelloDecodeEof(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testBrokenHelloDecodeEofInstruction() throws Exception {
-        testBrokenHelloDecodeEof(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-
-    private void testBrokenHelloDecodeEof(CodecOption codecOption) throws Exception {
+    public void testBrokenHelloDecodeEof() throws Exception {
         Schema schema = new SchemaBuilder().build(Hello.class);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
 
         byte[] dataNull = new byte[]
                 { 0x0d, // length
@@ -198,18 +159,10 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testDynamicGroupsBytecode() throws IOException {
-        testDynamicGroups(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testDynamicGroupsInstruction() throws IOException {
-        testDynamicGroups(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-    
-    private void testDynamicGroups(CodecOption codecOption) throws IOException {
+    public void testDynamicGroups() throws IOException {
         Schema schema = new SchemaBuilder().build(Foo.class, Bar.class);
         System.out.println("Schema:\n" + schema);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
         Foo foo1 = new Foo(1);
@@ -260,8 +213,8 @@ public class BlinkCodecTest {
             0x0a, // Bar5.data=10
         };
         codec.encode(bar5, bout);
-        System.out.println("HEX:\n" + TestUtil.toHex(bout.toByteArray()));
-        assertEquals(expected, bout.toByteArray());
+        System.out.println("HEX:\n" + ByteArrays.toHex(bout.toByteArray()));
+        assertArrayEquals(expected, bout.toByteArray());
 
         // test that we can parse the object
         Bar bar5Decoded = (Bar) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
@@ -270,22 +223,14 @@ public class BlinkCodecTest {
         // make sure we can repeat this, i.e. that there are not any corrupt data left in the codec
         bout.reset();
         codec.encode(bar5, bout);
-        assertEquals(expected, bout.toByteArray());
+        assertArrayEquals(expected, bout.toByteArray());
 
     }
 
     @Test
-    public void testDates1Bytecode() throws IOException {
-        testDates1(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testDates1Instruction() throws IOException {
-        testDates1(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-
-    private void testDates1(CodecOption codecOption) throws IOException {
+    public void testDates1() throws IOException {
         Schema schema = new SchemaBuilder().build(DateMsg.class);
-        MsgCodec codec = new BlinkCodecFactory(schema).setCodecOption(codecOption).createCodec();
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
 
         long dayInMillis = 24 * 3600 * 1000;
 
@@ -304,8 +249,8 @@ public class BlinkCodecTest {
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec.encode(d1, bout);
-        System.out.println("HEX:\n" + TestUtil.toHex(bout.toByteArray()));
-        assertEquals(exp1, bout.toByteArray());
+        System.out.println("HEX:\n" + ByteArrays.toHex(bout.toByteArray()));
+        assertArrayEquals(exp1, bout.toByteArray());
 
         // test that we can parse the object
         DateMsg d1Decoded = (DateMsg) codec.decode(new ByteArrayInputStream(bout.toByteArray()));
@@ -313,20 +258,12 @@ public class BlinkCodecTest {
     }
 
     @Test
-    public void testMetaProtocolEncodeDecodeBytecode() throws IOException {
-        testMetaProtocolEncodeDecode(CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY);
-    }
-    @Test
-    public void testMetaProtocolEncodeDecodeInstruction() throws IOException {
-        testMetaProtocolEncodeDecode(CodecOption.INSTRUCTION_CODEC_ONLY);
-    }
-
-    private void testMetaProtocolEncodeDecode(CodecOption codecOption) throws IOException {
+    public void testMetaProtocolEncodeDecode() throws IOException {
         Schema classSchema = MetaProtocol.getSchema();
-        MsgCodec classCodec = new BlinkCodecFactory(classSchema).setCodecOption(codecOption).createCodec();
+        MsgCodec classCodec = new BlinkCodecFactory(classSchema).createCodec();
 
         Schema groupSchema = Group.bind(classSchema.unbind());
-        MsgCodec groupCodec = new BlinkCodecFactory(groupSchema).setCodecOption(codecOption).createCodec();
+        MsgCodec groupCodec = new BlinkCodecFactory(groupSchema).createCodec();
 
         Object classMsg = classSchema.toMessage();
 

@@ -23,8 +23,6 @@ import org.openjdk.jmh.annotations.*;
 @State(Scope.Benchmark)
 public class BenchmarkOuch42EnterOrderStream {
 
-    @Param({"true"})
-    //@Param({"true", "false"})
     public boolean bytecode;
 
     private Ouch42EnterOrder msg;
@@ -42,9 +40,6 @@ public class BenchmarkOuch42EnterOrderStream {
     public void setup() throws IOException {
         Schema dict = new SchemaBuilder(true).build(Ouch42EnterOrder.class);
         BlinkCodecFactory factory = new BlinkCodecFactory(dict);
-        factory.setCodecOption(bytecode ? 
-                CodecOption.DYNAMIC_BYTECODE_CODEC_ONLY :
-                CodecOption.INSTRUCTION_CODEC_ONLY);
         codec = factory.createCodec();
         buf = ByteBuffer.allocate(1024);
         sink = new OutputStreamSink(new ByteBufferOutputStream(buf));
