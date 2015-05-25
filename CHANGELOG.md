@@ -43,7 +43,9 @@ Removed TAP format support (msgcodec-tap).
 Schema changes:
 
  - Added maxSize to String and Binary types. New annotation MaxSize.
+ - Group type in GroupBinding is now optional (required for encoding).
  
 Blink:
 
  - Added experimental support for the Native Blink format.
+

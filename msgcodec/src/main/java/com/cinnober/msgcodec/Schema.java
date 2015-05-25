@@ -151,7 +151,8 @@ public class Schema implements Annotatable<Schema> {
                 if (binding != null && binding.getGroupTypeAccessor() instanceof JavaClassGroupTypeAccessor) {
                     Class<?> superGroupClass = (Class<?>) superGroup.getGroupType();
                     Class<?> groupClass = (Class<?>) group.getGroupType();
-                    if (!superGroupClass.isAssignableFrom(groupClass)) {
+                    if (groupClass != null && superGroupClass != null &&
+                            !superGroupClass.isAssignableFrom(groupClass)) {
                         throw new IllegalArgumentException("Java inheritance does not match super group in group: " +
                             group.getName());
                     }

@@ -178,7 +178,7 @@ public class GroupDef implements Annotatable<GroupDef> {
     /**
      * Returns the group type of this group.
      *
-     * @return the group type, not null.
+     * @return the group type, or null if group is never intended to be encoded.
      */
     public Object getGroupType() {
         return binding != null ? binding.getGroupType() : null;

@@ -39,14 +39,15 @@ public class GroupBinding {
 
     /** Create a group binding.
      * @param factory the group factory, not null.
-     * @param groupType the group key, not null.
+     * @param groupType the group key, or null. Required for groups to be encoded.
      */
     public GroupBinding(Factory<?> factory, Object groupType) {
         this.factory = Objects.requireNonNull(factory);
-        this.groupType = Objects.requireNonNull(groupType);
+        this.groupType = groupType;
     }
 
-    /** Returns the group factory.
+    /**
+     * Returns the group factory.
      *
      * @return the factory, not null.
      */
@@ -54,9 +55,10 @@ public class GroupBinding {
         return factory;
     }
 
-    /** Returns the group type.
-     *groupType
-     * @return the group type, not null.
+    /** 
+     * Returns the group type.
+     *
+     * @return the group type, or null if never encoded.
      * @see GroupTypeAccessor
      */
     public Object getGroupType() {
