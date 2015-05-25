@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package com.cinnober.msgcodec.examples;
+package com.cinnober.msgcodec.examples.generated;
 
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.examples.generated.GeneratedProtocol;
