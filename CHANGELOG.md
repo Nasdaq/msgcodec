@@ -45,7 +45,7 @@ Schema changes:
  - Added maxSize to String and Binary types. New annotation MaxSize.
  - Group type in GroupBinding is now optional (required for encoding).
  
-Blink:
+Blink (msgcodec-blink):
 
  - Added experimental support for the Native Blink format.
-
+ - Removed legacy 'instruction based' codec. The ASM-based dynamic bytecode generation codec is faster and stable.
