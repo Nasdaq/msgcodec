@@ -73,8 +73,7 @@ import java.util.Map;
  * <tr>
  * <td>dynamic group</td>
  * <td>object, with an additional field <code>$type</code> with the group name as a string.
- * Currently JSON codec expects this field to appear first in an object.
- * <br>PENDING: relax this to a suggestion for improved performance?</td>
+ * Best decoding performance is gained when this field appears first in an object.
  * </tr>
  * </table>
  *
@@ -92,8 +91,6 @@ import java.util.Map;
  * </ul>
  * </ul>
  * 
- *
- * <p><b>TODO:</b> do not enforce the $type field to appear first (only optimize performance when it is first)
  *
  * @author mikael.brannstrom
  * @see JsonCodecFactory

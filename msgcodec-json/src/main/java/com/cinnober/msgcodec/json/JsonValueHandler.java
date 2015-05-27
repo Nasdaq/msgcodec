@@ -241,7 +241,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Byte readValue(JsonParser p) throws IOException {
-            return (byte) p.getValueAsInt();
+            return (byte) p.getIntValue();
         }
     }
     static class Int16Handler extends JsonValueHandler<Short> {
@@ -252,7 +252,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Short readValue(JsonParser p) throws IOException {
-            return (short) p.getValueAsInt();
+            return (short) p.getIntValue();
         }
     }
     static class Int32Handler extends JsonValueHandler<Integer> {
@@ -263,7 +263,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Integer readValue(JsonParser p) throws IOException {
-            return p.getValueAsInt();
+            return p.getIntValue();
         }
     }
     static class Int64Handler extends JsonValueHandler<Long> {
@@ -284,9 +284,9 @@ public abstract class JsonValueHandler<T> {
         public Long readValue(JsonParser p) throws IOException {
             switch (p.getCurrentToken()) {
                 case VALUE_NUMBER_INT:
-                    return p.getValueAsLong();
+                    return p.getLongValue();
                 case VALUE_STRING:
-                    return Long.parseLong(p.getValueAsString());
+                    return Long.parseLong(p.getText());
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing an int64");
             }
@@ -300,7 +300,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Byte readValue(JsonParser p) throws IOException {
-            return (byte) p.getValueAsInt();
+            return (byte) p.getIntValue();
         }
     }
     static class UInt16Handler extends JsonValueHandler<Short> {
@@ -311,7 +311,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Short readValue(JsonParser p) throws IOException {
-            return (short) p.getValueAsInt();
+            return (short) p.getIntValue();
         }
     }
     static class UInt32Handler extends JsonValueHandler<Integer> {
@@ -322,7 +322,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public Integer readValue(JsonParser p) throws IOException {
-            return (int) p.getValueAsLong();
+            return (int) p.getLongValue();
         }
     }
     static class UInt64Handler extends JsonValueHandler<Long> {
@@ -355,7 +355,7 @@ public abstract class JsonValueHandler<T> {
                 case VALUE_NUMBER_INT:
                     return p.getBigIntegerValue().longValue();
                 case VALUE_STRING:
-                    return new BigInteger(p.getValueAsString()).longValue();
+                    return new BigInteger(p.getText()).longValue();
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing an uint64");
             }
@@ -379,7 +379,7 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public String readValue(JsonParser p) throws IOException {
-            String value = p.getValueAsString();
+            String value = p.getText();
             if (maxSize != -1 && value.length() > maxSize) {
                 // PENDING: should actually check number of bytes (not chars), but that is expensive
                 throw new DecodeException("String length ("+value.length()+") exceeds max size "+maxSize);
@@ -443,7 +443,7 @@ public abstract class JsonValueHandler<T> {
                 case VALUE_NUMBER_FLOAT:
                     return checkRange(p.getDecimalValue());
                 case VALUE_STRING:
-                    return checkRange(new BigDecimal(p.getValueAsString()));
+                    return checkRange(new BigDecimal(p.getText()));
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a decimal");
             }
@@ -476,7 +476,7 @@ public abstract class JsonValueHandler<T> {
                 case VALUE_NUMBER_FLOAT:
                     return p.getDecimalValue();
                 case VALUE_STRING:
-                    return new BigDecimal(p.getValueAsString());
+                    return new BigDecimal(p.getText());
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big decimal");
             }
@@ -501,7 +501,7 @@ public abstract class JsonValueHandler<T> {
                 case VALUE_NUMBER_INT:
                     return p.getBigIntegerValue();
                 case VALUE_STRING:
-                    return new BigInteger(p.getValueAsString());
+                    return new BigInteger(p.getText());
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big integer");
             }
@@ -520,7 +520,7 @@ public abstract class JsonValueHandler<T> {
                 case VALUE_NUMBER_INT:
                     return p.getFloatValue();
                 case VALUE_STRING:
-                    switch (p.getValueAsString()) {
+                    switch (p.getText()) {
                         case "NaN":
                             return Float.NaN;
                         case "Infinity":
@@ -528,7 +528,7 @@ public abstract class JsonValueHandler<T> {
                         case "-Infinity":
                             return Float.NEGATIVE_INFINITY;
                         default:
-                            throw new DecodeException("Illegal float32 string value: " + p.getValueAsString());
+                            throw new DecodeException("Illegal float32 string value: " + p.getText());
                     }
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big integer");
@@ -548,7 +548,7 @@ public abstract class JsonValueHandler<T> {
                 case VALUE_NUMBER_INT:
                     return p.getDoubleValue();
                 case VALUE_STRING:
-                    switch (p.getValueAsString()) {
+                    switch (p.getText()) {
                         case "NaN":
                             return Double.NaN;
                         case "Infinity":
@@ -556,7 +556,7 @@ public abstract class JsonValueHandler<T> {
                         case "-Infinity":
                             return Double.NEGATIVE_INFINITY;
                         default:
-                            throw new DecodeException("Illegal float64 string value: " + p.getValueAsString());
+                            throw new DecodeException("Illegal float64 string value: " + p.getText());
                     }
                 default:
                     throw new DecodeException("Found " + p.getCurrentToken() + " while parsing a big integer");
@@ -928,7 +928,7 @@ public abstract class JsonValueHandler<T> {
             BitSet requiredFields = new BitSet(numRequiredFields);
             requiredFields.set(0, numRequiredFields);
             while (p.nextToken() == JsonToken.FIELD_NAME) {
-                String fieldName = p.getCurrentName();
+                String fieldName = p.getText();
                 FieldHandler fieldHandler = fields.get(fieldName);
                 if (fieldHandler == null) {
                     throw new DecodeException("Unknown field: " + fieldName);
@@ -969,11 +969,23 @@ public abstract class JsonValueHandler<T> {
 
         @Override
         public Object readValue(JsonParser p) throws IOException {
-            if (p.nextToken() != JsonToken.FIELD_NAME || !p.getText().equals(TYPE_FIELD)) {
-                throw new DecodeException("Expected field " + TYPE_FIELD);
+            if (p.nextToken() != JsonToken.FIELD_NAME) {
+                throw new DecodeException("Expected field");
             }
-            p.nextToken(); // field value
-            String groupName = p.getText();
+            String groupName;
+            if (p.getText().equals(TYPE_FIELD)) {
+                p.nextToken(); // field value
+                groupName = p.getText();
+            } else {
+                TypeScannerJsonParser p2;
+                if (p instanceof TypeScannerJsonParser) {
+                    p2 = (TypeScannerJsonParser) p;
+                } else {
+                    p2 = new TypeScannerJsonParser(p);
+                    p = p2;
+                }
+                groupName = p2.findType();
+            }
             StaticGroupHandler groupHandler = jsonCodec.lookupGroupByName(groupName);
             if (groupHandler == null) {
                 throw new DecodeException("Unknown type: " + groupName);

@@ -49,3 +49,8 @@ Blink (msgcodec-blink):
 
  - Added experimental support for the Native Blink format.
  - Removed legacy 'instruction based' codec. The ASM-based dynamic bytecode generation codec is faster and stable.
+
+JSON (msgcodec-json):
+
+ - Added support for JavaScript safe mode (default), where large numbers are encoded as strings.
+ - The "$type" field in dynamic groups, is no longer required to be first. However, having it first is best for performance.

@@ -35,6 +35,8 @@ import org.junit.Test;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Required;
 import java.io.IOException;
 
@@ -45,7 +47,7 @@ import java.io.IOException;
 public class JsonCodecTest {
 
     @Test
-    public void test() throws Exception {
+    public void testHello() throws Exception {
         SchemaBuilder builder = new SchemaBuilder();
         Schema schema = builder.build(Hello.class);
         MsgCodec codec = new JsonCodec(schema, false);
@@ -62,6 +64,50 @@ public class JsonCodecTest {
                 "{\"$type\":\"Hello\", \"greeting\":\"Hello world!\"}".getBytes(Charset.forName("UTF8")));
         msg2 = codec.decode(in);
         assertEquals(msg, msg2);
+    }
+
+    @Test
+    public void testDecodeHelloTypeOutOfOrder() throws Exception {
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+
+        ByteArrayInputStream in = new ByteArrayInputStream(
+                "{\"greeting\":\"Hello world!\", \"$type\":\"Hello\"}".getBytes(Charset.forName("UTF8")));
+        assertEquals(new Hello("Hello world!"), codec.decode(in));
+    }
+
+    @Test
+    public void testDecodeNestedTypeOutOfOrder1() throws Exception {
+        Schema schema = new SchemaBuilder().build(Nested.class, Hello.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+
+        String json = "{\"i\":123, \"$type\":\"Nested\", \"payload\": "
+                + "{\"$type\":\"Hello\", \"greeting\":\"Hello world!\"}"
+                + "}";
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(Charset.forName("UTF8")));
+        assertEquals(new Nested(123, new Hello("Hello world!")), codec.decode(in));
+    }
+    @Test
+    public void testDecodeNestedTypeOutOfOrder2() throws Exception {
+        Schema schema = new SchemaBuilder().build(Nested.class, Hello.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+
+        String json = "{\"i\":123, \"$type\":\"Nested\", \"payload\": "
+                + "{\"greeting\":\"Hello world!\", \"$type\":\"Hello\"}"
+                + "}";
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(Charset.forName("UTF8")));
+        assertEquals(new Nested(123, new Hello("Hello world!")), codec.decode(in));
+    }
+    @Test
+    public void testDecodeNestedTypeOutOfOrder3() throws Exception {
+        Schema schema = new SchemaBuilder().build(Nested.class, Hello.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+
+        String json = "{\"payload\": "
+                + "{\"$type\":\"Hello\", \"greeting\":\"Hello world!\"}"
+                + ", \"i\":123, \"$type\":\"Nested\"}";
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(Charset.forName("UTF8")));
+        assertEquals(new Nested(123, new Hello("Hello world!")), codec.decode(in));
     }
 
     @Test(expected = DecodeException.class)
@@ -85,51 +131,58 @@ public class JsonCodecTest {
         codec.encode(msg, out);
     }
 
-    public static class Hello {
+    @Test
+    public void testEncodeDecodeBinary() throws IOException {
+        Schema schema = new SchemaBuilder().build(BinaryMessage.class);
+        JsonCodec codec = new JsonCodec(schema, false);
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        BinaryMessage msg1 = new BinaryMessage(new byte[] {1,2,3});
+        codec.encode(msg1, out);
+        byte[] data = out.toByteArray();
+        System.out.write(data);
+        
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+        BinaryMessage msg2 = (BinaryMessage) codec.decode(in);
+        assertEquals(msg1, msg2);
+    }
+    @Test
+    public void testDecodeBinaryTypeOutOfOrder() throws IOException {
+        Schema schema = new SchemaBuilder().build(BinaryMessage.class);
+        JsonCodec codec = new JsonCodec(schema, false);
+
+        String json = "{\"data\":\"AQID\",\"$type\":\"BinaryMessage\"}";
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(Charset.forName("UTF8")));
+        BinaryMessage msg = (BinaryMessage) codec.decode(in);
+        assertEquals(new BinaryMessage(new byte[] {1,2,3}), msg);
+    }
+
+    public static class Hello extends MsgObject {
         @Required
-        private String greeting;
+        public String greeting;
         public Hello() {
         }
         public Hello(String greeting) {
             this.greeting = greeting;
         }
-        public String getGreeting() {
-            return greeting;
+    }
+    public static class Nested extends MsgObject {
+        public int i;
+        @Dynamic
+        public Object payload;
+        public Nested() {
         }
-        public void setGreeting(String greeting) {
-            this.greeting = greeting;
+        public Nested(int i, Object payload) {
+            this.i = i;
+            this.payload = payload;
         }
-        /* (non-Javadoc)
-         * @see java.lang.Object#hashCode()
-         */
-        @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result
-                    + ((greeting == null) ? 0 : greeting.hashCode());
-            return result;
+    }
+    public static class BinaryMessage extends MsgObject {
+        public byte[] data;
+        public BinaryMessage() {
         }
-        /* (non-Javadoc)
-         * @see java.lang.Object#equals(java.lang.Object)
-         */
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Hello other = (Hello) obj;
-            if (greeting == null) {
-                if (other.greeting != null)
-                    return false;
-            } else if (!greeting.equals(other.greeting))
-                return false;
-            return true;
+        public BinaryMessage(byte[] data) {
+            this.data = data;
         }
-
-
     }
 }
