@@ -235,6 +235,55 @@ public class JsonCodec implements MsgCodec {
         }
     }
 
+    /**
+     * Write the group to the stream, but without adding the '$type' field.
+     * To decode the JSON the receiver must know what group type to expect.
+     *
+     * @param group the group to encode.
+     * @param out the stream to write to, not null.
+     * @throws IOException if the underlying byte sink throws an exception.
+     * @throws IllegalArgumentException if the group is not correct or complete, e.g. a required field is missing.
+     * Partial data may have been written to the stream.
+     */
+    public void encodeStatic(Object group, OutputStream out) throws IOException {
+        if (group == null) {
+            out.write(NULL_BYTES);
+        } else {
+            JsonFactory f = new JsonFactory();
+            JsonGenerator g = f.createGenerator(out);
+            StaticGroupHandler groupHandler = lookupGroupByValue(group);
+            if (groupHandler == null) {
+                throw new IllegalArgumentException("Cannot encode group (unknown type)");
+            }
+            groupHandler.writeValue(group, g, false);
+            g.flush();
+        }
+    }
+    /**
+     * Write the group to the byte sink, but without adding the '$type' field.
+     * To decode the JSON the receiver must know what group type to expect.
+     *
+     * @param group the group to encode.
+     * @param out the byte sink to write to, not null.
+     * @throws IOException if the underlying byte sink throws an exception.
+     * @throws IllegalArgumentException if the group is not correct or complete, e.g. a required field is missing.
+     * Partial data may have been written to the byte sink.
+     */
+    public void encodeStatic(Object group, ByteSink out) throws IOException {
+        if (group == null) {
+            out.write(NULL_BYTES);
+        } else {
+            JsonFactory f = new JsonFactory();
+            JsonGenerator g = f.createGenerator(new ByteSinkOutputStream(out));
+            StaticGroupHandler groupHandler = lookupGroupByValue(group);
+            if (groupHandler == null) {
+                throw new IllegalArgumentException("Cannot encode group (unknown type)");
+            }
+            groupHandler.writeValue(group, g, false);
+            g.flush();
+        }
+    }
+
     @Override
     public Object decode(InputStream in) throws IOException {
         JsonFactory f = new JsonFactory();
@@ -250,6 +299,84 @@ public class JsonCodec implements MsgCodec {
     @Override
     public Object decode(ByteSource in) throws IOException {
         return decode(new ByteSourceInputStream(in));
+    }
+
+    /**
+     * Read a static group from the specified stream, when the JSON does not contain the '$type' field.
+     *
+     * @param groupType the expected group type, not null.
+     * @param in the stream to read from, not null.
+     * @return the decoded value.
+     * @throws IOException if the underlying stream throws an exception.
+     * @throws DecodeException if the value could not be decoded, or if a required field is missing.
+     */
+    public Object decodeStatic(Object groupType, InputStream in) throws IOException {
+        StaticGroupHandler groupHandler = staticGroupsByGroupType.get(groupType);
+        if (groupHandler == null) {
+            throw new IllegalArgumentException("Unknown group type");
+        }
+
+        JsonFactory f = new JsonFactory();
+        JsonParser p = f.createParser(in);
+        JsonToken token = p.nextToken();
+        if (token == JsonToken.VALUE_NULL) {
+            return null;
+        } else if (token != JsonToken.START_OBJECT) {
+            throw new DecodeException("Expected {");
+        }
+        return groupHandler.readValue(p);
+    }
+
+    /**
+     * Read a static group from the specified byte source, when the JSON does not contain the '$type' field.
+     *
+     * @param groupType the expected group type, not null.
+     * @param in the byte source to read from, not null.
+     * @return the decoded value.
+     * @throws IOException if the underlying byte source throws an exception.
+     * @throws DecodeException if the value could not be decoded, or if a required field is missing.
+     */
+    public Object decodeStatic(Object groupType, ByteSource in) throws IOException {
+        return decodeStatic(groupType, new ByteSourceInputStream(in));
+    }
+
+    /**
+     * Read a static group from the specified stream, when the JSON does not contain the '$type' field.
+     *
+     * @param groupName the expected group name, not null.
+     * @param in the stream to read from, not null.
+     * @return the decoded value.
+     * @throws IOException if the underlying stream throws an exception.
+     * @throws DecodeException if the value could not be decoded, or if a required field is missing.
+     */
+    public Object decodeStatic(String groupName, InputStream in) throws IOException {
+        StaticGroupHandler groupHandler = lookupGroupByName(groupName);
+        if (groupHandler == null) {
+            throw new IllegalArgumentException("Unknown group name");
+        }
+
+        JsonFactory f = new JsonFactory();
+        JsonParser p = f.createParser(in);
+        JsonToken token = p.nextToken();
+        if (token == JsonToken.VALUE_NULL) {
+            return null;
+        } else if (token != JsonToken.START_OBJECT) {
+            throw new DecodeException("Expected {");
+        }
+        return groupHandler.readValue(p);
+    }
+
+    /**
+     * Read a static group from the specified byte source, when the JSON does not contain the '$type' field.
+     *
+     * @param groupName the expected group name, not null.
+     * @param in the byte source to read from, not null.
+     * @return the decoded value.
+     * @throws IOException if the underlying byte source throws an exception.
+     * @throws DecodeException if the value could not be decoded, or if a required field is missing.
+     */
+    public Object decodeStatic(String groupName, ByteSource in) throws IOException {
+        return decodeStatic(groupName, new ByteSourceInputStream(in));
     }
 
     StaticGroupHandler lookupGroupByName(String name) {

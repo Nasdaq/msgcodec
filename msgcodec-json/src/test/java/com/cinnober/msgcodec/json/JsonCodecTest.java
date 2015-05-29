@@ -48,8 +48,7 @@ public class JsonCodecTest {
 
     @Test
     public void testHello() throws Exception {
-        SchemaBuilder builder = new SchemaBuilder();
-        Schema schema = builder.build(Hello.class);
+        Schema schema = new SchemaBuilder().build(Hello.class);
         MsgCodec codec = new JsonCodec(schema, false);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Hello msg = new Hello("Hello world!");
@@ -65,6 +64,30 @@ public class JsonCodecTest {
         msg2 = codec.decode(in);
         assertEquals(msg, msg2);
     }
+
+    @Test
+    public void testStaticHello() throws Exception {
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        JsonCodec codec = new JsonCodec(schema, false);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Hello msg = new Hello("Hello world!");
+        codec.encodeStatic(msg, out);
+        codec.encodeStatic(msg, System.out);
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        Object msg2 = codec.decodeStatic("Hello", in);
+        assertEquals(msg, msg2);
+
+        in = new ByteArrayInputStream(out.toByteArray());
+        msg2 = codec.decodeStatic(Hello.class, in);
+        assertEquals(msg, msg2);
+
+        in = new ByteArrayInputStream(
+                "{\"greeting\":\"Hello world!\"}".getBytes(Charset.forName("UTF8")));
+        msg2 = codec.decodeStatic("Hello", in);
+        assertEquals(msg, msg2);
+    }
+
 
     @Test
     public void testDecodeHelloTypeOutOfOrder() throws Exception {
