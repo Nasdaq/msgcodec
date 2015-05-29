@@ -1450,7 +1450,7 @@ class BaseByteCodeGenerator {
                 // null
                 mv.visitInsn(POP);
                 mv.visitInsn(ACONST_NULL);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeUInt32Null",
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeInt32Null",
                         "(Lcom/cinnober/msgcodec/io/ByteSink;Ljava/lang/Integer;)V", false);
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
@@ -1496,11 +1496,11 @@ class BaseByteCodeGenerator {
             if (!required) {
                 box(mv, int.class);
             }
-            generateEncodeUInt32Value(required, mv);
+            generateEncodeInt32Value(required, mv);
             // end
             mv.visitLabel(endLabel);
         } else if (javaClass == int.class || javaClass == Integer.class) {
-            generateEncodeUInt32Value(required, mv);
+            generateEncodeInt32Value(required, mv);
         } else {
             throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
         }
@@ -1959,7 +1959,7 @@ class BaseByteCodeGenerator {
     }
 
     /**
-     * @see #generateDecodeUInt32Value(boolean, org.objectweb.asm.MethodVisitor) 
+     * @see #generateDecodeInt32Value(boolean, org.objectweb.asm.MethodVisitor) 
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected void generateDecodeEnumValue(boolean required, MethodVisitor mv, TypeDef type,
@@ -1968,9 +1968,9 @@ class BaseByteCodeGenerator {
 
         Label endLabel = new Label();
         if (required) {
-            generateDecodeUInt32Value(true, mv);
+            generateDecodeInt32Value(true, mv);
         } else {
-            generateDecodeUInt32Value(false, mv);
+            generateDecodeInt32Value(false, mv);
             mv.visitInsn(DUP);
             Label nonNullLabel = new Label();
             mv.visitJumpInsn(IFNONNULL, nonNullLabel);
