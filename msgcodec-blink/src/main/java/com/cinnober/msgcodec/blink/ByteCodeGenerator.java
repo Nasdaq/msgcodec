@@ -1271,9 +1271,9 @@ class ByteCodeGenerator {
         } else if (javaClass == int.class || javaClass == Integer.class) {
             // PENDING: validate that the value is a correct enum value?
             if (required) {
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
             } else {
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32Null",
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32Null",
                         "(Ljava/io/OutputStream;Ljava/lang/Integer;)V", false);
             }
         } else {
@@ -1547,10 +1547,10 @@ class ByteCodeGenerator {
 
         Label endLabel = new Label();
         if (required) {
-            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32",
+            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32",
                     "(Ljava/io/InputStream;)I", false);
         } else {
-            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readUInt32Null",
+            mv.visitMethodInsn(INVOKESTATIC, blinkInput, "readInt32Null",
                     "(Ljava/io/InputStream;)Ljava/lang/Integer;", false);
             mv.visitInsn(DUP);
             Label nonNullLabel = new Label();
