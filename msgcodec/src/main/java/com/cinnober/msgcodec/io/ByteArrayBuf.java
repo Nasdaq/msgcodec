@@ -45,6 +45,7 @@ public class ByteArrayBuf implements ByteBuf {
      */
     public ByteArrayBuf(byte[] data) {
         this.data = Objects.requireNonNull(data);
+        this.limit = data.length;
     }
 
     /**
@@ -144,22 +145,36 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public void write(int b) throws IOException {
+        if (pos >= limit) {
+            throw new IOException("Insufficient space");
+        }
         data[pos++] = (byte) b;
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
+        if (pos + len > limit) {
+            throw new IOException("Insufficient space");
+        }
         System.arraycopy(b, off, data, pos, len);
         pos += len;
     }
 
     @Override
     public void shift(int position, int length, int distance) {
+        if (position + distance < 0) {
+            throw new IllegalArgumentException("Cannot shift left beyond 0");
+        } else if (position + distance + length > limit) {
+            throw new IllegalArgumentException("Cannot shift right beyond limit");
+        }
         System.arraycopy(data, position, data, position+distance, length);
     }
 
     @Override
     public void writeIntLE(int v) throws IOException {
+        if (pos + 4 > limit) {
+            throw new IOException("Insufficient space");
+        }
         data[pos] = (byte) v;
         data[pos+1] = (byte) (v >> 8);
         data[pos+2] = (byte) (v >> 16);
@@ -169,6 +184,9 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public void writeLongLE(long v) throws IOException {
+        if (pos + 8 > limit) {
+            throw new IOException("Insufficient space");
+        }
         data[pos] = (byte) v;
         data[pos+1] = (byte) (v >> 8);
         data[pos+2] = (byte) (v >> 16);
