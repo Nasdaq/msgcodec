@@ -29,7 +29,6 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
 /**
- *
  * An output stream backed by a ByteBuffer.
  *
  * A write will advance the position of the underlying buffer until it reaches the limit,

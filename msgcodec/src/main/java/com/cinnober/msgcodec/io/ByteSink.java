@@ -27,23 +27,45 @@ package com.cinnober.msgcodec.io;
 import java.io.IOException;
 
 /**
- * TODO: javadoc
+ * A byte sink to write data to.
  *
  * @author mikael.brannstrom
  */
 public interface ByteSink {
+    /**
+     * Write a byte.
+     * @param b the byte to write.
+     * @throws IOException if data could not be written.
+     */
     void write(int b) throws IOException;
 
+    /**
+     * Write bytes from a byte array.
+     * @param b the byte array to write from, not null.
+     * @param off the offset in the byte array.
+     * @param len the number of bytes to write.
+     * @throws IOException if data could not be written.
+     */
     default void write(byte[] b, int off, int len) throws IOException {
         for (int i=off; i<len; i++) {
             write(b[i]);
         }
     }
 
+    /**
+     * Write bytes from a byte array.
+     * @param b the byte array to write from, not null.
+     * @throws IOException if data could not be written.
+     */
     default void write(byte[] b) throws IOException {
         write(b, 0, b.length);
     }
 
+    /**
+     * Write a 4-byte integer, little endian.
+     * @param v the integer value.
+     * @throws IOException if data could not be written.
+     */
     default void writeIntLE(int v) throws IOException {
         write(v);
         write(v >> 8);
@@ -51,6 +73,11 @@ public interface ByteSink {
         write(v >> 24);
     }
 
+    /**
+     * Write an 8-byte long, little endian.
+     * @param v the long value.
+     * @throws IOException if data could not be written.
+     */
     default void writeLongLE(long v) throws IOException {
         write((int) v);
         write((int) (v >> 8));
@@ -62,6 +89,11 @@ public interface ByteSink {
         write((int) (v >> 56));
     }
 
+    /**
+     * Write zero bytes.
+     * @param n the number of zero bytes to write.
+     * @throws IOException if data could not be written.
+     */
     default void pad(int n) throws IOException {
         for (int i=0; i<n; i++) {
             write(0);

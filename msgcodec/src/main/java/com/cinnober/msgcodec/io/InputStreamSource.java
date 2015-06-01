@@ -21,17 +21,22 @@ package com.cinnober.msgcodec.io;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
- * TODO: javadoc
+ * A byte source wrapper for an input stream.
  * @author mikael.brannstrom
  */
 public class InputStreamSource implements ByteSource {
 
     private final InputStream in;
 
+    /**
+     * Create a new input stream source.
+     * @param in the wrapped input stream to read from, not null.
+     */
     public InputStreamSource(InputStream in) {
-        this.in = in;
+        this.in = Objects.requireNonNull(in);
     }
 
     @Override

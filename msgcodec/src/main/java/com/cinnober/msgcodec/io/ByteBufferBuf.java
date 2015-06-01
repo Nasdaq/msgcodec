@@ -24,18 +24,27 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * TODO: javadoc
- * TODO: limit checks
+ * A ByteBuf backed by a ByteBuffer.
+ * Changes to the underlying byte buffer are reflected in the byte buf, and vice versa, including position and limit.
+ * 
  * @author mikael.brannstrom
  */
 public class ByteBufferBuf implements ByteBuf {
 
     private final ByteBuffer buf;
 
+    /**
+     * Create a new byte buffer buf.
+     * @param buf the wrapped byte buffer, not null.
+     */
     public ByteBufferBuf(ByteBuffer buf) {
         this.buf = buf;
     }
 
+    /**
+     * Returns the underlying byte buffer.
+     * @return the underlying byte buffer, not null.
+     */
     public ByteBuffer buffer() {
         return buf;
     }

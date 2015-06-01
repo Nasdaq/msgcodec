@@ -19,16 +19,62 @@
 package com.cinnober.msgcodec.io;
 
 /**
- * TODO: javadoc
+ * A byte buffer.
+ *
+ * ByteBuf has the same semantics as {@link java.nio.ByteBuffer}.
+ * 
  * @author mikael.brannstrom
  */
 public interface ByteBuf extends ByteSource, ByteSink {
+    /**
+     * Return the position.
+     * @return the position.
+     */
     int position();
+    
+    /**
+     * Set the position.
+     * @param position the new position.
+     * @return this ByteBuf.
+     */
     ByteBuf position(int position);
+
+    /**
+     * Return the limit.
+     * @return the limit.
+     */
     int limit();
-    int capacity();
+
+    /**
+     * Set the limit.
+     * @param limit the new limit.
+     * @return this ByteBuf.
+     */
     ByteBuf limit(int limit);
+
+    /**
+     * Returns the capacity.
+     * @return the capacity.
+     */
+    int capacity();
+
+    /**
+     * Set position to zero and limit to capacity.
+     * @return this ByteBuf.
+     */
     ByteBuf clear();
+
+    /**
+     * Set position to zero, and limit to previous position value.
+     * @return this ByteBuf.
+     */
     ByteBuf flip();
+
+    /**
+     * Shift the bytes in this buffer.
+     * @param position the position in this buffer
+     * @param length the number of bytes
+     * @param distance the distance to move the data. A positive number shifts right, a negative number shifts left.
+     */
     void shift(int position, int length, int distance);
 }

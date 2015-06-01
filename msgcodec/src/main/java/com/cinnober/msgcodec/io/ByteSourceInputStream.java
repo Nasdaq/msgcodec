@@ -20,32 +20,53 @@ package com.cinnober.msgcodec.io;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 
 /**
- * TODO: javadoc
+ * An input stream wrapper for a byte source.
  * @author mikael.brannstrom
  */
 public class ByteSourceInputStream extends InputStream {
     private final ByteSource src;
 
+    /**
+     * Create a new byte source input stream.
+     * @param src the wrapped byte source to read from, not null.s
+     */
     public ByteSourceInputStream(ByteSource src) {
-        this.src = src;
+        this.src = Objects.requireNonNull(src);
     }
 
-    // TODO: javadoc, never returns -1, throws EOF instead
+    /**
+     * Read a byte.
+     * @return the byte read. Never returns -1. EOF is instead signaled with an {@link java.io.EOFException}.
+     * @throws IOException if data could not be read, including reaching EOF.
+     */
     @Override
     public int read() throws IOException {
         return src.read();
     }
 
-    // TODO: javadoc, always returns len
+    /**
+     * Read data into the byte array.
+     * @param b the byte array, not null.
+     * @param off the offset in the byte array
+     * @param len the number of bytes to read
+     * @return the number of bytes read, which is always equals to <code>len</code>.
+     * @throws IOException if data could not be read.
+     */
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         src.read(b, off, len);
         return len;
     }
 
-    // TODO: javadoc, always returns len
+    /**
+     * Read data into the byte array.
+     * @param b the byte array, not null.
+     * @return the number of bytes read, which is always equals to <code>b.length</code>.
+     * @throws IOException if data could not be read.
+     */
     @Override
     public int read(byte[] b) throws IOException {
         src.read(b);

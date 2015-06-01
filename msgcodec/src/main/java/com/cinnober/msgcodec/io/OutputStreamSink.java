@@ -20,16 +20,21 @@ package com.cinnober.msgcodec.io;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Objects;
 
 /**
- * TODO: javadoc
+ * A byte sink wrapper for an output stream.
  * @author mikael.brannstrom
  */
 public class OutputStreamSink implements ByteSink {
     private final OutputStream out;
 
+    /**
+     * Create a new output stream sink.
+     * @param out the wrapped output stream to write to, not null.
+     */
     public OutputStreamSink(OutputStream out) {
-        this.out = out;
+        this.out = Objects.requireNonNull(out);
     }
 
     @Override

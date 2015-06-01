@@ -19,24 +19,50 @@
 package com.cinnober.msgcodec.io;
 
 import java.io.IOException;
+import java.util.Objects;
 
 /**
- * TODO: javadoc
- * TODO: limit checks
- * @author mikael.brannstrom
+ * A ByteBuf backed by a byte array.
  */
+// TODO: limit checks
 public class ByteArrayBuf implements ByteBuf {
 
     private final byte[] data;
     private int pos;
     private int limit;
 
-    public ByteArrayBuf(byte[] data) {
-        this.data = data;
+    /**
+     * Create a new byte array buffer.
+     * @param size the size of the buffer in bytes.
+     */
+    public ByteArrayBuf(int size) {
+        this(new byte[size]);
     }
 
+    /**
+     * Create a new byte array buffer.
+     * @param data the byte array, not null.
+     */
+    public ByteArrayBuf(byte[] data) {
+        this.data = Objects.requireNonNull(data);
+    }
+
+    /**
+     * Returns the underlying byte array.
+     * @return the underlying byte array, not null.
+     */
     public byte[] array() {
         return data;
+    }
+
+    /**
+     * Copy the content of this buffer to the specified byte sink.
+     * The data between position and limit are copied.
+     * @param out the byte sink to write to, not null.
+     * @throws IOException if data cannot be written to the byte sink.
+     */
+    public void copyTo(ByteSink out) throws IOException {
+        out.write(data, pos, limit-pos);
     }
 
     @Override
@@ -130,10 +156,6 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void shift(int position, int length, int distance) {
         System.arraycopy(data, position, data, position+distance, length);
-    }
-
-    public void copyTo(ByteSink out) throws IOException {
-        out.write(data, pos, limit-pos);
     }
 
     @Override
