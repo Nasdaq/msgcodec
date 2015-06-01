@@ -1265,7 +1265,7 @@ class ByteCodeGenerator {
 
             // write
             mv.visitLabel(writeLabel);
-            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeUInt32", "(Ljava/io/OutputStream;I)V", false);
+            mv.visitMethodInsn(INVOKESTATIC, blinkOutput, "writeInt32", "(Ljava/io/OutputStream;I)V", false);
             // end
             mv.visitLabel(endLabel);
         } else if (javaClass == int.class || javaClass == Integer.class) {
