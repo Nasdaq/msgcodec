@@ -147,7 +147,7 @@ public class FieldDef implements Annotatable<FieldDef> {
 
     /** Returns the field accessor.
      *
-     * @return the field accessor, not null.
+     * @return the field accessor, or null if not bound.
      */
     public Accessor<?, ?> getAccessor() {
         return binding != null ? binding.getAccessor() : null;
@@ -155,7 +155,7 @@ public class FieldDef implements Annotatable<FieldDef> {
 
     /** Returns the Java class of this field.
      *
-     * @return the Java class, not null.
+     * @return the Java class, or null if not bound.
      */
     public Class<?> getJavaClass() {
         return binding != null ? binding.getJavaClass() : null;
@@ -163,7 +163,7 @@ public class FieldDef implements Annotatable<FieldDef> {
 
     /** Returns the component Java class of this field, for sequence fields.
      *
-     * @return the Java class of the sequence component, or null if not a sequence field.
+     * @return the Java class of the sequence component, or null if not a sequence field or not bound.
      */
     public Class<?> getComponentJavaClass() {
         return binding != null ? binding.getComponentJavaClass() : null;
