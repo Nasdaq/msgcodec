@@ -23,6 +23,7 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
@@ -32,8 +33,18 @@ import com.cinnober.msgcodec.io.ByteBufferBuf;
 import com.cinnober.msgcodec.io.ByteBuffers;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.*;
-import org.openjdk.jmh.annotations.*;
+import java.util.concurrent.TimeUnit;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.BenchmarkMode;
+import org.openjdk.jmh.annotations.Fork;
+import org.openjdk.jmh.annotations.Measurement;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.OutputTimeUnit;
+import org.openjdk.jmh.annotations.Param;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.Warmup;
 
 
 @BenchmarkMode(Mode.AverageTime)
@@ -42,7 +53,7 @@ import org.openjdk.jmh.annotations.*;
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
 @State(Scope.Benchmark)
-public class BenchmarkOuch42EnterOrder {
+public class BenchmarkOuch42EnterOrderGroup {
 
     public static enum BufferType {
         ARRAY,
@@ -53,19 +64,20 @@ public class BenchmarkOuch42EnterOrder {
     @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
     public BufferType bufType;
 
-    private Ouch42EnterOrder msg;
+    private Schema schema;
+    private Group msg;
     private BlinkCodec codec;
     private int encodedSize;
 
     private ByteBuf buf;
 
-    public BenchmarkOuch42EnterOrder() {
+    public BenchmarkOuch42EnterOrderGroup() {
     }
 
     @Setup
     public void setup() throws IOException {
-        Schema dict = new SchemaBuilder(true).build(Ouch42EnterOrder.class);
-        BlinkCodecFactory factory = new BlinkCodecFactory(dict);
+        schema = Group.bind(new SchemaBuilder(true).build(Ouch42EnterOrder.class));
+        BlinkCodecFactory factory = new BlinkCodecFactory(schema);
         codec = factory.createCodec();
         final int bufferSize = 1024;
         switch (bufType) {
@@ -93,22 +105,22 @@ public class BenchmarkOuch42EnterOrder {
         }
     }
 
-    public static Ouch42EnterOrder createOuch42EnterOrder() {
-        Ouch42EnterOrder msg = new Ouch42EnterOrder();
-        msg.token = "qwerty1234";
-        msg.buySell = 'B';
-        msg.shares = 100;
-        msg.stock = "CINN";
-        msg.price = 10000;
-        msg.timeInForce = 99998; // market hours
-        msg.firm = "AVA";
-        msg.display = 'O';
-        msg.capacity = 'O';
-        msg.intermarketSweep = 'N';
-        msg.minimumQuantity = 1;
-        msg.crossType = 'N';
-        msg.customerType = 'R';
-        return msg;
+    public Group createOuch42EnterOrder() {
+        Group g = new Group(schema, "EnterOrder");
+        g.set("token","qwerty1234");
+        g.set("buySell",(byte)'B');
+        g.set("shares",100);
+        g.set("stock","CINN");
+        g.set("price",10000);
+        g.set("timeInForce",99998); // market hours
+        g.set("firm","AVA");
+        g.set("display",(byte)'O');
+        g.set("capacity",(byte)'O');
+        g.set("intermarketSweep",(byte)'N');
+        g.set("minimumQuantity",1);
+        g.set("crossType",(byte)'N');
+        g.set("customerType",(byte)'R');
+        return g;
     }
 
     @Benchmark
