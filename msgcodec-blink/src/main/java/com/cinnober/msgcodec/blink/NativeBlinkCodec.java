@@ -42,11 +42,25 @@ import java.util.logging.Logger;
 
 /**
  * The Blink codec can serialize and deserialize Java objects according to
- * the Blink compact binary encoding format.
+ * the Blink native binary encoding format.
+ *
+ * <p><b>Note: Experimental support!</b> E.g. variable length data is not supported for now.
  *
  * Null values are supported in encode and decode.
  *
- * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta2.pdf">Blink Specification beta2 - 2013-02-05.</a>
+ * <p>See the <a href="http://blinkprotocol.org/s/BlinkNativeSpec-beta4.pdf">
+ * Blink Native Binary Format Specification beta4 - 2013-06-05.</a>
+ *
+ * <p>This implementation differs from the specification above in the following ways:
+ * <ul>
+ * <li>The <code>fixed</code> (binary) type is not supported.
+ * <li>Message extensions are ignored.
+ * <li>The type identifier only uses the lower 32 bits of the 64 bit in the wire format.
+ * <li>Support for bigInt is added, encoded as a binary with the integer in little endian.
+ * Stored in the data area.
+ * <li>Support for bigDecimal is added, encoded as int32 exponent followed by a bigInt mantissa.
+ * Stored in the data area.
+ * </ul>
  *
  * @author mikael.brannstrom
  * @see BlinkCodecFactory

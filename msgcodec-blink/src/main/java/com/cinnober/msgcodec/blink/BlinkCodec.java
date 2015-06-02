@@ -45,7 +45,16 @@ import java.util.logging.Logger;
  *
  * Null values are supported in encode and decode.
  *
- * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta2.pdf">Blink Specification beta2 - 2013-02-05.</a>
+ * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta4.pdf">Blink Specification beta4 - 2013-06-05.</a>
+ *
+ * <p>This implementation differs from the specification above in the following ways:
+ * <ul>
+ * <li>The <code>fixed</code> (binary) type is not supported.
+ * <li>Message extensions are ignored.
+ * <li>The type identifier is encodec as uInt32 instead of uInt64, however the same wire format (VLC).
+ * <li>Support for bigInt is added, encoded as VLC integers.
+ * <li>Support for bigDecimal is added, encoded as int32 exponent followed by a bigInt mantissa.
+ * </ul>
  *
  * @author mikael.brannstrom
  * @see BlinkCodecFactory

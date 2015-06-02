@@ -32,7 +32,7 @@ import com.cinnober.msgcodec.util.Pool;
 import java.util.Objects;
 
 /**
- * Factory for BlinkCodec.
+ * Factory for NativeBlinkCodec.
  * 
  * @author mikael.brannstrom
  */
