@@ -1256,7 +1256,6 @@ class BaseByteCodeGenerator {
         }
     }
 
-    // TODO: not reusable
     protected void generateEncodeSequenceValue(
             Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required,
             int outputStreamVar,
@@ -2097,7 +2096,6 @@ class BaseByteCodeGenerator {
         }
     }
 
-    // TODO: not reusable?
     protected void generateDecodeSequenceValue(
             Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv,
             Class<?> componentJavaClass, int byteSourceVar, TypeDef type, Schema schema,

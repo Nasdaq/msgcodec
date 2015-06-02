@@ -24,42 +24,15 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.Accessor;
-import com.cinnober.msgcodec.ConstructorFactory;
-import com.cinnober.msgcodec.EnumSymbols;
-import com.cinnober.msgcodec.Factory;
-import com.cinnober.msgcodec.FieldAccessor;
-import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.IgnoreAccessor;
-import com.cinnober.msgcodec.JavaClassGroupTypeAccessor;
 import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.SchemaBinding;
 import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Symbol;
-import com.cinnober.msgcodec.io.ByteArrays;
-import com.cinnober.msgcodec.io.ByteSink;
-import com.cinnober.msgcodec.io.ByteSource;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 /**
  *
