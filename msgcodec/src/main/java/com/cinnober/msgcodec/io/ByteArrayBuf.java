@@ -94,7 +94,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public ByteArrayBuf clear() {
         pos = 0;
-        limit = 0;
+        limit = data.length;
         return this;
     }
 
