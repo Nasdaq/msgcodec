@@ -131,10 +131,19 @@ public class SchemaBinder {
                 case BOTH:
                     throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
                 case INBOUND:
+                {
                     // TODO: attempt to narrow the binding, e.g. int64 in src and int32 in dst
                     // narrow can also mean having more enum symbols in src than in dst
-                    throw new IncompatibleSchemaException("Source type not eq or wider" +
-                            details(dstGroup, dstField, dir));
+                    Accessor narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dstType);
+                    if (narrowAccessor == null) {
+                        throw new IncompatibleSchemaException("Source type not eq or wider" +
+                                details(dstGroup, dstField, dir));
+                    }
+                    return dstField.bind(new FieldBinding(
+                            narrowAccessor,
+                            dstType.getDefaultJavaType(),
+                            dstType.getDefaultJavaComponentType()));
+                }
                 case OUTBOUND:
                     // TODO: attempt to widen the binding, e.g. int32 in src and int64 in dst
                     // widening can also mean having more enum symbols in dst than in src
@@ -144,6 +153,112 @@ public class SchemaBinder {
                     throw new RuntimeException("Unhandled case: " + dir);
             }
         }
+    }
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private Accessor narrowAccessor(Accessor accessor, TypeDef srcType, TypeDef dstType) {
+        switch (srcType.getType()) {
+            case INT64:
+            case UINT64:
+                switch (dstType.getType()) {
+                    case INT32:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::longToInt, SchemaBinder::intToLong);
+                    case UINT32:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::longToInt, SchemaBinder::uIntToLong);
+                    case INT16:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::longToShort, SchemaBinder::shortToLong);
+                    case UINT16:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::longToShort, SchemaBinder::uShortToLong);
+                    case INT8:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::longToByte, SchemaBinder::byteToLong);
+                    case UINT8:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::longToByte, SchemaBinder::uByteToLong);
+                    default:
+                        return null;
+                }
+            case INT32:
+            case UINT32:
+                switch (dstType.getType()) {
+                    case INT16:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::intToShort, SchemaBinder::shortToInt);
+                    case UINT16:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::intToShort, SchemaBinder::uShortToInt);
+                    case INT8:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::intToByte, SchemaBinder::byteToInt);
+                    case UINT8:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::intToByte, SchemaBinder::uByteToInt);
+                    default:
+                        return null;
+                }
+            case INT16:
+            case UINT16:
+                switch (dstType.getType()) {
+                    case INT8:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::shortToByte, SchemaBinder::byteToShort);
+                    case UINT8:
+                        return new ConverterAccessor<>(accessor, SchemaBinder::shortToByte, SchemaBinder::uByteToShort);
+                    default:
+                        return null;
+                }
+            // TODO: enum, float, etc
+            default:
+                return null;
+        }
+    }
+    
+    private static Integer longToInt(Long v) {
+        return v.intValue();
+    }
+    private static Short longToShort(Long v) {
+        return v.shortValue();
+    }
+    private static Byte longToByte(Long v) {
+        return v.byteValue();
+    }
+    private static Short intToShort(Integer v) {
+        return v.shortValue();
+    }
+    private static Byte intToByte(Integer v) {
+        return v.byteValue();
+    }
+    private static Byte shortToByte(Short v) {
+        return v.byteValue();
+    }
+    private static Short byteToShort(Byte v) {
+        return v.shortValue();
+    }
+    private static Integer byteToInt(Byte v) {
+        return v.intValue();
+    }
+    private static Long byteToLong(Byte v) {
+        return v.longValue();
+    }
+    private static Integer shortToInt(Short v) {
+        return v.intValue();
+    }
+    private static Long shortToLong(Short v) {
+        return v.longValue();
+    }
+    private static Long intToLong(Integer v) {
+        return v.longValue();
+    }
+    private static Short uByteToShort(Byte v) {
+        return (short)(v & 0xff);
+    }
+    private static Integer uByteToInt(Byte v) {
+        return v & 0xff;
+    }
+    private static Long uByteToLong(Byte v) {
+        return v & 0xffL;
+    }
+    private static Integer uShortToInt(Short v) {
+        return v & 0xffff;
+    }
+    private static Long uShortToLong(Short v) {
+        return v & 0xffffL;
+    }
+    private static Long uIntToLong(Integer v) {
+        return v & 0xffffffffL;
     }
 
     private static String details(GroupDef group, FieldDef field, Direction dir) {
@@ -178,6 +293,25 @@ public class SchemaBinder {
         @Override
         public String toString() {
             return s;
+        }
+    }
+
+    private static class ConverterAccessor<T,S,D> implements Accessor<T,D> {
+        private final Accessor<T,S> accessor;
+        private final Function<S,D> srcToDstFn;
+        private final Function<D,S> dstToSrcFn;
+        ConverterAccessor(Accessor<T,S> accessor, Function<S,D> srcToDstFn, Function<D,S> dstToSrcFn) {
+            this.accessor = accessor;
+            this.srcToDstFn = srcToDstFn;
+            this.dstToSrcFn = dstToSrcFn;
+        }
+        @Override
+        public D getValue(T obj) {
+            return srcToDstFn.apply(accessor.getValue(obj));
+        }
+        @Override
+        public void setValue(T obj, D value) {
+            accessor.setValue(obj, dstToSrcFn.apply(value));
         }
     }
 }
