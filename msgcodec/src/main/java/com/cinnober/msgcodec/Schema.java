@@ -500,12 +500,13 @@ public class Schema implements Annotatable<Schema> {
 
     /**
      * Returns a human readable string representation of this schema.
+     * @see SchemaParser
      */
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
         for (Map.Entry<String, String> annotation : annotations.entrySet()) {
-            str.append("schema <- ").append(Annotations.toString(annotation.getKey(), annotation.getValue()));
+            str.append(". <- ").append(Annotations.toString(annotation.getKey(), annotation.getValue()));
             str.append("\n");
         }
 
