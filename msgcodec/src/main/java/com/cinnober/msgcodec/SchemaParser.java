@@ -485,6 +485,15 @@ public class SchemaParser {
         }
     }
 
+    /**
+     * Parse schema from string.
+     * This is a shorthand for
+     * <code>new SchemaParser(new StringReader(s)).parse()</code>.
+     * 
+     * @param s the string to parse, not null.
+     * @return the parsed schema, not null.
+     * @throws IOException if the schema could not be parsed.
+     */
     public static Schema parse(String s) throws IOException {
         return new SchemaParser(new StringReader(s)).parse();
     }
