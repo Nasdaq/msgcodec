@@ -103,10 +103,12 @@ public class Group {
      * Set the value for the specified field.
      * @param fieldName the field name, not null.
      * @param value the field value (including null).
+     * @return this group instance, for chaining.
      * @throws IllegalArgumentException if the field name does not exist.
      */
-    public void set(String fieldName, Object value) throws IllegalArgumentException {
+    public Group set(String fieldName, Object value) throws IllegalArgumentException {
         fieldValues[groupInfo.getFieldIndex(fieldName)] = value;
+        return this;
     }
     private Object get(int fieldIndex) {
         return fieldValues[fieldIndex];
