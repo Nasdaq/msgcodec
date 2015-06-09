@@ -23,30 +23,31 @@
  */
 package com.cinnober.msgcodec.xml;
 
-import org.junit.runners.model.InitializationError;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
-import com.cinnober.msgcodec.MsgCodec;
-import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
-import com.cinnober.msgcodec.test.messages.TestProtocol;
-import javax.xml.parsers.ParserConfigurationException;
-import org.xml.sax.SAXException;
+
 
 /**
  * @author mikael.brannstrom
  *
  */
-public class XmlTestMessagesSuiteImpl extends TestMessagesSuite {
+class XmlBinaryFormat implements XmlFormat<byte[]> {
 
-    public XmlTestMessagesSuiteImpl(Class<?> rootClass)
-            throws InitializationError {
-        super(rootClass, createCodec());
+    public static final XmlBinaryFormat BINARY = new XmlBinaryFormat();
+
+    private final Encoder encoder = Base64.getEncoder();
+    private final Decoder decoder = Base64.getDecoder();
+
+    @Override
+    public String format(byte[] value) {
+        return encoder.encodeToString(value);
     }
 
-    private static MsgCodec createCodec() {
-        try {
-            return new XmlCodec(TestProtocol.getSchema());
-        } catch (ParserConfigurationException | SAXException ex) {
-            throw new RuntimeException(ex);
-        }
+    @Override
+    public byte[] parse(String str) throws FormatException {
+        return decoder.decode(str);
     }
+
 }

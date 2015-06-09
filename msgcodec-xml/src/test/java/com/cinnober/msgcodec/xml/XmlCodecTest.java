@@ -35,6 +35,7 @@ import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Required;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -131,6 +132,29 @@ public class XmlCodecTest {
         System.out.println("Message: " + msg);
 
         codec.encode(msg, System.out);
+    }
+
+    @Test(expected = DecodeException.class)
+    public void testDecodeHelloMissingField() throws Exception {
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        Annotations annot = new Annotations();
+        annot.path("Hello", "greeting").put("xml:field", "element");
+        schema = schema.replaceAnnotations(annot);
+
+        MsgCodec codec = new XmlCodec(schema);
+
+        Hello msg = (Hello) codec.decode(new ByteArrayInputStream("<hello/>".getBytes("UTF-8")));
+    }
+    @Test(expected = IllegalArgumentException.class)
+    public void testEncodeHelloMissingField() throws Exception {
+        Schema schema = new SchemaBuilder().build(Hello.class);
+        Annotations annot = new Annotations();
+        annot.path("Hello", "greeting").put("xml:field", "element");
+        schema = schema.replaceAnnotations(annot);
+
+        MsgCodec codec = new XmlCodec(schema);
+
+        codec.encode(new Hello(), new ByteArrayOutputStream());
     }
 
     @Test(expected = DecodeException.class)

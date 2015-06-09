@@ -23,6 +23,7 @@
  */
 package com.cinnober.msgcodec.xml;
 
+import java.util.BitSet;
 import java.util.Stack;
 
 /**
@@ -31,9 +32,28 @@ import java.util.Stack;
  */
 class XmlContext {
     private final Stack<Object> context = new Stack<>();
+    private final Stack<BitSet> requiredFields = new Stack<>();
 
     public void pushValue(Object value) {
         context.push(value);
+    }
+    public BitSet pushRequiredFields(int numRequiredFields) {
+        BitSet bits = new BitSet(numRequiredFields);
+        bits.set(0, numRequiredFields);
+        requiredFields.push(bits);
+        return bits;
+    }
+
+    public void clearRequiredFieldSlot(int requiredFieldSlot) {
+        peekRequiredFields().clear(requiredFieldSlot);
+    }
+
+    public BitSet peekRequiredFields() {
+        return requiredFields.peek();
+    }
+
+    public BitSet popRequiredFields() {
+        return requiredFields.pop();
     }
 
     public Object popValue() {
@@ -46,6 +66,7 @@ class XmlContext {
 
     public void clear() {
         context.clear();
+        requiredFields.clear();
     }
 
     @Override
