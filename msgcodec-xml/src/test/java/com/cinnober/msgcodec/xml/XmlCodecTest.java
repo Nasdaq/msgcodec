@@ -27,11 +27,16 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.Annotations;
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Required;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * @author mikael.brannstrom
@@ -128,6 +133,17 @@ public class XmlCodecTest {
         codec.encode(msg, System.out);
     }
 
+    @Test(expected = DecodeException.class)
+    public void testFailDecodeAbstractMessage() throws Exception {
+        Schema schema = new SchemaBuilder().build(AbstractMessage.class);
+        XmlCodec codec = new XmlCodec(schema);
+
+        String xml = "<AbstractMessage/>";
+        ByteArrayInputStream in = new ByteArrayInputStream(xml.getBytes(Charset.forName("UTF8")));
+        codec.decode(in);
+    }
+
+
     public static class Hello {
         @Required
         private String greeting;
@@ -183,8 +199,9 @@ public class XmlCodecTest {
             return "MyMessage [person1=" + person1 + ", person2=" + person2
                     + "]";
         }
+    }
 
-
+    public static abstract class AbstractMessage extends MsgObject {
     }
 
 }

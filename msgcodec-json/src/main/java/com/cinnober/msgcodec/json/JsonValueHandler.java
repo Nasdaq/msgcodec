@@ -42,6 +42,7 @@ import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
+import com.cinnober.msgcodec.ObjectInstantiationException;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.util.TimeFormat;
@@ -918,7 +919,12 @@ public abstract class JsonValueHandler<T> {
 
         @Override
         public Object readValue(JsonParser p) throws IOException {
-            Object group = factory.newInstance();
+            Object group;
+            try {
+                group = factory.newInstance();
+            } catch (ObjectInstantiationException e) {
+                throw new DecodeException(e);
+            }
             readValue(group, p);
             return group;
         }

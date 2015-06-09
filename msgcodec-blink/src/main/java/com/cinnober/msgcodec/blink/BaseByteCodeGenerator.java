@@ -42,6 +42,7 @@ import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
@@ -2181,8 +2182,12 @@ class BaseByteCodeGenerator {
     }
 
     public static boolean isPublicConstructorFactory(Factory<?> factory) {
-        return factory.getClass() == ConstructorFactory.class &&
-                Modifier.isPublic(((ConstructorFactory)factory).getConstructor().getModifiers());
+        if (factory.getClass() != ConstructorFactory.class) {
+            return false;
+        }
+        Constructor<?> constructor = ((ConstructorFactory)factory).getConstructor();
+        return Modifier.isPublic(constructor.getModifiers()) &&
+                !Modifier.isAbstract(constructor.getDeclaringClass().getModifiers());
     }
 
     public static void generateArrayStore(MethodVisitor mv, Class<?> componentJavaClass) {

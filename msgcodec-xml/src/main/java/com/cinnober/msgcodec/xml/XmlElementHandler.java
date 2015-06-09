@@ -30,10 +30,13 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
+import com.cinnober.msgcodec.ObjectInstantiationException;
 import java.util.List;
+import org.xml.sax.SAXException;
 
 /**
  * @author mikael.brannstrom
@@ -57,16 +60,16 @@ class XmlElementHandler {
         return nsName;
     }
 
-    public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) {
+    public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) throws SAXException {
     }
-    public void endElement(XmlContext ctx, String text) {
+    public void endElement(XmlContext ctx, String text) throws SAXException {
     }
-    public XmlElementHandler lookupElement(XmlContext ctx, NsName nsName) {
+    public XmlElementHandler lookupElement(XmlContext ctx, NsName nsName) throws SAXException {
         return null;
     }
-    public void startChildElement(XmlContext ctx, XmlElementHandler element) {
+    public void startChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
     }
-    public void endChildElement(XmlContext ctx, XmlElementHandler element) {
+    public void endChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
     }
     protected void appendElementName(PrintWriter writer, NsName elementName) {
         writer.append(elementName.getName()); // TODO: check special chars, namespace etc
@@ -92,7 +95,7 @@ class XmlElementHandler {
 
         @SuppressWarnings("unchecked")
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             Object value = ctx.popValue();
             Object group = ctx.peekValue();
             accessor.setValue(group, value);
@@ -175,8 +178,11 @@ class XmlElementHandler {
         }
 
         @Override
-        public void startElement(XmlContext ctx, NsName name,
-                Map<NsName, String> attributes) {
+        public void startElement(
+                XmlContext ctx,
+                NsName name,
+                Map<NsName, String> attributes) throws SAXException {
+            
             ctx.pushValue(factory.newInstance());
             for (Map.Entry<NsName, String> attribute : attributes.entrySet()) {
                 SimpleField field = attributeFields.get(attribute.getKey());
@@ -336,7 +342,7 @@ class XmlElementHandler {
             this.format = format;
         }
 
-        public void handleAttribute(XmlContext ctx, NsName attribute, String text) {
+        public void handleAttribute(XmlContext ctx, NsName attribute, String text) throws SAXException {
             startElement(ctx, attribute, null);
             endElement(ctx, text);
         }
@@ -450,7 +456,7 @@ class XmlElementHandler {
 
         @SuppressWarnings("rawtypes")
         @Override
-        public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) {
+        public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) throws SAXException {
             super.startElement(ctx, nsName, attributes);
             ctx.pushValue(new ArrayList());
         }
@@ -511,7 +517,7 @@ class XmlElementHandler {
 
         @SuppressWarnings("rawtypes")
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             // convert from list to array
             List list = (List) ctx.popValue();
             Object array = Array.newInstance(componentType, list.size());
@@ -703,25 +709,25 @@ class XmlElementHandler {
             this.valueHandler = valueHandler;
         }
         @Override
-        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) {
+        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) throws SAXException {
             super.startElement(ctx, name, attributes);
             valueHandler.startElement(ctx, name, attributes);
         }
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             valueHandler.endElement(ctx, text);
             super.endElement(ctx, text);
         }
         @Override
-        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) {
+        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) throws SAXException {
             return valueHandler.lookupElement(ctx, name);
         }
         @Override
-        public void startChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void startChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.startChildElement(ctx, element);
         }
         @Override
-        public void endChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void endChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.endChildElement(ctx, element);
         }
 
@@ -744,23 +750,23 @@ class XmlElementHandler {
             this.valueHandler = valueHandler;
         }
         @Override
-        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) {
+        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) throws SAXException {
             valueHandler.startElement(ctx, name, attributes);
         }
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             valueHandler.endElement(ctx, text);
         }
         @Override
-        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) {
+        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) throws SAXException {
             return valueHandler.lookupElement(ctx, name);
         }
         @Override
-        public void startChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void startChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.startChildElement(ctx, element);
         }
         @Override
-        public void endChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void endChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.endChildElement(ctx, element);
         }
         @Override

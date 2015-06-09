@@ -23,6 +23,7 @@
  */
 package com.cinnober.msgcodec.xml;
 
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
@@ -64,6 +65,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 /**
  * The XML codec can serialize and deserialize Java objects to/from XML.
@@ -429,7 +431,7 @@ public class XmlCodec implements MsgCodec {
             saxParser.parse(in, saxHandler);
             return saxHandler.getValue();
         } catch (SAXException e) {
-            throw new IOException(e);
+            throw new DecodeException(e);
         }
     }
 

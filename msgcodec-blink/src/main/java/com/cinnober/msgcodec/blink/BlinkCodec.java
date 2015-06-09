@@ -29,7 +29,7 @@ import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgCodecInstantiationException;
-import com.cinnober.msgcodec.util.ConcurrentBufferPool;
+import com.cinnober.msgcodec.ObjectInstantiationException;
 import com.cinnober.msgcodec.io.InputStreamSource;
 import com.cinnober.msgcodec.io.OutputStreamSink;
 import com.cinnober.msgcodec.util.Pool;
@@ -145,6 +145,8 @@ public class BlinkCodec implements MsgCodec {
                 } else if(t instanceof FieldDecodeException) {
                     str.append('.').append(((FieldDecodeException)t).getFieldName());
                     t = t.getCause();
+                } else if(t instanceof ObjectInstantiationException) {
+                    throw new DecodeException("Could not create group "+str.toString(), t);
                 } else {
                     throw new DecodeException("Could not decode field "+str.toString(), t);
                 }
