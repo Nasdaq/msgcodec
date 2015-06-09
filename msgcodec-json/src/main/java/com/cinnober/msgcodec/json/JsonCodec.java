@@ -126,13 +126,12 @@ public class JsonCodec implements MsgCodec {
         for (GroupDef groupDef : schema.getGroups()) {
             StaticGroupHandler groupInstruction = staticGroupsByGroupType.get(groupDef.getGroupType());
             Map<String, FieldHandler> fields = new LinkedHashMap<>();
+            int nextRequiredSlot = 0;
             if (groupDef.getSuperGroup() != null) {
                 StaticGroupHandler superGroupInstruction = staticGroupsByName.get(groupDef.getSuperGroup());
                 fields.putAll(superGroupInstruction.getFields());
+                nextRequiredSlot = superGroupInstruction.getNumRequiredFields();
             }
-
-            int nextRequiredSlot = 1 +
-                    fields.values().stream().mapToInt(FieldHandler::getRequiredSlot).filter(i -> i>=0).max().orElse(-1);
 
             for (FieldDef fieldDef : groupDef.getFields()) {
                 JsonValueHandler valueHandler = createValueHandler(

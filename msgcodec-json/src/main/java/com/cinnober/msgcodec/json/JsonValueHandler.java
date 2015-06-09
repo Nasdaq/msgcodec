@@ -900,6 +900,10 @@ public abstract class JsonValueHandler<T> {
             
         }
 
+        public int getNumRequiredFields() {
+            return numRequiredFields;
+        }
+        
         void writeValue(Object value, JsonGenerator g, boolean dynamic) throws IOException {
             g.writeStartObject();
             if (dynamic) {
