@@ -40,7 +40,6 @@ import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Factory;
-import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.ObjectInstantiationException;
 import com.cinnober.msgcodec.TypeDef;
@@ -113,7 +112,7 @@ public abstract class JsonValueHandler<T> {
      * @param jsSafe true if unsafe JavaScript numeric values should be encoded as strings, otherwise false.
      * @return the json value handler, not null.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, boolean jsSafe) {
         switch (type.getType()) {
         case INT8:
