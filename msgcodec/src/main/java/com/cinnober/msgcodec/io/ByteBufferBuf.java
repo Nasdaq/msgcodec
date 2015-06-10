@@ -120,6 +120,11 @@ public class ByteBufferBuf implements ByteBuf {
     }
 
     @Override
+    public void skip(int len) throws IOException {
+        buf.position(buf.position()+len);
+    }
+    
+    @Override
     public String readStringUtf8(int len) throws IOException {
         if (buf.hasArray()) {
             final byte[] data = buf.array();
@@ -128,7 +133,7 @@ public class ByteBufferBuf implements ByteBuf {
                 boolean ascii = true;
                 int end = pos+len;
                 for (int i=pos; i<end; i++) {
-                    if(data[i] >= 0x80) {
+                    if(data[i] < 0) {
                         ascii = false;
                         break;
                     }
@@ -142,7 +147,7 @@ public class ByteBufferBuf implements ByteBuf {
                     return new String(chars);
                 }
             }
-            String s = new String(data, pos, pos+len, UTF8);
+            String s = new String(data, pos, len, UTF8);
             buf.position(buf.position()+len);
             return s;
         } else {

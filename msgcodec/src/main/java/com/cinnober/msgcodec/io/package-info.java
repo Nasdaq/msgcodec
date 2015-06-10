@@ -21,18 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.cinnober.msgcodec.util;
-
-import java.io.EOFException;
-// PENDING: remove this class?
-
 /**
- * This exception is thrown when the limit of a {@link LimitInputStream} has been reached. 
- *
- * @see LimitInputStream
- * @author mikael.brannstrom
+ * This package contains I/O related classes.
  */
-public class LimitException extends EOFException {
-    private static final long serialVersionUID = 1L;
-
-}
+package com.cinnober.msgcodec.io;

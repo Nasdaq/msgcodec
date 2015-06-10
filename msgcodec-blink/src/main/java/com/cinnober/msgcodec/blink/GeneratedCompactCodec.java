@@ -136,9 +136,8 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec {
         }
         int expectedEndPos = inbuf.position() + size;
         int groupId = BlinkInput.readUInt32(inbuf);
-        Object group;
         try {
-            group = readStaticGroup(groupId, inbuf);
+            Object group = readStaticGroup(groupId, inbuf);
             
             int skip = expectedEndPos - inbuf.position();
             if (skip < 0) {
@@ -146,6 +145,7 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec {
             } else if (skip > 0) {
                 in.skip(skip);
             }
+            return group;
         } catch (Exception e) {
             GroupDef groupDef = codec.getSchema().getGroup(groupId);
             if (groupDef != null) {
@@ -154,6 +154,5 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec {
                 throw e;
             }
         }
-        return group;
     }
 }

@@ -123,12 +123,17 @@ public class ByteArrayBuf implements ByteBuf {
     }
 
     @Override
+    public void skip(int len) throws IOException {
+        pos += len;
+    }
+
+    @Override
     public String readStringUtf8(int len) throws IOException {
         if (len < 128) {
             boolean ascii = true;
             int end = pos+len;
             for (int i=pos; i<end; i++) {
-                if(data[i] >= 0x80) {
+                if(data[i] < 0) {
                     ascii = false;
                     break;
                 }
@@ -144,7 +149,7 @@ public class ByteArrayBuf implements ByteBuf {
         }
 
 
-        String s = new String(data, pos, pos+len, UTF8);
+        String s = new String(data, pos, len, UTF8);
         pos += len;
         return s;
     }

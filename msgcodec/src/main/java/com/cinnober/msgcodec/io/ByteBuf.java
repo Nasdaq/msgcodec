@@ -83,4 +83,20 @@ public interface ByteBuf extends ByteSource, ByteSink {
      * @param distance the distance to move the data. A positive number shifts right, a negative number shifts left.
      */
     void shift(int position, int length, int distance);
+
+    /**
+     * Returns the number of elements between the current position and the limit.
+     * @return The number of elements remaining in this buffer
+     */
+    default int remaining() {
+        return limit() - position();
+    }
+
+    /**
+     * Tells whether there are any elements between the current position and the limit.
+     * @return true if, and only if, there is at least one element remaining in this buffer
+     */
+    default boolean hasRemaining() {
+        return remaining() != 0;
+    }
 }
