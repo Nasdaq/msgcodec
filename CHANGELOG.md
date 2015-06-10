@@ -7,7 +7,7 @@ Changed requirement from JDK 7 to JDK 8.
 Removed TAP format support (msgcodec-tap).
 
 ### msgcodec
-Renamed 'ProtocolDictionary' into 'Schema':
+Renamed 'ProtocolDictionary' to 'Schema':
 
  - com.cinnober.msgcodec.{ProtocolDictionary => Schema}
  - com.cinnober.msgcodec.{ProtocolDictionaryBuilder => SchemaBuilder}
@@ -43,13 +43,19 @@ Added visitor package:
 
  - com.cinnober.msgcodec.visitor
 
+Added built-in support for schema upgrades:
+
+ - com.cinnober.msgcodec.SchemaBinder
+
 Schema changes:
 
  - Added maxSize to String and Binary types. New annotation MaxSize.
  - Group type in GroupBinding is now optional (required for encoding).
+ - Message classes can now be abstract. Factory.newInstance can now throw ObjectInstantiationException.
 
 ### msgcodec-blink
 
+ - Improved performance.
  - Added experimental support for the Native Blink format.
  - Removed legacy 'instruction based' codec. The ASM-based dynamic bytecode generation codec is faster and stable.
  - Upgraded from Blink spec beta2 to beta4.
@@ -58,3 +64,4 @@ Schema changes:
 
  - Added support for JavaScript safe mode (default), where large numbers are encoded as strings.
  - The "$type" field in dynamic groups, is no longer required to be first. However, having it first is best for performance.
+ - Added support to encode/decode static groups in JsonCodec, i.e. JSON without the "$type" field.
