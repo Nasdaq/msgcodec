@@ -43,15 +43,13 @@ Added visitor package:
 
  - com.cinnober.msgcodec.visitor
 
-Added built-in support for schema upgrades:
+Schema related changes:
 
- - com.cinnober.msgcodec.SchemaBinder
-
-Schema changes:
-
- - Added maxSize to String and Binary types. New annotation MaxSize.
- - Group type in GroupBinding is now optional (required for encoding).
+ - Schema change: Added maxSize to String and Binary types. New annotation MaxSize.
+ - Schame change: Group type in GroupBinding is now optional (required for encoding).
  - Message classes can now be abstract. Factory.newInstance can now throw ObjectInstantiationException.
+ - Added SchemaBinder with support for schema upgrades.
+ - Added SchemaParser that can parse the Schema.toString format into a Schema.
 
 ### msgcodec-blink
 
