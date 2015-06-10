@@ -74,7 +74,7 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec {
             buf.skip(4); // size
             writeStaticGroupWithId(buf, group);
             int end = buf.position();
-            int size = end - start - 2;
+            int size = end - start - 4;
             buf.position(start);
             buf.writeIntLE(size);
             buf.position(end);
@@ -117,19 +117,13 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec {
     }
 
     private Object readDynamicGroup(int size, ByteSource in) throws IOException {
-        ByteBuf inbuf;
-        if (in instanceof ByteBuf) {
-            inbuf = (ByteBuf) in;
-        } else {
-            inbuf = new PositionByteSource(in);
-        }
+        ByteBuf inbuf = (ByteBuf) in;
         int expectedEndPos = inbuf.position() + size;
         // PENDING: currently msgcodec only supports int32 as group id
         int groupId = (int) NativeBlinkInput.readUInt64(inbuf);
         inbuf.skip(4); // discard extension offset (not supported)
-        Object group;
         try {
-            group = readStaticGroup(groupId, inbuf);
+            Object group = readStaticGroup(groupId, inbuf);
 
             int skip = expectedEndPos - inbuf.position();
             if (skip < 0) {
@@ -137,6 +131,7 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec {
             } else if (skip > 0) {
                 in.skip(skip);
             }
+            return group;
         } catch (Exception e) {
             GroupDef groupDef = codec.getSchema().getGroup(groupId);
             if (groupDef != null) {
@@ -145,6 +140,5 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec {
                 throw e;
             }
         }
-        return group;
     }
 }
