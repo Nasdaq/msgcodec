@@ -338,7 +338,7 @@ class BaseByteCodeGenerator {
         }
 
         ctormv.visitInsn(RETURN);
-        ctormv.visitMaxs(3, nextCtorVar); // PENDING: maxStack
+        ctormv.visitMaxs(3, nextCtorVar);
         ctormv.visitEnd();
     }
     
@@ -483,7 +483,7 @@ class BaseByteCodeGenerator {
             }
 
             // end
-            mv.visitMaxs(3, nextWriteidVar); // PENDING: maxStack
+            mv.visitMaxs(3, nextWriteidVar);
             mv.visitEnd();
         }
     }
@@ -558,7 +558,7 @@ class BaseByteCodeGenerator {
 
             // end write
             writemv.visitInsn(RETURN);
-            writemv.visitMaxs(4, nextWriteVar.get()); // PENDING: maxStack
+            writemv.visitMaxs(4, nextWriteVar.get());
             writemv.visitEnd();
         }
     }
@@ -611,7 +611,7 @@ class BaseByteCodeGenerator {
         mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unknownGroupId",
                 "(I)Lcom/cinnober/msgcodec/DecodeException;", false);
         mv.visitInsn(ATHROW);
-        mv.visitMaxs(2, nextVar); // PENDING: maxStack
+        mv.visitMaxs(2, nextVar);
         mv.visitEnd();
     }
     
@@ -660,7 +660,7 @@ class BaseByteCodeGenerator {
             // end read
             readmv.visitVarInsn(ALOAD, readInstanceVar);
             readmv.visitInsn(ARETURN);
-            readmv.visitMaxs(4, nextReadVar); // PENDING: maxStack
+            readmv.visitMaxs(4, nextReadVar);
             readmv.visitEnd();
         }
     }
@@ -758,7 +758,7 @@ class BaseByteCodeGenerator {
             }
 
             mv.visitInsn(RETURN);
-            mv.visitMaxs(6, nextVar.get()); // PENDING: maxStack
+            mv.visitMaxs(6, nextVar.get());
             mv.visitEnd();
         }
     }
@@ -1240,7 +1240,7 @@ class BaseByteCodeGenerator {
 
                 // not null
                 mv.visitLabel(nonNullLabel);
-                // PENDING: mv.visitFrame
+                // PENDING: mv.visitFrame?
                 mv.visitVarInsn(ASTORE, instanceVar);
                 mv.visitInsn(ICONST_1); // true
                 mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeBoolean", "(Lcom/cinnober/msgcodec/io/ByteSink;Z)V", false);
@@ -1250,7 +1250,7 @@ class BaseByteCodeGenerator {
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroup_" + refGroup.getName(),
                         "(Lcom/cinnober/msgcodec/io/ByteSink;" + refGroupDescriptor + ")V", false);
                 mv.visitLabel(endLabel);
-                // PENDING: mv.visitFrame
+                // PENDING: mv.visitFrame?
             }
         } else {
             throw new IllegalArgumentException("Illegal reference: " + type);
@@ -1285,7 +1285,7 @@ class BaseByteCodeGenerator {
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
                 mv.visitLabel(nonNullLabel);
-                // PENDING: mv.visitFrame
+                // PENDING: mv.visitFrame?
                 mv.visitInsn(ARRAYLENGTH);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ISTORE, lengthVar);
@@ -1297,7 +1297,7 @@ class BaseByteCodeGenerator {
             mv.visitVarInsn(ISTORE, loopVar);
             Label loopLabel = new Label();
             mv.visitLabel(loopLabel);
-            // PENDING: mv.visitFrame
+            // PENDING: mv.visitFrame?
             mv.visitVarInsn(ILOAD, loopVar);
             mv.visitVarInsn(ILOAD, lengthVar);
             mv.visitJumpInsn(IF_ICMPGE, endLabel);
@@ -1329,7 +1329,7 @@ class BaseByteCodeGenerator {
             mv.visitIincInsn(loopVar, 1);
             mv.visitJumpInsn(GOTO, loopLabel);
             mv.visitLabel(endLabel);
-            // PENDING: mv.visitFrame
+            // PENDING: mv.visitFrame?
 
         } else if (javaClass == List.class) {
             int sequenceVar = nextVar.next();
@@ -1352,7 +1352,7 @@ class BaseByteCodeGenerator {
                 mv.visitJumpInsn(GOTO, endLabel);
                 // not null
                 mv.visitLabel(nonNullLabel);
-                // PENDING: mv.visitFrame
+                // PENDING: mv.visitFrame?
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ISTORE, lengthVar);
@@ -1365,7 +1365,7 @@ class BaseByteCodeGenerator {
             mv.visitVarInsn(ASTORE, iteratorVar);
             Label loopLabel = new Label();
             mv.visitLabel(loopLabel);
-            // PENDING: mv.visitFrame
+            // PENDING: mv.visitFrame?
             mv.visitVarInsn(ALOAD, iteratorVar);
             mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
             mv.visitJumpInsn(IFEQ, endLabel);
@@ -1386,7 +1386,7 @@ class BaseByteCodeGenerator {
 
             mv.visitJumpInsn(GOTO, loopLabel);
             mv.visitLabel(endLabel);
-            // PENDING: mv.visitFrame
+            // PENDING: mv.visitFrame?
         } else {
             throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
         }
@@ -1590,7 +1590,7 @@ class BaseByteCodeGenerator {
         }
 
         if (!required && javaClass.isPrimitive()) {
-            // PENDING: null check and throw DecodeException: Cannot represent absent (null) value.
+            // PENDING: null check and throw DecodeException (instead of NPE): Cannot represent absent (null) value.
             unbox(mv, javaClass);
         } else if (required && !javaClass.isPrimitive()) {
             box(mv, javaClass);
@@ -2089,7 +2089,7 @@ class BaseByteCodeGenerator {
                         false);
 
                 mv.visitLabel(endLabel);
-                // PENDING: mv.visitFrame
+                // PENDING: mv.visitFrame?
                 mv.visitFrame(F_SAME, 0, null, 0, null);
             }
         } else {
@@ -2140,7 +2140,7 @@ class BaseByteCodeGenerator {
         mv.visitVarInsn(ISTORE, loopVar);
         Label loopLabel = new Label();
         mv.visitLabel(loopLabel);
-        // PENDING: mv.visitFrame
+        // PENDING: mv.visitFrame?
         mv.visitFrame(F_SAME, 0, null, 0, null);
         mv.visitVarInsn(ILOAD, loopVar);
         mv.visitVarInsn(ILOAD, lengthVar);

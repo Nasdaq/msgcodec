@@ -32,14 +32,20 @@ import java.io.IOException;
 
 /**
  * Base class for a dynamically generated codec for a specific schema.
+ *
+ * <p><b>Note: internal use only!</b>
  * 
+ * <p>
  * A GeneratedCodec sub class represents a schema.
  * A GeneratedCodec instance is tied to a specific {@link BlinkCodec} instance which holds the encode buffers
  * and any max binary size settings.
  * 
  * @author mikael brannstrom
  */
-public abstract class GeneratedCodec { // PENDING: This should be package private
+
+/* Note: This class should be package private, but cannot since the dynamically generated classes are loaded
+   from another class loader, i.e. don't share the package with this class (regardless of package name). */
+public abstract class GeneratedCodec {
 
     protected final int maxBinarySize;
 
@@ -50,7 +56,7 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
     /**
      * Write a static group and its group id.
      * Method to be generated in a sub class using <b>switch</b> construct
-     * (similar what is generated for a switch on String) based on the group type.
+     * (similar to what is generated for a switch on String) based on the group type.
      * 
      * @param out where to write to, not null
      * @param group the group to write, not null.
@@ -129,7 +135,9 @@ public abstract class GeneratedCodec { // PENDING: This should be package privat
      * @param enumClass the enum class, not null
      * @return the exception to be thrown.
      */
-    protected static DecodeException unmappableEnumSymbolId(String valueName, int symbolId, Class<? extends Enum> enumClass) {
+    @SuppressWarnings("rawtypes")
+    protected static DecodeException unmappableEnumSymbolId(
+            String valueName, int symbolId, Class<? extends Enum> enumClass) {
         return new DecodeException(valueName + ": Cannot map symbol id " + symbolId +
                 " to enum value of type " + enumClass);
     }

@@ -25,15 +25,15 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
-import static com.cinnober.msgcodec.blink.BlinkInput.readUInt32;
-import static com.cinnober.msgcodec.blink.BlinkInput.readUInt32Null;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 
 /**
  * Methods for reading primitive Native Blink data types.
+ *
+ * <p>Read methods for variable size data types come in two flavors:
+ * <code>readInlineXxx</code> and <code>readDataXxx</code> for inline and data area respectively.
  *
  * @see BlinkOutput
  * @author mikael.brannstrom
@@ -176,12 +176,24 @@ public class NativeBlinkInput {
     /**
      * Read a signed big integer.
      * @param in the input stream to read from, not null.
+     * @param maxLength the maximum bigint length (bytes) that is allowed, or -1 for no limit.
      * @return the value, not null.
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigInteger readDataBigInt(ByteSource in) throws IOException {
-        throw new UnsupportedOperationException(); // FIXME
+    public static BigInteger readDataBigInt(ByteSource in, int maxLength) throws IOException {
+        byte[] bytes = readDataBinary(in, maxLength);
+        if (bytes.length == 0) {
+            throw new DecodeException("Cannot decode BigInt from zero length data");
+        }
+
+        // convert bytes from LE to BE
+        for (int i=0, i2=bytes.length-1; i<i2; i++, i2--) {
+            byte b = bytes[i];
+            bytes[i] = bytes[i2];
+            bytes[i2] = b;
+        }
+        return new BigInteger(bytes);
     }
 
     /**
@@ -279,13 +291,14 @@ public class NativeBlinkInput {
     /**
      * Read a big decimal number.
      * @param in the input stream to read from, not null.
+     * @param maxLength the maximum data length (bytes) that is allowed for the mantissa, or -1 for no limit.
      * @return the value, not null
      * @throws IOException if the input stream throws an exception.
      * @throws DecodeException if the value could not be parsed.
      */
-    public static BigDecimal readDataBigDecimal(ByteSource in) throws IOException {
+    public static BigDecimal readDataBigDecimal(ByteSource in, int maxLength) throws IOException {
         int exp = readInt32(in);
-        BigInteger mantissa = readDataBigInt(in);
+        BigInteger mantissa = readDataBigInt(in, maxLength);
         return new BigDecimal(mantissa, -exp);
     }
 
@@ -409,6 +422,28 @@ public class NativeBlinkInput {
             in.skip(1 + maxLength);
             return null;
         }
+    }
+
+    /**
+     * Read binary data.
+     *
+     * @param in the input stream to read from, not null.
+     * @param maxLength the maximum binary length (bytes) that is allowed, or -1 for no limit.
+     * @return the value, not null.
+     * @throws IOException if the input stream throws an exception.
+     * @throws DecodeException if the value could not be parsed.
+     */
+    public static byte[] readDataBinary(ByteSource in, int maxLength) throws IOException {
+        int size = readUInt32(in);
+        if (size < 0) {
+            throw new DecodeException("Cannot read binary larger than " + Integer.MAX_VALUE + " bytes.");
+        }
+        if (size > maxLength && maxLength >= 0) {
+            throw new DecodeException("Binary length (" + size + ") exceeds limit (" + maxLength + ")");
+        }
+        byte[] data = new byte[size];
+        in.read(data);
+        return data;
     }
     
 }
