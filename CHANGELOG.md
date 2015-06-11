@@ -57,6 +57,7 @@ Schema related changes:
  - Added experimental support for the Native Blink format.
  - Removed legacy 'instruction based' codec. The ASM-based dynamic bytecode generation codec is faster and stable.
  - Upgraded from Blink spec beta2 to beta4.
+ - Removed com.cinnober.msgcodec.blink.Blink{Input|Output}Stream. Use com.cinnober.msgcodec.blink.Blink{Input|Output} instead.
 
 ### msgcodec-json
 
