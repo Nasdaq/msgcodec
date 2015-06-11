@@ -26,6 +26,8 @@ package com.cinnober.msgcodec.io;
 
 import static com.cinnober.msgcodec.io.ByteSource.UTF8;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -101,31 +103,53 @@ public class ByteBufferBuf implements ByteBuf {
 
     @Override
     public int read() throws IOException {
-        return 0xff & buf.get();
+        try {
+            return 0xff & buf.get();
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void read(byte[] b, int off, int len) throws IOException {
-        buf.get(b, off, len);
+        try {
+            buf.get(b, off, len);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void write(int b) throws IOException {
-        buf.put((byte) b);
+        try {
+            buf.put((byte) b);
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        buf.put(b, off, len);
+        try {
+            buf.put(b, off, len);
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void skip(int len) throws IOException {
+        if (position() + len > limit()) {
+            throw new IOException("Buffer underflow");
+        }
         buf.position(buf.position()+len);
     }
     
     @Override
     public String readStringUtf8(int len) throws IOException {
+        if (position() + len > limit()) {
+            throw new IOException("Buffer underflow");
+        }
         if (buf.hasArray()) {
             final byte[] data = buf.array();
             final int pos = buf.arrayOffset();
@@ -176,24 +200,40 @@ public class ByteBufferBuf implements ByteBuf {
 
     @Override
     public void writeIntLE(int v) throws IOException {
-        buf.putInt(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v));
+        try {
+            buf.putInt(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v));
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void writeLongLE(long v) throws IOException {
-        buf.putLong(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v));
+        try {
+            buf.putLong(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v));
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public int readIntLE() throws IOException {
-        int v = buf.getInt();
-        return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v);
+        try {
+            int v = buf.getInt();
+            return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public long readLongLE() throws IOException {
-        long v = buf.getLong();
-        return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v);
+        try {
+            long v = buf.getLong();
+            return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
 }

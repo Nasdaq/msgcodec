@@ -30,7 +30,6 @@ import java.util.Objects;
 /**
  * A ByteBuf backed by a byte array.
  */
-// TODO: limit checks
 public class ByteArrayBuf implements ByteBuf {
 
     private final byte[] data;
@@ -83,6 +82,9 @@ public class ByteArrayBuf implements ByteBuf {
     }
     @Override
     public ByteArrayBuf position(int position) {
+        if (position > limit) {
+            throw new IllegalArgumentException("Cannot set position beyond limit");
+        }
         this.pos = position;
         return this;
     }
@@ -93,6 +95,11 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public ByteArrayBuf limit(int limit) {
+        if (limit < pos) {
+            throw new IllegalArgumentException("Cannot set limit before position");
+        } else if (limit > data.length) {
+            throw new IllegalArgumentException("Cannot set limit beyond capacity");
+        }
         this.limit = limit;
         return this;
     }
@@ -113,22 +120,34 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public int read() throws IOException {
+        if (pos == limit) {
+            throw new IOException("Buffer underflow");
+        }
         return 0xff & data[pos++];
     }
 
     @Override
     public void read(byte[] b, int off, int len) throws IOException {
+        if (pos+len > limit) {
+            throw new IOException("Buffer underflow");
+        }
         System.arraycopy(data, pos, b, off, len);
         pos += len;
     }
 
     @Override
     public void skip(int len) throws IOException {
+        if (pos+len > limit) {
+            throw new IOException("Buffer underflow");
+        }
         pos += len;
     }
 
     @Override
     public String readStringUtf8(int len) throws IOException {
+        if (pos+len > limit) {
+            throw new IOException("Buffer underflow");
+        }
         if (len < 128) {
             boolean ascii = true;
             int end = pos+len;
@@ -157,7 +176,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void write(int b) throws IOException {
         if (pos >= limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         data[pos++] = (byte) b;
     }
@@ -165,7 +184,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         if (pos + len > limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         System.arraycopy(b, off, data, pos, len);
         pos += len;
@@ -184,7 +203,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void writeIntLE(int v) throws IOException {
         if (pos + 4 > limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         data[pos] = (byte) v;
         data[pos+1] = (byte) (v >> 8);
@@ -196,7 +215,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void writeLongLE(long v) throws IOException {
         if (pos + 8 > limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         data[pos] = (byte) v;
         data[pos+1] = (byte) (v >> 8);
