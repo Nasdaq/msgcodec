@@ -27,7 +27,6 @@ package com.cinnober.msgcodec.blink;
 import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
-import com.cinnober.msgcodec.io.ByteBuf;
 import java.io.IOException;
 
 /**

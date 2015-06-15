@@ -285,6 +285,10 @@ class TypeScannerJsonParser extends JsonParser {
         return currentToken != null ? currentToken.getDecimalValue() : p.getDecimalValue();
     }
     @Override
+    public boolean getBooleanValue() throws IOException, JsonParseException {
+        return currentToken != null ? currentToken.getBooleanValue() : p.getBooleanValue();
+    }
+    @Override
     public String getValueAsString(String defaultValue) throws IOException, JsonParseException {
         if (currentToken != null) {
             String s = currentToken.getText();

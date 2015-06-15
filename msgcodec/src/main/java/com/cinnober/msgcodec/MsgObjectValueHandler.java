@@ -295,7 +295,6 @@ abstract class MsgObjectValueHandler<T> {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         int hashCode(Object value) {
             int hash = 17;
             if (value != null) {
@@ -344,7 +343,6 @@ abstract class MsgObjectValueHandler<T> {
         int hashCode(Object group) {
             return valueHandler.hashCode(getValue(group));
         }
-        @SuppressWarnings("unchecked")
         boolean equals(Object group1, Object group2) {
             return valueHandler.equals(getValue(group1), getValue(group2));
         }
@@ -368,7 +366,6 @@ abstract class MsgObjectValueHandler<T> {
         }
     }
 
-    @SuppressWarnings({"rawtypes"})
     static class GroupHandler extends MsgObjectValueHandler<Object> {
         private final String name;
         private FieldHandler[] fields;

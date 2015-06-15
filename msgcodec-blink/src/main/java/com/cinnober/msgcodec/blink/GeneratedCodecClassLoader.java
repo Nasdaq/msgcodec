@@ -26,15 +26,12 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.Schema;
 import java.util.WeakHashMap;
-import java.util.logging.Logger;
 
 /**
  *
  * @author mikael.brannstrom
  */
 class GeneratedCodecClassLoader extends ClassLoader {
-    private static final Logger log = Logger.getLogger(GeneratedCodecClassLoader.class.getName());
-
     private static final GeneratedCodecClassLoader instance = new GeneratedCodecClassLoader();
 
     public static GeneratedCodecClassLoader getInstance() {

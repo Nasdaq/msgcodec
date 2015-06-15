@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
-import java.util.logging.Logger;
 
 /**
  * The Blink codec can serialize and deserialize Java objects according to
@@ -61,8 +60,6 @@ import java.util.logging.Logger;
  *
  */
 public class BlinkCodec implements MsgCodec {
-    private static final Logger log = Logger.getLogger(BlinkCodec.class.getName());
-
     private final GeneratedCodec generatedCodec;
     private final Schema schema;
 

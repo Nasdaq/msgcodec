@@ -154,7 +154,7 @@ public class JsonCodec implements MsgCodec {
         }
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes" })
     private JsonValueHandler createValueHandler(
             Schema schema,
             TypeDef type,

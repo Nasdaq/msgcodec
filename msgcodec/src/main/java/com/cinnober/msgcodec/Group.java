@@ -24,6 +24,7 @@
 package com.cinnober.msgcodec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -165,9 +166,7 @@ public class Group {
         List<FieldDef> allFields = new ArrayList<>();
         List<FieldDef> declaredFields = new ArrayList<>();
         if (superGroupInfo != null) {
-            for (FieldDef field : superGroupInfo.fieldDefs()) {
-                allFields.add(field);
-            }
+            allFields.addAll(Arrays.asList(superGroupInfo.fieldDefs()));
         }
         for (FieldDef field : group.getFields()) {
             TypeDef type = schema.resolveToType(field.getType(), true);
@@ -214,9 +213,6 @@ public class Group {
             for (FieldDef field : fieldDefs) {
                 fieldIndexByName.put(field.getName(), index++);
             }
-        }
-        GroupDef groupDef() {
-            return groupDef;
         }
 
         void initGroupDef(GroupDef groupDef) {

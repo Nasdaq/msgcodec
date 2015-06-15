@@ -24,7 +24,6 @@
 
 package com.cinnober.msgcodec.io;
 
-import static com.cinnober.msgcodec.io.ByteSource.UTF8;
 import java.io.IOException;
 import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;

@@ -97,7 +97,6 @@ public abstract class JsonValueHandler<T> {
      * @param javaClass the java class, not null.
      * @return the json value handler, not null.
      */
-    @SuppressWarnings("unchecked")
     public static <T> JsonValueHandler<T> getValueHandlerXXX(TypeDef type, Class<T> javaClass) {
         return getValueHandler(type, javaClass, true);
     }

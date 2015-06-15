@@ -734,7 +734,7 @@ class XmlElementHandler {
             accessor.setValue(ctx.peekValue(), array);
         }
 
-        @SuppressWarnings({"rawtypes", "unchecked"})
+        @SuppressWarnings({"unchecked"})
         @Override
         public void writeElement(Object value, NsName name, PrintWriter appendTo)
                 throws IOException {

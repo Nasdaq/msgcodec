@@ -36,7 +36,6 @@ import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Required;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**

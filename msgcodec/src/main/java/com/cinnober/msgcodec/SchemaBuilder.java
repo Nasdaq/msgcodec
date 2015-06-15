@@ -436,7 +436,7 @@ public class SchemaBuilder {
         visitFields(gv, group, parentGroup, group, new HashMap<>(), namedTypes, groups);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({ "rawtypes" })
     private void visitFields(
             GroupDefVisitor gv,
             Class<?> group,

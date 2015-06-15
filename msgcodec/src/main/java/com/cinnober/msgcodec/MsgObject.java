@@ -80,7 +80,6 @@ public class MsgObject {
 
             // copy fields from superclass
             if (superClass != null && !superClass.equals(MsgObject.class) && !superClass.equals(Object.class)) {
-                @SuppressWarnings("unchecked")
                 GroupHandler superClassToString = getGroupValueHandler(superClass);
                 for (FieldHandler fieldToString : superClassToString.fields()) {
                     fields.add(fieldToString);

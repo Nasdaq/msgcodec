@@ -28,7 +28,6 @@ import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Unsigned;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  *
