@@ -21,3 +21,9 @@ dependencies {
   testCompile project(':msgcodec-test')
   testCompile group: 'junit', name: 'junit', version: junit_version
 }
+
+eclipse {
+  classpath {
+    plusConfigurations += [configurations.jmh]
+  }
+}
