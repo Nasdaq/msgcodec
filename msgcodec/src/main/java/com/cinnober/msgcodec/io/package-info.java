@@ -21,40 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-package com.cinnober.msgcodec.io;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Objects;
-
 /**
- * A byte sink wrapper for an output stream.
- * @author mikael.brannstrom
+ * This package contains I/O related classes.
  */
-public class OutputStreamSink implements ByteSink {
-    private final OutputStream out;
-
-    /**
-     * Create a new output stream sink.
-     * @param out the wrapped output stream to write to, not null.
-     */
-    public OutputStreamSink(OutputStream out) {
-        this.out = Objects.requireNonNull(out);
-    }
-
-    @Override
-    public void write(int b) throws IOException {
-        out.write(b);
-    }
-
-    @Override
-    public void write(byte[] b) throws IOException {
-        out.write(b);
-    }
-
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-        out.write(b, off, len);
-    }
-}
+package com.cinnober.msgcodec.io;

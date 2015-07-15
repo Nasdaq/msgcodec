@@ -237,7 +237,17 @@ public class ObjectDispatcher {
                 }
             }
             if (target == null) {
-                throw new NoSuchMethodException("Unhandled type " + type);
+            	StringBuilder str = new StringBuilder();
+            	str.append("Unhandled type " + type);
+            	str.append("\n");
+            	str.append("Available targets:");
+            	str.append("\n");
+            	for(Map.Entry<Class<?>, Target> entry : targets.entrySet()) {
+            		str.append("    ");
+            		str.append(entry.getValue().toString());
+            		str.append("\n");
+            	}
+                throw new NoSuchMethodException(str.toString());
             }
         }
         return target;
@@ -264,6 +274,11 @@ public class ObjectDispatcher {
             } catch (IllegalAccessException e) {
                 throw new Error("Bug", e); // should not happen
             }
+        }
+        
+        @Override 
+        public String toString() {
+        	return method.toString();
         }
     }
 

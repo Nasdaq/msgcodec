@@ -29,7 +29,7 @@ import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgCodecInstantiationException;
-import com.cinnober.msgcodec.util.ConcurrentBufferPool;
+import com.cinnober.msgcodec.ObjectInstantiationException;
 import com.cinnober.msgcodec.io.InputStreamSource;
 import com.cinnober.msgcodec.io.OutputStreamSink;
 import com.cinnober.msgcodec.util.Pool;
@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
-import java.util.logging.Logger;
 
 /**
  * The Blink codec can serialize and deserialize Java objects according to
@@ -45,15 +44,22 @@ import java.util.logging.Logger;
  *
  * Null values are supported in encode and decode.
  *
- * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta2.pdf">Blink Specification beta2 - 2013-02-05.</a>
+ * <p>See the <a href="http://blinkprotocol.org/s/BlinkSpec-beta4.pdf">Blink Specification beta4 - 2013-06-05.</a>
+ *
+ * <p>This implementation differs from the specification above in the following ways:
+ * <ul>
+ * <li>The <code>fixed</code> (binary) type is not supported.
+ * <li>Message extensions are ignored.
+ * <li>The type identifier is encodec as uInt32 instead of uInt64, however the same wire format (VLC).
+ * <li>Support for bigInt is added, encoded as VLC integers.
+ * <li>Support for bigDecimal is added, encoded as int32 exponent followed by a bigInt mantissa.
+ * </ul>
  *
  * @author mikael.brannstrom
  * @see BlinkCodecFactory
  *
  */
 public class BlinkCodec implements MsgCodec {
-    private static final Logger log = Logger.getLogger(BlinkCodec.class.getName());
-
     private final GeneratedCodec generatedCodec;
     private final Schema schema;
 
@@ -136,6 +142,8 @@ public class BlinkCodec implements MsgCodec {
                 } else if(t instanceof FieldDecodeException) {
                     str.append('.').append(((FieldDecodeException)t).getFieldName());
                     t = t.getCause();
+                } else if(t instanceof ObjectInstantiationException) {
+                    throw new DecodeException("Could not create group "+str.toString(), t);
                 } else {
                     throw new DecodeException("Could not decode field "+str.toString(), t);
                 }

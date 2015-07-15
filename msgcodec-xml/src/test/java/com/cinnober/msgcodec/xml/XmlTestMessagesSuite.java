@@ -29,6 +29,6 @@ import org.junit.runner.RunWith;
  * @author mikael.brannstrom
  *
  */
-//TODO: @RunWith(XmlTestMessagesSuiteImpl.class)
+@RunWith(XmlTestMessagesSuiteImpl.class)
 public class XmlTestMessagesSuite {
 }

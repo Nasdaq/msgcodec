@@ -22,39 +22,50 @@
  * SOFTWARE.
  */
 
-package com.cinnober.msgcodec.io;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Objects;
+package com.cinnober.msgcodec;
 
 /**
- * A byte sink wrapper for an output stream.
+ * Thrown when a Factory cannot instantiate a new object.
+ *
+ * @see Factory#newInstance() 
  * @author mikael.brannstrom
  */
-public class OutputStreamSink implements ByteSink {
-    private final OutputStream out;
+public class ObjectInstantiationException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Create a new output stream sink.
-     * @param out the wrapped output stream to write to, not null.
+     * Create a new ObjectInstantiationException.
      */
-    public OutputStreamSink(OutputStream out) {
-        this.out = Objects.requireNonNull(out);
+    public ObjectInstantiationException() {
     }
 
-    @Override
-    public void write(int b) throws IOException {
-        out.write(b);
+    /**
+     * Create a new ObjectInstantiationException.
+     *
+     * @param message the detail message.
+     */
+    public ObjectInstantiationException(String message) {
+        super(message);
     }
 
-    @Override
-    public void write(byte[] b) throws IOException {
-        out.write(b);
+    /**
+     * Create a new ObjectInstantiationException.
+     *
+     * @param message the detail message.
+     * @param cause the cause.
+     */
+    public ObjectInstantiationException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    @Override
-    public void write(byte[] b, int off, int len) throws IOException {
-        out.write(b, off, len);
+    /**
+     * Create a new ObjectInstantiationException.
+     * 
+     * @param cause the cause.
+     */
+    public ObjectInstantiationException(Throwable cause) {
+        super(cause);
     }
+
+
 }

@@ -58,7 +58,8 @@ public final class ConstructorFactory<T> implements Factory<T> {
         try {
             return constructor.newInstance();
         } catch (InstantiationException e) {
-            throw new Error("Should not happen", e); // abstract class
+            throw new ObjectInstantiationException("Cannot instantiate abstract class " +
+                    constructor.getDeclaringClass().getCanonicalName(), e);
         } catch (IllegalAccessException e) {
             throw new Error("Should not happen", e);
         } catch (InvocationTargetException e) {

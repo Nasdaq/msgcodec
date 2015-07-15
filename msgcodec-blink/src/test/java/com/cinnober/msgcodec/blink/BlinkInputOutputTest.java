@@ -23,11 +23,12 @@
  */
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.io.ByteArrayBuf;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ByteSource;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -38,9 +39,10 @@ import org.junit.Test;
  * @author mikael.brannstrom
  *
  */
-public class BlinkStreamTest {
+public class BlinkInputOutputTest {
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.1.
+    /**
+     * Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.1.
      * @throws IOException
      */
     @Test
@@ -80,7 +82,8 @@ public class BlinkStreamTest {
                 new byte[] {(byte)0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, (byte)0xc0});
     }
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.2.
+    /**
+     * Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.2.
      * @throws IOException
      */
     @Test
@@ -94,7 +97,8 @@ public class BlinkStreamTest {
         testEncodeDecodeStringUTF8("", new byte[] { 0x00 });
     }
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.5.
+    /**
+     * Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.5.
      * @throws IOException
      */
     @Test
@@ -103,7 +107,8 @@ public class BlinkStreamTest {
                 new byte[] { 0x7e, (byte)0xc2, 0x10, 0x27 });
     }
 
-    /** Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.6.
+    /**
+     * Examples from the Blink Specification beta2 - 2013-02-05, chapter 3.6.
      * @throws IOException
      */
     @Test
@@ -121,88 +126,45 @@ public class BlinkStreamTest {
 
 
     private void testEncodeDecodeUnsignedVLC(long value, byte[] encoded) throws IOException {
-        testEncodeDecode(value, encoded, new StreamOp<Long>() {
-            @Override
-            public void writeValue(Long value, BlinkOutputStream out) throws IOException {
-                out.writeUnsignedVLC(value);
-            }
-            @Override
-            public Long readValue(BlinkInputStream in) throws IOException {
-                return in.readUnsignedVLC();
-            }
-        });
+        testEncodeDecode(value, encoded, BlinkOutput::writeUnsignedVLC, BlinkInput::readUnsignedVLC);
     }
     private void testEncodeDecodeSignedVLC(long value, byte[] encoded) throws IOException {
-        testEncodeDecode(value, encoded, new StreamOp<Long>() {
-            @Override
-            public void writeValue(Long value, BlinkOutputStream out) throws IOException {
-                out.writeSignedVLC(value);
-            }
-            @Override
-            public Long readValue(BlinkInputStream in) throws IOException {
-                return in.readSignedVLC();
-            }
-        });
+        testEncodeDecode(value, encoded, BlinkOutput::writeSignedVLC, BlinkInput::readSignedVLC);
     }
     private void testEncodeDecodeStringUTF8(String value, byte[] encoded) throws IOException {
-        testEncodeDecode(value, encoded, new StreamOp<String>() {
-            @Override
-            public void writeValue(String value, BlinkOutputStream out) throws IOException {
-                out.writeStringUTF8(value);
-            }
-            @Override
-            public String readValue(BlinkInputStream in) throws IOException {
-                return in.readStringUTF8();
-            }
-        });
+        testEncodeDecode(value, encoded, BlinkOutput::writeStringUTF8, BlinkInput::readStringUTF8);
     }
     private void testEncodeDecodeDecimal(BigDecimal value, byte[] encoded) throws IOException {
-        testEncodeDecode(value, encoded, new StreamOp<BigDecimal>() {
-            @Override
-            public void writeValue(BigDecimal value, BlinkOutputStream out) throws IOException {
-                out.writeDecimal(value);
-            }
-            @Override
-            public BigDecimal readValue(BlinkInputStream in) throws IOException {
-                return in.readDecimal();
-            }
-        });
+        testEncodeDecode(value, encoded, BlinkOutput::writeDecimal, BlinkInput::readDecimal);
     }
     private void testEncodeDecodeFloat64(Double value, byte[] encoded) throws IOException {
-        testEncodeDecode(value, encoded, new StreamOp<Double>() {
-            @Override
-            public void writeValue(Double value, BlinkOutputStream out) throws IOException {
-                out.writeFloat64(value);
-            }
-            @Override
-            public Double readValue(BlinkInputStream in) throws IOException {
-                return in.readFloat64();
-            }
-        });
+        testEncodeDecode(value, encoded, BlinkOutput::writeFloat64, BlinkInput::readFloat64);
     }
 
-    private <V> void testEncodeDecode(V value, byte[] encoded, StreamOp<V> streamOp) throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        BlinkOutputStream out = new BlinkOutputStream(bout);
+    private <V> void testEncodeDecode(V value, byte[] encoded, WriteOp<V> writeOp, ReadOp<V> readOp) throws IOException {
+        ByteArrayBuf buf = new ByteArrayBuf(1024);
 
         // encode
-        bout.reset();
-        streamOp.writeValue(value, out);
-        byte[] actualEncoded = bout.toByteArray();
+        buf.clear();
+        writeOp.writeValue(buf, value);
+        buf.flip();
+        byte[] actualEncoded = new byte[buf.limit()];
+        buf.read(actualEncoded);
+        buf.position(0);
         assertArrayEquals("Encoded value", encoded, actualEncoded);
 
         // decode
-        ByteArrayInputStream bin = new ByteArrayInputStream(encoded);
-        BlinkInputStream in = new BlinkInputStream(bin);
-        V decodedValue = streamOp.readValue(in);
+        V decodedValue = readOp.readValue(buf);
         assertEquals("Decoded value", value, decodedValue);
 
-        assertEquals("Remaining bytes after decode", 0, in.available());
+        assertEquals("Remaining bytes after decode", 0, buf.remaining());
     }
 
-    private interface StreamOp<V> {
-        void writeValue(V value, BlinkOutputStream out) throws IOException;
-        V readValue(BlinkInputStream in) throws IOException;
+    private interface WriteOp<V> {
+        void writeValue(ByteSink out, V value) throws IOException;
+    }
+    private interface ReadOp<V> {
+        V readValue(ByteSource in) throws IOException;
     }
 
     @Test

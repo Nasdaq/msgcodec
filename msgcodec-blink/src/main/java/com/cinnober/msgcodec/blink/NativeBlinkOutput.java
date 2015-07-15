@@ -32,6 +32,9 @@ import java.nio.charset.Charset;
 /**
  * Methods for writing primitive Native Blink data types.
  *
+ * <p>Write methods for variable size data types come in two flavors:
+ * <code>writeInlineXxx</code> and <code>writeDataXxx</code> for inline and data area respectively.
+ *
  * @see NativeBlinkInput
  * @author mikael.brannstrom
  *

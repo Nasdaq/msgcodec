@@ -24,6 +24,7 @@
 
 package com.cinnober.msgcodec.blink;
 
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
@@ -32,15 +33,22 @@ import com.cinnober.msgcodec.io.ByteArrayBuf;
 import java.io.IOException;
 
 /**
- * Base class for a dynamically generated codec for a specific schema.
+ * Base class for a dynamically generated native blink codec for a specific schema.
  * 
- * A GeneratedCodec sub class represents a schema.
- * A GeneratedCodec instance is tied to a specific {@link BlinkCodec} instance which holds the encode buffers
- * and any max binary size settings.
+ * <p><b>Note: internal use only!</b>
+ *
+ * <p>
+ * A GeneratedNativeCodec sub class represents a schema.
+ * A GeneratedNativeCodec instance is tied to a specific {@link NativeBlinkCodec} instance which holds the 
+ * encode buffers and any max binary size settings.
  * 
  * @author mikael brannstrom
  */
-public abstract class GeneratedNativeCodec extends GeneratedCodec { // PENDING: This should be package private
+
+
+/* Note: This class should be package private, but cannot since the dynamically generated classes are loaded
+   from another class loader, i.e. don't share the package with this class (regardless of package name). */
+public abstract class GeneratedNativeCodec extends GeneratedCodec {
 
     /** Reference to the blink codec. */
     protected final NativeBlinkCodec codec;
@@ -66,7 +74,7 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec { // PENDING: 
             buf.skip(4); // size
             writeStaticGroupWithId(buf, group);
             int end = buf.position();
-            int size = end - start - 2;
+            int size = end - start - 4;
             buf.position(start);
             buf.writeIntLE(size);
             buf.position(end);
@@ -109,59 +117,28 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec { // PENDING: 
     }
 
     private Object readDynamicGroup(int size, ByteSource in) throws IOException {
-        // TODO: limit
-//        int limit = in.limit();
+        ByteBuf inbuf = (ByteBuf) in;
+        int expectedEndPos = inbuf.position() + size;
+        // PENDING: currently msgcodec only supports int32 as group id
+        int groupId = (int) NativeBlinkInput.readUInt64(inbuf);
+        inbuf.skip(4); // discard extension offset (not supported)
         try {
-//            if (limit >= 0) {
-//                if (size > limit) {
-//                    // there is already a limit that is smaller than this message size
-//                    throw new DecodeException("Dynamic group size preamble (" + size +
-//                            ") goes beyond current stream limit (" + limit + ").");
-//                } else {
-//                    limit -= size;
-//                    in.limit(size);
-//                }
-//            }
+            Object group = readStaticGroup(groupId, inbuf);
 
-            // PENDING: currently msgcodec only supports int32 as group id
-            int groupId = (int) NativeBlinkInput.readUInt64(in);
-            in.skip(4); // discard extension offset (not supported)
-            Object group;
-            try {
-                group = readStaticGroup(groupId, in);
-            } catch (Exception e) {
-                GroupDef groupDef = codec.getSchema().getGroup(groupId);
-                if (groupDef != null) {
-                    throw new GroupDecodeException(groupDef.getName(), e);
-                } else {
-                    throw e;
-                }
+            int skip = expectedEndPos - inbuf.position();
+            if (skip < 0) {
+                throw new DecodeException("Malformed dynamic group. Read " + (-skip) + " bytes beyond group size.");
+            } else if (skip > 0) {
+                in.skip(skip);
             }
-//            in.skip(in.limit());
             return group;
-        } finally {
-//            in.limit(limit); // restore old limit
+        } catch (Exception e) {
+            GroupDef groupDef = codec.getSchema().getGroup(groupId);
+            if (groupDef != null) {
+                throw new GroupDecodeException(groupDef.getName(), e);
+            } else {
+                throw e;
+            }
         }
-    }
-
-    protected void encodeString() throws IOException {
-        ByteBuf buf = null;
-
-        buf.writeIntLE(dataPos-buf.position());
-        int mark = buf.position();
-        buf.position(dataPos);
-        NativeBlinkOutput.writeDataStringUTF8(buf, "Hello");
-        dataPos = buf.position();
-        buf.position(mark);
-    }
-
-    protected void decodeString() throws IOException {
-        ByteBuf buf = null;
-
-        int dataOffset = buf.readIntLE();
-        int mark = buf.position();
-        buf.position(mark+dataOffset-4);
-        String value = NativeBlinkInput.readDataStringUTF8(buf);
-        buf.position(mark);
     }
 }

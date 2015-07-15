@@ -25,11 +25,9 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
-import java.io.EOFException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 
 /**
  * Methods for reading primitive Blink data types.

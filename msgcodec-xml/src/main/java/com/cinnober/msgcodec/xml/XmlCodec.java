@@ -23,6 +23,7 @@
  */
 package com.cinnober.msgcodec.xml;
 
+import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
@@ -44,9 +45,9 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.FieldHandler;
 import com.cinnober.msgcodec.xml.XmlElementHandler.InlineElementValueField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceSimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ListSequenceValueField;
+import com.cinnober.msgcodec.xml.XmlElementHandler.SequenceItemValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.SimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StaticGroupValue;
-import com.cinnober.msgcodec.xml.XmlElementHandler.StringItemValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
 import java.io.IOException;
 import java.io.InputStream;
@@ -112,14 +113,14 @@ import org.xml.sax.SAXException;
  * <tr><td>string</td><td>xs:string</td></tr>
  * <tr><td>enum</td><td>xs:string (name)</td></tr>
  * <tr><td>time</td><td>xs:string, see {@link TimeFormat}. PENDING: use xs:time and xs:date?</td></tr>
- * <tr><td>binary</td><td>xs:binary. TODO: not implemented yet</td></tr>
- * <tr><td>sequence</td><td>TODO: To be documented.</td></tr>
+ * <tr><td>binary</td><td>xs:base64Binary</td></tr>
+ * <tr><td>sequence</td><td>XML list (tokens separated by whitespace). 
+ * String and binary values are wrapped by <code>&lt;i&gt;</code> elements.
+ * Groups are already represented as elements.</td></tr>
  * <tr><td>group</td><td>element with group name as element name. 
  * Fields are represented as nested attributes or elements.</td></tr>
  * </table>
  * 
- * <p><b>Note:</b> missing fields are not checked. (TODO)
- *
  * @author mikael.brannstrom
  *
  */
@@ -131,7 +132,7 @@ public class XmlCodec implements MsgCodec {
     private static final String ANOT_FIELD = "xml:field";
     private static final String ANOTVALUE_FIELD_ATTRIBUTE = "attribute";
     private static final String ANOTVALUE_FIELD_ELEMENT = "element";
-    private static final String ANOTVALUE_FIELD_INLINE_ELEMENT = "inline";
+    private static final String ANOTVALUE_FIELD_INLINE = "inline";
 
     private final GroupTypeAccessor groupTypeAccessor;
     private final Map<NsName, StaticGroupValue> staticGroupsByNsName;
@@ -167,6 +168,7 @@ public class XmlCodec implements MsgCodec {
             Map<NsName, FieldHandler> elementFields = new LinkedHashMap<>();
             Map<NsName, SimpleField> attributeFields = new LinkedHashMap<>();
             List<SimpleField> inlineField = new ArrayList<>(1);
+            int nextRequiredFieldSlot = 0;
             if (groupDef.getSuperGroup() != null) {
                 StaticGroupValue superGroupInstruction = staticGroupsByName.get(groupDef.getSuperGroup());
                 attributeFields.putAll(superGroupInstruction.getAttributeFields());
@@ -174,10 +176,16 @@ public class XmlCodec implements MsgCodec {
                 if (superGroupInstruction.getInlineField() != null) {
                     inlineField.add(superGroupInstruction.getInlineField());
                 }
+                nextRequiredFieldSlot = superGroupInstruction.getNumRequiredFields();
             }
-
             for (FieldDef fieldDef : groupDef.getFields()) {
-                createFieldInstruction(schema, fieldDef, fieldDef.getType(), attributeFields, elementFields, inlineField);
+                createFieldInstruction(
+                        schema,
+                        fieldDef,
+                        fieldDef.isRequired() ? nextRequiredFieldSlot++ : -1,
+                        attributeFields,
+                        elementFields,
+                        inlineField);
             }
             groupInstruction.init(attributeFields, elementFields, inlineField.isEmpty() ? null : inlineField.get(0));
         }
@@ -208,12 +216,16 @@ public class XmlCodec implements MsgCodec {
     }
 
     @SuppressWarnings("rawtypes")
-    private void createFieldInstruction(Schema schema, FieldDef field, TypeDef type,
-            Map<NsName, SimpleField> attributeFields, Map<NsName, FieldHandler> elementFields,
+    private void createFieldInstruction(
+            Schema schema,
+            FieldDef field,
+            int requiredFieldSlot,
+            Map<NsName, SimpleField> attributeFields,
+            Map<NsName, FieldHandler> elementFields,
             List<SimpleField> inlineField) {
-        NsName nsName = getNsName(field);
 
-        type = schema.resolveToType(type, true);
+        NsName nsName = getNsName(field);
+        TypeDef type = schema.resolveToType(field.getType(), true);
         GroupDef typeGroup = schema.resolveToGroup(type);
 
         if (type instanceof TypeDef.Sequence) {
@@ -228,31 +240,45 @@ public class XmlCodec implements MsgCodec {
             } else if (componentType instanceof TypeDef.DynamicReference) {
                 valueInstr = new DynamicGroupValue(this);
             } else if (componentType.getType() == TypeDef.Type.STRING) {
-                valueInstr = new StringItemValue(new NsName(null, "i"));
+                valueInstr = new SequenceItemValue(new NsName(null, "i"), XmlStringFormat.STRING);
             } else if (componentType.getType() == TypeDef.Type.BINARY) {
-                throw new RuntimeException("Sequence of binary not implemented yet"); // TODO
+                valueInstr = new SequenceItemValue(new NsName(null, "i"), XmlBinaryFormat.BINARY);
             }
 
 
             if (valueInstr != null) {
                 if (field.getJavaClass().isArray()) {
-                    ArraySequenceValueField fieldInstr = new ArraySequenceValueField(nsName, field, valueInstr,
+                    ArraySequenceValueField fieldInstr = new ArraySequenceValueField(
+                            nsName,
+                            field,
+                            requiredFieldSlot,
+                            valueInstr,
                             field.getComponentJavaClass());
                     putElement(elementFields, fieldInstr);
                 } else {
-                    ListSequenceValueField fieldInstr =
-                            new ListSequenceValueField(nsName, field, valueInstr);
+                    ListSequenceValueField fieldInstr = new ListSequenceValueField(
+                            nsName,
+                            field,
+                            requiredFieldSlot,
+                            valueInstr);
                     putElement(elementFields, fieldInstr);
                 }
             } else {
                 XmlFormat format = getXmlFormat(componentType, field.getComponentJavaClass());
                 if (field.getJavaClass().isArray()) {
-                    ArraySequenceSimpleField fieldInstr = new ArraySequenceSimpleField(nsName, field, format,
+                    ArraySequenceSimpleField fieldInstr = new ArraySequenceSimpleField(
+                            nsName,
+                            field,
+                            requiredFieldSlot,
+                            format,
                             field.getJavaClass().getComponentType());
                     putElement(elementFields, fieldInstr);
                 } else {
-                    ListSequenceSimpleField fieldInstr =
-                            new ListSequenceSimpleField(nsName, field, format);
+                    ListSequenceSimpleField fieldInstr = new ListSequenceSimpleField(
+                            nsName,
+                            field,
+                            requiredFieldSlot,
+                            format);
                     putElement(elementFields, fieldInstr);
                 }
             }
@@ -277,30 +303,28 @@ public class XmlCodec implements MsgCodec {
             StaticGroupValue valueInstr = staticGroupsByName.get(typeGroup.getName());
             FieldHandler fieldInstr;
             if (inline) {
-                fieldInstr = new InlineElementValueField(nsName, field, valueInstr);
+                fieldInstr = new InlineElementValueField(nsName, field, requiredFieldSlot, valueInstr);
             } else {
-                fieldInstr = new ElementValueField(nsName, field, valueInstr);
+                fieldInstr = new ElementValueField(nsName, field, requiredFieldSlot, valueInstr);
             }
             putElement(elementFields, fieldInstr);
         } else if (type instanceof TypeDef.DynamicReference) {
             // --- DYNAMIC GROUP REFERENCE ---
-            boolean inline = ANOTVALUE_FIELD_INLINE_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
+            boolean inline = ANOTVALUE_FIELD_INLINE.equals(field.getAnnotation(ANOT_FIELD));
 
             if (inline) {
                 for (GroupDef subGroup : schema.getDynamicGroups(typeGroup != null ? typeGroup.getName() : null)) {
                     StaticGroupValue valueInstr = staticGroupsByName.get(subGroup.getName());
-                    FieldHandler fieldInstr = new InlineElementValueField(getNsName(subGroup), field, valueInstr);
+                    FieldHandler fieldInstr = new InlineElementValueField(
+                            getNsName(subGroup),
+                            field,
+                            requiredFieldSlot,
+                            valueInstr);
                     putElement(elementFields, fieldInstr);
                 }
             } else {
-                putElement(elementFields, new DynamicGroupField(nsName, field, this));
+                putElement(elementFields, new DynamicGroupField(nsName, field, requiredFieldSlot, this));
             }
-        } else if (type.getType() == TypeDef.Type.BINARY) {
-            throw new RuntimeException("BINARY not implemented"); // TODO
-            // inline element:
-            // <fieldname encoding="hex">AABBCC</fieldname>
-            // <fieldname encoding="base64">qeqt24rwr=</fieldname>
-
         } else {
             // --- SIMPLE TYPE ---
             // xml schema:
@@ -312,19 +336,17 @@ public class XmlCodec implements MsgCodec {
             // token (enum)
 
             XmlFormat format = getXmlFormat(type, field.getJavaClass());
-            SimpleField fieldInstr = new SimpleField(nsName, field, format);
+            SimpleField fieldInstr = new SimpleField(nsName, field, requiredFieldSlot, format);
 
             boolean attribute = !ANOTVALUE_FIELD_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
-            boolean inline = ANOTVALUE_FIELD_INLINE_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
-
-            // PENDING: only inline strings with a maxSize <= 255.
+            boolean inline = ANOTVALUE_FIELD_INLINE.equals(field.getAnnotation(ANOT_FIELD));
 
             if (inline) {
-                putInline(inlineField, fieldInstr);
+                    putInline(inlineField, fieldInstr);
             } else if (attribute) {
-                putAttribute(attributeFields, fieldInstr);
+                    putAttribute(attributeFields, fieldInstr);
             } else {
-                putElement(elementFields, fieldInstr);
+                    putElement(elementFields, fieldInstr);
             }
         }
     }
@@ -405,6 +427,8 @@ public class XmlCodec implements MsgCodec {
             return XmlBooleanFormat.BOOLEAN;
         case STRING:
             return XmlStringFormat.STRING;
+        case BINARY:
+            return XmlBinaryFormat.BINARY;
         default:
             throw new RuntimeException("Unhandled type: " + type);
         }
@@ -429,7 +453,7 @@ public class XmlCodec implements MsgCodec {
             saxParser.parse(in, saxHandler);
             return saxHandler.getValue();
         } catch (SAXException e) {
-            throw new IOException(e);
+            throw new DecodeException(e);
         }
     }
 

@@ -1,7 +1,8 @@
 # msgcodec #
 [![Build Status](https://travis-ci.org/cinnober/msgcodec.svg?branch=master)](https://travis-ci.org/cinnober/msgcodec)
 
-A library to encode and decode messages in various formats where messages are defined as plain old java objects. 
+A library to encode and decode messages in various formats where messages are defined as plain old java objects.
+Java 7 is required for version 2.x and Java 8 is required for version 3.x (latest).
 
 ## Usage ##
 Given a POJO:

@@ -1,6 +1,7 @@
 description = 'Blink format support for msgcodec.'
 
 apply plugin: 'me.champeau.gradle.jmh'
+apply plugin: 'idea'
 
 jmh {
   jmhVersion = '1.6.3'
@@ -20,4 +21,16 @@ dependencies {
   compile group: 'org.ow2.asm', name: 'asm-all', version: '5.0.1'
   testCompile project(':msgcodec-test')
   testCompile group: 'junit', name: 'junit', version: junit_version
+}
+
+eclipse {
+  classpath {
+    plusConfigurations += [configurations.jmh]
+  }
+}
+
+idea {
+  module {
+    scopes.PROVIDED.plus += [project.configurations.jmh]
+  }
 }

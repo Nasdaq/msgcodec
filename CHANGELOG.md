@@ -4,7 +4,10 @@
 
 Changed requirement from JDK 7 to JDK 8.
 
-Renamed 'ProtocolDictionary' into 'Schema':
+Removed TAP format support (msgcodec-tap).
+
+### msgcodec
+Renamed 'ProtocolDictionary' to 'Schema':
 
  - com.cinnober.msgcodec.{ProtocolDictionary => Schema}
  - com.cinnober.msgcodec.{ProtocolDictionaryBuilder => SchemaBuilder}
@@ -33,24 +36,31 @@ to byte sink and source:
 Removed utilities:
 
  - com.cinnober.msgcodec.util.TempOutputStream
+ - com.cinnober.msgcodec.util.LimitInputStream
+ - com.cinnober.msgcodec.util.LimitException
  
 Added visitor package:
 
  - com.cinnober.msgcodec.visitor
 
-Removed TAP format support (msgcodec-tap).
+Schema related changes:
 
-Schema changes:
+ - Schema change: Added maxSize to String and Binary types. New annotation MaxSize.
+ - Schame change: Group type in GroupBinding is now optional (required for encoding).
+ - Message classes can now be abstract. Factory.newInstance can now throw ObjectInstantiationException.
+ - Added SchemaBinder with support for schema upgrades.
+ - Added SchemaParser that can parse the Schema.toString format into a Schema.
 
- - Added maxSize to String and Binary types. New annotation MaxSize.
- - Group type in GroupBinding is now optional (required for encoding).
- 
-Blink (msgcodec-blink):
+### msgcodec-blink
 
+ - Improved performance.
  - Added experimental support for the Native Blink format.
  - Removed legacy 'instruction based' codec. The ASM-based dynamic bytecode generation codec is faster and stable.
+ - Upgraded from Blink spec beta2 to beta4.
+ - Removed com.cinnober.msgcodec.blink.Blink{Input|Output}Stream. Use com.cinnober.msgcodec.blink.Blink{Input|Output} instead.
 
-JSON (msgcodec-json):
+### msgcodec-json
 
  - Added support for JavaScript safe mode (default), where large numbers are encoded as strings.
  - The "$type" field in dynamic groups, is no longer required to be first. However, having it first is best for performance.
+ - Added support to encode/decode static groups in JsonCodec, i.e. JSON without the "$type" field.

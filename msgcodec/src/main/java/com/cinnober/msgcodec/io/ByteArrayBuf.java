@@ -1,19 +1,25 @@
 /*
- * Copyright (c) 2015 Cinnober Financial Technology AB, Stockholm,
- * Sweden. All rights reserved.
- * 
- * This software is the confidential and proprietary information of
- * Cinnober Financial Technology AB, Stockholm, Sweden. You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Cinnober.
- * 
- * Cinnober makes no representations or warranties about the suitability
- * of the software, either expressed or implied, including, but not limited
- * to, the implied warranties of merchantibility, fitness for a particular
- * purpose, or non-infringement. Cinnober shall not be liable for any
- * damages suffered by licensee as a result of using, modifying, or
- * distributing this software or its derivatives.
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 The MsgCodec Authors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package com.cinnober.msgcodec.io;
@@ -24,7 +30,6 @@ import java.util.Objects;
 /**
  * A ByteBuf backed by a byte array.
  */
-// TODO: limit checks
 public class ByteArrayBuf implements ByteBuf {
 
     private final byte[] data;
@@ -77,6 +82,9 @@ public class ByteArrayBuf implements ByteBuf {
     }
     @Override
     public ByteArrayBuf position(int position) {
+        if (position > limit) {
+            throw new IllegalArgumentException("Cannot set position beyond limit");
+        }
         this.pos = position;
         return this;
     }
@@ -87,6 +95,11 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public ByteArrayBuf limit(int limit) {
+        if (limit < pos) {
+            throw new IllegalArgumentException("Cannot set limit before position");
+        } else if (limit > data.length) {
+            throw new IllegalArgumentException("Cannot set limit beyond capacity");
+        }
         this.limit = limit;
         return this;
     }
@@ -107,22 +120,39 @@ public class ByteArrayBuf implements ByteBuf {
 
     @Override
     public int read() throws IOException {
+        if (pos == limit) {
+            throw new IOException("Buffer underflow");
+        }
         return 0xff & data[pos++];
     }
 
     @Override
     public void read(byte[] b, int off, int len) throws IOException {
+        if (pos+len > limit) {
+            throw new IOException("Buffer underflow");
+        }
         System.arraycopy(data, pos, b, off, len);
         pos += len;
     }
 
     @Override
+    public void skip(int len) throws IOException {
+        if (pos+len > limit) {
+            throw new IOException("Buffer underflow");
+        }
+        pos += len;
+    }
+
+    @Override
     public String readStringUtf8(int len) throws IOException {
+        if (pos+len > limit) {
+            throw new IOException("Buffer underflow");
+        }
         if (len < 128) {
             boolean ascii = true;
             int end = pos+len;
             for (int i=pos; i<end; i++) {
-                if(data[i] >= 0x80) {
+                if(data[i] < 0) {
                     ascii = false;
                     break;
                 }
@@ -138,7 +168,7 @@ public class ByteArrayBuf implements ByteBuf {
         }
 
 
-        String s = new String(data, pos, pos+len, UTF8);
+        String s = new String(data, pos, len, UTF8);
         pos += len;
         return s;
     }
@@ -146,7 +176,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void write(int b) throws IOException {
         if (pos >= limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         data[pos++] = (byte) b;
     }
@@ -154,7 +184,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         if (pos + len > limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         System.arraycopy(b, off, data, pos, len);
         pos += len;
@@ -173,7 +203,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void writeIntLE(int v) throws IOException {
         if (pos + 4 > limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         data[pos] = (byte) v;
         data[pos+1] = (byte) (v >> 8);
@@ -185,7 +215,7 @@ public class ByteArrayBuf implements ByteBuf {
     @Override
     public void writeLongLE(long v) throws IOException {
         if (pos + 8 > limit) {
-            throw new IOException("Insufficient space");
+            throw new IOException("Buffer overflow");
         }
         data[pos] = (byte) v;
         data[pos+1] = (byte) (v >> 8);

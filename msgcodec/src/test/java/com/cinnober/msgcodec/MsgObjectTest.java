@@ -27,7 +27,6 @@ package com.cinnober.msgcodec;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Time;
-import com.cinnober.msgcodec.anot.Unsigned;
 import java.util.Date;
 import org.junit.Test;
 import static org.junit.Assert.*;

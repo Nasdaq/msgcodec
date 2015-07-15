@@ -43,7 +43,7 @@ import com.cinnober.msgcodec.anot.Unsigned;
  *
  */
 @Name("TypeDef")
-public class MetaTypeDef extends MetaAnnotated {
+public abstract class MetaTypeDef extends MetaAnnotated {
 
     public static final MetaInt8 INT8 = new MetaInt8();
     public static final MetaInt16 INT16 = new MetaInt16();
@@ -66,7 +66,7 @@ public class MetaTypeDef extends MetaAnnotated {
     public static final MetaBigDecimal BIGDECIMAL = new MetaBigDecimal();
     public static final MetaBigInt BIGINT = new MetaBigInt();
 
-    public TypeDef toTypeDef() { return null; }
+    public abstract TypeDef toTypeDef();
 
     @Name("Ref") @Id(16003)
     public static class MetaRef extends MetaTypeDef {

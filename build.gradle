@@ -14,7 +14,6 @@ buildscript {
 }
 
 allprojects { 
-  ext.nextVersion = 'major'
   apply plugin: 'com.cinnober.gradle.semver-git'
   group = 'com.cinnober.msgcodec'
 }
@@ -23,8 +22,10 @@ subprojects {
   apply plugin: 'maven'
   apply plugin: 'java'
   apply plugin: 'signing'
+  apply plugin: 'eclipse'
   sourceCompatibility = '1.8'
   ext.junit_version = '4.11'
+  compileTestJava.options.encoding = 'UTF-8'
   
   task javadocJar(type: Jar) {
     classifier = 'javadoc'

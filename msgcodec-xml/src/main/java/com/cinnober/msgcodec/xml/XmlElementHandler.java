@@ -33,7 +33,11 @@ import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
+import java.util.BitSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+import org.xml.sax.SAXException;
 
 /**
  * @author mikael.brannstrom
@@ -57,16 +61,16 @@ class XmlElementHandler {
         return nsName;
     }
 
-    public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) {
+    public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) throws SAXException {
     }
-    public void endElement(XmlContext ctx, String text) {
+    public void endElement(XmlContext ctx, String text) throws SAXException {
     }
-    public XmlElementHandler lookupElement(XmlContext ctx, NsName nsName) {
+    public XmlElementHandler lookupElement(XmlContext ctx, NsName nsName) throws SAXException {
         return null;
     }
-    public void startChildElement(XmlContext ctx, XmlElementHandler element) {
+    public void startChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
     }
-    public void endChildElement(XmlContext ctx, XmlElementHandler element) {
+    public void endChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
     }
     protected void appendElementName(PrintWriter writer, NsName elementName) {
         writer.append(elementName.getName()); // TODO: check special chars, namespace etc
@@ -77,6 +81,7 @@ class XmlElementHandler {
 
     static abstract class FieldHandler extends XmlElementHandler {
         protected FieldDef field;
+        private final int requiredFieldSlot;
         @SuppressWarnings("rawtypes")
         protected Accessor accessor;
 
@@ -84,15 +89,16 @@ class XmlElementHandler {
          * @param nsName the name, not null.
          * @param field the field, not null.
          */
-        public FieldHandler(NsName nsName, FieldDef field) {
+        public FieldHandler(NsName nsName, FieldDef field, int requiredFieldSlot) {
             super(nsName);
             this.field = field;
+            this.requiredFieldSlot = requiredFieldSlot;
             this.accessor = field.getAccessor();
         }
 
         @SuppressWarnings("unchecked")
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             Object value = ctx.popValue();
             Object group = ctx.peekValue();
             accessor.setValue(group, value);
@@ -102,6 +108,12 @@ class XmlElementHandler {
             return accessor.getValue(group);
         }
         public abstract void writeElement(Object value, NsName name, PrintWriter appendTo) throws IOException;
+        boolean isRequired() {
+            return field.isRequired();
+        }
+        int getRequiredFieldSlot() {
+            return requiredFieldSlot;
+        }
     }
     static abstract class ValueHandler extends XmlElementHandler {
         /**
@@ -112,24 +124,37 @@ class XmlElementHandler {
         }
         public abstract void writeElementValue(Object value, NsName name, PrintWriter appendTo) throws IOException;
     }
-    static class StringItemValue extends ValueHandler {
+    static class SequenceItemValue extends ValueHandler {
 
+        @SuppressWarnings("rawtypes")
+        private final XmlFormat format;
         /**
          * @param nsName the name, or null.
          */
-        public StringItemValue(NsName nsName) {
+        @SuppressWarnings("rawtypes")
+        public SequenceItemValue(NsName nsName, XmlFormat format) {
             super(nsName);
+            this.format = Objects.requireNonNull(format);
         }
         @Override
-        public void endElement(XmlContext ctx, String text) {
-            ctx.pushValue(text);
+        public void endElement(XmlContext ctx, String text) throws SAXException {
+            try {
+                ctx.pushValue(format.parse(text));
+            } catch (FormatException e) {
+                throw new SAXException(e);
+            }
         }
         @Override
+        @SuppressWarnings("unchecked")
         public void writeElementValue(Object value, NsName name, PrintWriter appendTo) throws IOException {
             appendTo.append('<');
             appendElementName(appendTo, name);
             appendTo.append('>');
-            appendTo.append(XmlStringFormat.escape((String) value));
+            try {
+                appendTo.append(format.format(value));
+            } catch (FormatException e) {
+                throw new IOException(e);
+            }
             appendTo.append("</");
             appendElementName(appendTo, name);
             appendTo.append('>');
@@ -143,7 +168,8 @@ class XmlElementHandler {
         private Map<NsName, SimpleField> attributeFields;
         private Map<NsName, FieldHandler> elementFields;
         private SimpleField inlineField;
-
+        private int numRequiredFields;
+        
         /**
          * @param nsName the name, not null.
          * @param groupDef the group, not null.
@@ -152,6 +178,10 @@ class XmlElementHandler {
             super(nsName);
             this.groupDef = groupDef;
             this.factory = groupDef.getFactory();
+        }
+
+        public int getNumRequiredFields() {
+            return numRequiredFields;
         }
 
         public void init(Map<NsName, SimpleField> attributeFields,
@@ -163,6 +193,10 @@ class XmlElementHandler {
             this.attributeFields = attributeFields;
             this.elementFields = elementFields;
             this.inlineField = inlineField;
+            this.numRequiredFields =
+                    Math.max(Stream.concat(attributeFields.values().stream(), elementFields.values().stream())
+                        .mapToInt(FieldHandler::getRequiredFieldSlot).max().orElse(-1),
+                        inlineField != null ? inlineField.getRequiredFieldSlot() : -1) + 1;
         }
         Map<NsName, SimpleField> getAttributeFields() {
             return attributeFields;
@@ -175,17 +209,22 @@ class XmlElementHandler {
         }
 
         @Override
-        public void startElement(XmlContext ctx, NsName name,
-                Map<NsName, String> attributes) {
+        public void startElement(
+                XmlContext ctx,
+                NsName name,
+                Map<NsName, String> attributes) throws SAXException {
+            
+            BitSet bits = ctx.pushRequiredFields(numRequiredFields);
             ctx.pushValue(factory.newInstance());
             for (Map.Entry<NsName, String> attribute : attributes.entrySet()) {
                 SimpleField field = attributeFields.get(attribute.getKey());
                 if (field == null) {
-                    throw new RuntimeException("Unknown attribute: " + attribute.getKey()); // TODO: exception type
+                    throw new SAXException("Unknown attribute: " + attribute.getKey());
                 }
                 field.handleAttribute(ctx, attribute.getKey(), attribute.getValue());
-                //field.copyValueToGroup(value);
-                // TODO: remove attribute.getKey() from missing fields
+                if (field.isRequired()) {
+                    bits.clear(field.getRequiredFieldSlot());
+                }
             }
         }
 
@@ -196,17 +235,24 @@ class XmlElementHandler {
 
         @Override
         public void endChildElement(XmlContext ctx, XmlElementHandler element) {
-            //            FieldHandler field = (FieldHandler) element;
-            //            field.copyValueToGroup(value);
-            // TODO: remove element.getName() from missing fields
+            FieldHandler field = (FieldHandler) element;
+            if (field.isRequired()) {
+                ctx.clearRequiredFieldSlot(field.getRequiredFieldSlot());
+            }
         }
 
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
+            BitSet bits = ctx.popRequiredFields();
             if (inlineField != null) {
                 inlineField.handleText(ctx, text);
+                if (inlineField.isRequired()) {
+                    bits.clear(inlineField.getRequiredFieldSlot());
+                }
             }
-            // TODO: check missing fields
+            if (!bits.isEmpty()) {
+                throw new SAXException("Some required fields are missing: " + bits);
+            }
         }
 
         @Override
@@ -214,6 +260,9 @@ class XmlElementHandler {
             if (value == null || !value.getClass().equals(groupDef.getGroupType())) {
                 return;
             }
+            BitSet requiredFields = new BitSet(numRequiredFields);
+            requiredFields.set(0, numRequiredFields);
+
             appendTo.append('<');
             appendElementName(appendTo, name);
             for (Map.Entry<NsName, SimpleField> attrEntry : attributeFields.entrySet()) {
@@ -222,6 +271,9 @@ class XmlElementHandler {
                 Object fieldValue = attrInstr.getValue(value);
                 if (fieldValue != null) {
                     attrInstr.writeAttribute(fieldValue, attrName, appendTo);
+                    if (attrInstr.isRequired()) {
+                        requiredFields.clear(attrInstr.getRequiredFieldSlot());
+                    }
                 }
             }
             boolean startElementOpen = true;
@@ -234,6 +286,9 @@ class XmlElementHandler {
                     appendTo.append("</");
                     appendElementName(appendTo, name);
                     appendTo.println('>');
+                    if (inlineField.isRequired()) {
+                        requiredFields.clear(inlineField.getRequiredFieldSlot());
+                    }
                 } else {
                     appendTo.println("/>");
                 }
@@ -248,6 +303,9 @@ class XmlElementHandler {
                             startElementOpen = false;
                         }
                         elemInstr.writeElement(fieldValue, elemName, appendTo);
+                        if (elemInstr.isRequired()) {
+                            requiredFields.clear(elemInstr.getRequiredFieldSlot());
+                        }
                     }
                 }
                 if (startElementOpen) {
@@ -258,6 +316,11 @@ class XmlElementHandler {
                     appendTo.println('>');
                 }
             }
+
+            if (!requiredFields.isEmpty()) {
+                throw new IllegalArgumentException("Some required fields are missing: " + requiredFields);
+            }
+
         }
     }
 
@@ -292,8 +355,8 @@ class XmlElementHandler {
          * @param nsName
          * @param valueHandler
          */
-        public DynamicGroupField(NsName name, FieldDef fieldDef, XmlCodec codec) {
-            super(name, fieldDef);
+        public DynamicGroupField(NsName name, FieldDef fieldDef, int requiredFieldSlot, XmlCodec codec) {
+            super(name, fieldDef, requiredFieldSlot);
             this.codec = codec;
         }
 
@@ -331,29 +394,29 @@ class XmlElementHandler {
          * @param format
          */
         @SuppressWarnings("rawtypes")
-        public SimpleField(NsName nsName, FieldDef field, XmlFormat format) {
-            super(nsName, field);
+        public SimpleField(NsName nsName, FieldDef field, int requiredFieldSlot, XmlFormat format) {
+            super(nsName, field, requiredFieldSlot);
             this.format = format;
         }
 
-        public void handleAttribute(XmlContext ctx, NsName attribute, String text) {
+        public void handleAttribute(XmlContext ctx, NsName attribute, String text) throws SAXException {
             startElement(ctx, attribute, null);
             endElement(ctx, text);
         }
 
         @SuppressWarnings("unchecked")
-        public void handleText(XmlContext ctx, String text) {
+        public void handleText(XmlContext ctx, String text) throws SAXException {
             try {
                 Object value = format.parse(text);
                 Object group = ctx.peekValue();
                 accessor.setValue(group, value);
             } catch (FormatException e) {
-                throw new RuntimeException(e); // TODO: exception type
+                throw new SAXException(e);
             }
         }
 
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             handleText(ctx, text);
         }
 
@@ -403,9 +466,12 @@ class XmlElementHandler {
          * @param accessor
          * @param valueHandler
          */
-        public ElementValueField(NsName nsName, FieldDef field,
+        public ElementValueField(
+                NsName nsName,
+                FieldDef field,
+                int requiredFieldSlot,
                 ValueHandler valueHandler) {
-            super(nsName, field);
+            super(nsName, field, requiredFieldSlot);
             this.valueHandler = valueHandler;
         }
 
@@ -442,15 +508,18 @@ class XmlElementHandler {
          * @param accessor
          * @param valueHandler
          */
-        public ListSequenceValueField(NsName nsName, FieldDef field,
+        public ListSequenceValueField(
+                NsName nsName,
+                FieldDef field,
+                int requiredFieldSlot,
                 ValueHandler valueHandler) {
-            super(nsName, field);
+            super(nsName, field, requiredFieldSlot);
             this.valueHandler = valueHandler;
         }
 
         @SuppressWarnings("rawtypes")
         @Override
-        public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) {
+        public void startElement(XmlContext ctx, NsName nsName, Map<NsName, String> attributes) throws SAXException {
             super.startElement(ctx, nsName, attributes);
             ctx.pushValue(new ArrayList());
         }
@@ -503,15 +572,19 @@ class XmlElementHandler {
          * @param field
          * @param valueHandler
          */
-        public ArraySequenceValueField(NsName nsName, FieldDef field,
-                ValueHandler valueHandler, Class<?> componentType) {
-            super(nsName, field, valueHandler);
+        public ArraySequenceValueField(
+                NsName nsName,
+                FieldDef field,
+                int requiredFieldSlot,
+                ValueHandler valueHandler, 
+                Class<?> componentType) {
+            super(nsName, field, requiredFieldSlot, valueHandler);
             this.componentType = componentType;
         }
 
         @SuppressWarnings("rawtypes")
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             // convert from list to array
             List list = (List) ctx.popValue();
             Object array = Array.newInstance(componentType, list.size());
@@ -556,15 +629,18 @@ class XmlElementHandler {
          * @param accessor
          * @param valueHandler
          */
-        public ListSequenceSimpleField(NsName nsName, FieldDef field,
+        public ListSequenceSimpleField(
+                NsName nsName,
+                FieldDef field,
+                int requiredFieldSlot,
                 XmlFormat<?> valueHandler) {
-            super(nsName, field);
+            super(nsName, field, requiredFieldSlot);
             this.valueFormat = valueHandler;
         }
 
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             ArrayList list = new ArrayList();
             String[] split = text.split("\\s+");
             for (String str : split) {
@@ -572,7 +648,7 @@ class XmlElementHandler {
                     try {
                         list.add(valueFormat.parse(str));
                     } catch (FormatException e) {
-                        throw new RuntimeException(e); // TODO: exception type
+                        throw new IllegalArgumentException(e);
                     }
                 }
             }
@@ -603,7 +679,7 @@ class XmlElementHandler {
                     try {
                         appendTo.append(valueFormat.format(item));
                     } catch (FormatException e) {
-                        throw new RuntimeException(e); // TODO: exception type
+                        throw new IOException(e);
                     }
                 }
                 appendTo.append("</");
@@ -623,16 +699,20 @@ class XmlElementHandler {
          * @param accessor
          * @param valueHandler
          */
-        public ArraySequenceSimpleField(NsName nsName, FieldDef field,
-                XmlFormat<?> valueHandler, Class<?> componentType) {
-            super(nsName, field);
+        public ArraySequenceSimpleField(
+                NsName nsName,
+                FieldDef field,
+                int requiredFieldSlot,
+                XmlFormat<?> valueHandler, 
+                Class<?> componentType) {
+            super(nsName, field, requiredFieldSlot);
             this.valueFormat = valueHandler;
             this.componentType = componentType;
         }
 
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             ArrayList list = new ArrayList();
             String[] split = text.split("\\s+");
             for (String str : split) {
@@ -640,7 +720,7 @@ class XmlElementHandler {
                     try {
                         list.add(valueFormat.parse(str));
                     } catch (FormatException e) {
-                        throw new RuntimeException(e); // TODO: exception type
+                        throw new SAXException(e);
                     }
                 }
             }
@@ -654,7 +734,7 @@ class XmlElementHandler {
             accessor.setValue(ctx.peekValue(), array);
         }
 
-        @SuppressWarnings({"rawtypes", "unchecked"})
+        @SuppressWarnings({"unchecked"})
         @Override
         public void writeElement(Object value, NsName name, PrintWriter appendTo)
                 throws IOException {
@@ -680,7 +760,7 @@ class XmlElementHandler {
                     try {
                         appendTo.append(valueFormat.format(item));
                     } catch (FormatException e) {
-                        throw new RuntimeException(e); // TODO: exception type
+                        throw new IllegalArgumentException(e);
                     }
                 }
                 appendTo.append("</");
@@ -697,31 +777,34 @@ class XmlElementHandler {
          * @param nsName the name, or null
          * @param valueHandler the value handler, not null.
          */
-        public InlineElementValueField(NsName nsName, FieldDef field,
+        public InlineElementValueField(
+                NsName nsName,
+                FieldDef field,
+                int requiredFieldSlot,
                 ValueHandler valueHandler) {
-            super(nsName, field);
+            super(nsName, field, requiredFieldSlot);
             this.valueHandler = valueHandler;
         }
         @Override
-        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) {
+        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) throws SAXException {
             super.startElement(ctx, name, attributes);
             valueHandler.startElement(ctx, name, attributes);
         }
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             valueHandler.endElement(ctx, text);
             super.endElement(ctx, text);
         }
         @Override
-        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) {
+        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) throws SAXException {
             return valueHandler.lookupElement(ctx, name);
         }
         @Override
-        public void startChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void startChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.startChildElement(ctx, element);
         }
         @Override
-        public void endChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void endChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.endChildElement(ctx, element);
         }
 
@@ -744,23 +827,23 @@ class XmlElementHandler {
             this.valueHandler = valueHandler;
         }
         @Override
-        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) {
+        public void startElement(XmlContext ctx, NsName name, Map<NsName, String> attributes) throws SAXException {
             valueHandler.startElement(ctx, name, attributes);
         }
         @Override
-        public void endElement(XmlContext ctx, String text) {
+        public void endElement(XmlContext ctx, String text) throws SAXException {
             valueHandler.endElement(ctx, text);
         }
         @Override
-        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) {
+        public XmlElementHandler lookupElement(XmlContext ctx, NsName name) throws SAXException {
             return valueHandler.lookupElement(ctx, name);
         }
         @Override
-        public void startChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void startChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.startChildElement(ctx, element);
         }
         @Override
-        public void endChildElement(XmlContext ctx, XmlElementHandler element) {
+        public void endChildElement(XmlContext ctx, XmlElementHandler element) throws SAXException {
             valueHandler.endChildElement(ctx, element);
         }
         @Override

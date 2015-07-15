@@ -26,7 +26,6 @@ package com.cinnober.msgcodec.examples.messages;
 import java.util.Objects;
 
 import com.cinnober.msgcodec.MsgObject;
-import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.MaxSize;
 import com.cinnober.msgcodec.anot.Required;

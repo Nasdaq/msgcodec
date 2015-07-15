@@ -1,25 +1,32 @@
 /*
- * Copyright (c) 2015 Cinnober Financial Technology AB, Stockholm,
- * Sweden. All rights reserved.
- * 
- * This software is the confidential and proprietary information of
- * Cinnober Financial Technology AB, Stockholm, Sweden. You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Cinnober.
- * 
- * Cinnober makes no representations or warranties about the suitability
- * of the software, either expressed or implied, including, but not limited
- * to, the implied warranties of merchantibility, fitness for a particular
- * purpose, or non-infringement. Cinnober shall not be liable for any
- * damages suffered by licensee as a result of using, modifying, or
- * distributing this software or its derivatives.
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 The MsgCodec Authors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package com.cinnober.msgcodec.io;
 
-import static com.cinnober.msgcodec.io.ByteSource.UTF8;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -95,26 +102,53 @@ public class ByteBufferBuf implements ByteBuf {
 
     @Override
     public int read() throws IOException {
-        return 0xff & buf.get();
+        try {
+            return 0xff & buf.get();
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void read(byte[] b, int off, int len) throws IOException {
-        buf.get(b, off, len);
+        try {
+            buf.get(b, off, len);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void write(int b) throws IOException {
-        buf.put((byte) b);
+        try {
+            buf.put((byte) b);
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        buf.put(b, off, len);
+        try {
+            buf.put(b, off, len);
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
+    public void skip(int len) throws IOException {
+        if (position() + len > limit()) {
+            throw new IOException("Buffer underflow");
+        }
+        buf.position(buf.position()+len);
+    }
+    
+    @Override
     public String readStringUtf8(int len) throws IOException {
+        if (position() + len > limit()) {
+            throw new IOException("Buffer underflow");
+        }
         if (buf.hasArray()) {
             final byte[] data = buf.array();
             final int pos = buf.arrayOffset();
@@ -122,7 +156,7 @@ public class ByteBufferBuf implements ByteBuf {
                 boolean ascii = true;
                 int end = pos+len;
                 for (int i=pos; i<end; i++) {
-                    if(data[i] >= 0x80) {
+                    if(data[i] < 0) {
                         ascii = false;
                         break;
                     }
@@ -136,7 +170,7 @@ public class ByteBufferBuf implements ByteBuf {
                     return new String(chars);
                 }
             }
-            String s = new String(data, pos, pos+len, UTF8);
+            String s = new String(data, pos, len, UTF8);
             buf.position(buf.position()+len);
             return s;
         } else {
@@ -165,24 +199,40 @@ public class ByteBufferBuf implements ByteBuf {
 
     @Override
     public void writeIntLE(int v) throws IOException {
-        buf.putInt(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v));
+        try {
+            buf.putInt(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v));
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public void writeLongLE(long v) throws IOException {
-        buf.putLong(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v));
+        try {
+            buf.putLong(buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v));
+        } catch (BufferOverflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public int readIntLE() throws IOException {
-        int v = buf.getInt();
-        return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v);
+        try {
+            int v = buf.getInt();
+            return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
     @Override
     public long readLongLE() throws IOException {
-        long v = buf.getLong();
-        return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v);
+        try {
+            long v = buf.getLong();
+            return buf.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
     }
 
 }

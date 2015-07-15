@@ -218,12 +218,12 @@ public class FieldDef implements Annotatable<FieldDef> {
             }
         }
         str.append(type.toString());
-        if (!required) {
-            str.append("?");
-        }
         str.append(" ").append(name);
         if (id != -1) {
             str.append("/").append(id);
+        }
+        if (!required) {
+            str.append("?");
         }
         return str.toString();
     }

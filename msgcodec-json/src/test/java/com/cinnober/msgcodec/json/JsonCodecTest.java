@@ -180,6 +180,16 @@ public class JsonCodecTest {
         assertEquals(new BinaryMessage(new byte[] {1,2,3}), msg);
     }
 
+    @Test(expected = DecodeException.class)
+    public void testFailDecodeAbstractMessage() throws IOException {
+        Schema schema = new SchemaBuilder().build(AbstractMessage.class);
+        JsonCodec codec = new JsonCodec(schema, false);
+        
+        String json = "{\"$type\":\"AbstractMessage\"}";
+        ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(Charset.forName("UTF8")));
+        codec.decode(in);
+    }
+
     public static class Hello extends MsgObject {
         @Required
         public String greeting;
@@ -207,5 +217,7 @@ public class JsonCodecTest {
         public BinaryMessage(byte[] data) {
             this.data = data;
         }
+    }
+    public static abstract class AbstractMessage extends MsgObject {
     }
 }

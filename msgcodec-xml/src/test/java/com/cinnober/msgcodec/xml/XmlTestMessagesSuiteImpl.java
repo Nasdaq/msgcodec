@@ -28,8 +28,6 @@ import org.junit.runners.model.InitializationError;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.test.messages.TestMessagesSuite;
 import com.cinnober.msgcodec.test.messages.TestProtocol;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 

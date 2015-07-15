@@ -24,6 +24,7 @@
 package com.cinnober.msgcodec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,10 +104,12 @@ public class Group {
      * Set the value for the specified field.
      * @param fieldName the field name, not null.
      * @param value the field value (including null).
+     * @return this group instance, for chaining.
      * @throws IllegalArgumentException if the field name does not exist.
      */
-    public void set(String fieldName, Object value) throws IllegalArgumentException {
+    public Group set(String fieldName, Object value) throws IllegalArgumentException {
         fieldValues[groupInfo.getFieldIndex(fieldName)] = value;
+        return this;
     }
     private Object get(int fieldIndex) {
         return fieldValues[fieldIndex];
@@ -163,9 +166,7 @@ public class Group {
         List<FieldDef> allFields = new ArrayList<>();
         List<FieldDef> declaredFields = new ArrayList<>();
         if (superGroupInfo != null) {
-            for (FieldDef field : superGroupInfo.fieldDefs()) {
-                allFields.add(field);
-            }
+            allFields.addAll(Arrays.asList(superGroupInfo.fieldDefs()));
         }
         for (FieldDef field : group.getFields()) {
             TypeDef type = schema.resolveToType(field.getType(), true);
@@ -212,9 +213,6 @@ public class Group {
             for (FieldDef field : fieldDefs) {
                 fieldIndexByName.put(field.getName(), index++);
             }
-        }
-        GroupDef groupDef() {
-            return groupDef;
         }
 
         void initGroupDef(GroupDef groupDef) {

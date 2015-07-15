@@ -21,18 +21,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package com.cinnober.msgcodec.util;
+package com.cinnober.msgcodec.xml;
 
-import java.io.EOFException;
-// PENDING: remove this class?
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
+
+
 
 /**
- * This exception is thrown when the limit of a {@link LimitInputStream} has been reached. 
- *
- * @see LimitInputStream
  * @author mikael.brannstrom
+ *
  */
-public class LimitException extends EOFException {
-    private static final long serialVersionUID = 1L;
+class XmlBinaryFormat implements XmlFormat<byte[]> {
+
+    public static final XmlBinaryFormat BINARY = new XmlBinaryFormat();
+
+    private final Encoder encoder = Base64.getEncoder();
+    private final Decoder decoder = Base64.getDecoder();
+
+    @Override
+    public String format(byte[] value) {
+        return encoder.encodeToString(value);
+    }
+
+    @Override
+    public byte[] parse(String str) throws FormatException {
+        return decoder.decode(str);
+    }
 
 }

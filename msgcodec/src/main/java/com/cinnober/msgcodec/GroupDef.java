@@ -215,7 +215,7 @@ public class GroupDef implements Annotatable<GroupDef> {
         }
         str.append(name);
         if (id != -1) {
-            str.append("/").append(id);
+            str.append("/").append(0xffffffffL & id);
         }
         if (superGroup != null) {
             str.append(" : ").append(superGroup);

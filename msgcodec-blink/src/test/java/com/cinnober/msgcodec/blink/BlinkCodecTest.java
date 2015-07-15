@@ -40,6 +40,7 @@ import com.cinnober.msgcodec.messages.MetaProtocol;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.*;
@@ -280,6 +281,22 @@ public class BlinkCodecTest {
         assertArrayEquals(bout.toByteArray(), bout2.toByteArray());
     }
 
+    @Test(expected = DecodeException.class)
+    public void testFailDecodeAbstractMessage() throws IOException {
+        Schema schema = new SchemaBuilder().build(AbstractMessage.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+
+        byte[] blink = new byte[]{0x01, 0x05}; // size, type
+        ByteArrayInputStream in = new ByteArrayInputStream(blink);
+        try {
+            codec.decode(in);
+        } catch(Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+
     @Id(1)
     public static class Hello extends MsgObject {
         @Required
@@ -356,5 +373,8 @@ public class BlinkCodecTest {
         public Date seconds2000;
     }
 
+    @Id(5)
+    public static abstract class AbstractMessage extends MsgObject {
+    }
 
 }

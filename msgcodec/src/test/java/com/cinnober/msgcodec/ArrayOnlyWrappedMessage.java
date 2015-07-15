@@ -25,7 +25,6 @@ package com.cinnober.msgcodec;
 
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
-import com.cinnober.msgcodec.anot.Unsigned;
 
 /**
  * @author mikael.brannstrom

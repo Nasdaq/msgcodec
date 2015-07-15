@@ -800,10 +800,7 @@ public abstract class TypeDef {
          * @param refType the named type or group, not null.
          */
         public Reference(java.lang.String refType) {
-            super(Type.REFERENCE, refType);
-            if (refType == null) {
-                throw new NullPointerException("refType");
-            }
+            super(Type.REFERENCE, Objects.requireNonNull(refType));
         }
         @Override
         public MetaTypeDef toMessage() {

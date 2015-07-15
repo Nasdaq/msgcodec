@@ -33,15 +33,22 @@ import com.cinnober.msgcodec.io.ByteArrayBuf;
 import java.io.IOException;
 
 /**
- * Base class for a dynamically generated codec for a specific schema.
+ * Base class for a dynamically generated compact blink codec for a specific schema.
  * 
- * A GeneratedCodec sub class represents a schema.
- * A GeneratedCodec instance is tied to a specific {@link BlinkCodec} instance which holds the encode buffers
+ * <p><b>Note: internal use only!</b>
+ *
+ * <p>
+ * A GeneratedCompactCodec sub class represents a schema.
+ * A GeneratedCompactCodec instance is tied to a specific {@link BlinkCodec} instance which holds the encode buffers
  * and any max binary size settings.
  * 
  * @author mikael brannstrom
  */
-public abstract class GeneratedCompactCodec extends GeneratedCodec { // PENDING: This should be package private
+
+
+/* Note: This class should be package private, but cannot since the dynamically generated classes are loaded
+   from another class loader, i.e. don't share the package with this class (regardless of package name). */
+public abstract class GeneratedCompactCodec extends GeneratedCodec {
 
     /** Reference to the blink codec. */
     protected final BlinkCodec codec;
@@ -121,35 +128,31 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec { // PENDING:
     }
 
     private Object readDynamicGroup(int size, ByteSource in) throws IOException {
-        // TODO: limit
-//        int limit = in.limit();
+        ByteBuf inbuf;
+        if (in instanceof ByteBuf) {
+            inbuf = (ByteBuf) in;
+        } else {
+            inbuf = new PositionByteSource(in);
+        }
+        int expectedEndPos = inbuf.position() + size;
+        int groupId = BlinkInput.readUInt32(inbuf);
         try {
-//            if (limit >= 0) {
-//                if (size > limit) {
-//                    // there is already a limit that is smaller than this message size
-//                    throw new DecodeException("Dynamic group size preamble (" + size +
-//                            ") goes beyond current stream limit (" + limit + ").");
-//                } else {
-//                    limit -= size;
-//                    in.limit(size);
-//                }
-//            }
-            int groupId = BlinkInput.readUInt32(in);
-            Object group;
-            try {
-                group = readStaticGroup(groupId, in);
-            } catch (Exception e) {
-                GroupDef groupDef = codec.getSchema().getGroup(groupId);
-                if (groupDef != null) {
-                    throw new GroupDecodeException(groupDef.getName(), e);
-                } else {
-                    throw e;
-                }
+            Object group = readStaticGroup(groupId, inbuf);
+            
+            int skip = expectedEndPos - inbuf.position();
+            if (skip < 0) {
+                throw new DecodeException("Malformed dynamic group. Read " + (-skip) + " bytes beyond group size.");
+            } else if (skip > 0) {
+                in.skip(skip);
             }
-//            in.skip(in.limit());
             return group;
-        } finally {
-//            in.limit(limit); // restore old limit
+        } catch (Exception e) {
+            GroupDef groupDef = codec.getSchema().getGroup(groupId);
+            if (groupDef != null) {
+                throw new GroupDecodeException(groupDef.getName(), e);
+            } else {
+                throw e;
+            }
         }
     }
 }

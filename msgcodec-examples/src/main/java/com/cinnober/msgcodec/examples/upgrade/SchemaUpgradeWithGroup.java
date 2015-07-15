@@ -1,32 +1,35 @@
 /*
- * Copyright (c) 2015 Cinnober Financial Technology AB, Stockholm,
- * Sweden. All rights reserved.
- * 
- * This software is the confidential and proprietary information of
- * Cinnober Financial Technology AB, Stockholm, Sweden. You shall not
- * disclose such Confidential Information and shall use it only in
- * accordance with the terms of the license agreement you entered into
- * with Cinnober.
- * 
- * Cinnober makes no representations or warranties about the suitability
- * of the software, either expressed or implied, including, but not limited
- * to, the implied warranties of merchantibility, fitness for a particular
- * purpose, or non-infringement. Cinnober shall not be liable for any
- * damages suffered by licensee as a result of using, modifying, or
- * distributing this software or its derivatives.
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 The MsgCodec Authors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  */
 
 package com.cinnober.msgcodec.examples.upgrade;
 
 import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.MsgCodec;
-import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinder;
 import com.cinnober.msgcodec.SchemaBinder.Direction;
-import com.cinnober.msgcodec.SchemaBuilder;
-import com.cinnober.msgcodec.anot.Id;
-import com.cinnober.msgcodec.anot.Name;
+import com.cinnober.msgcodec.SchemaParser;
 import com.cinnober.msgcodec.blink.BlinkCodecFactory;
 import com.cinnober.msgcodec.io.ByteArrayBuf;
 import com.cinnober.msgcodec.io.ByteBuf;
@@ -44,21 +47,21 @@ public class SchemaUpgradeWithGroup {
         ByteBuf buf1 = new ByteArrayBuf(new byte[1000_000]);
 
         // == PHASE 1: Some application writes some Pets to a file (here buffer)
-        Schema schema1 = new SchemaBuilder().build(Pet1.class);
+        Schema schema1 = Group.bind(SchemaParser.parse("Pet/1 -> string name"));
         MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
         // write schema using MetaProtocol, so the Pets can be decoded later on
         metaCodec.encode(schema1.toMessage(), buf1);
         // then write 3 pets
-        codec1.encode(new Pet1("Buster"), buf1);
-        codec1.encode(new Pet1("Rosa"), buf1);
-        codec1.encode(new Pet1("Felix"), buf1);
+        codec1.encode(new Group(schema1, "Pet").set("name", "Buster"), buf1);
+        codec1.encode(new Group(schema1, "Pet").set("name", "Rosa"), buf1);
+        codec1.encode(new Group(schema1, "Pet").set("name", "Felix"), buf1);
         buf1.flip();
 
         // == PHASE 2: A "schema upgrade application" upgrades the contents of the file,
         //             reads buf1 stores the result in buf2
 
         // Schema2 is the new schema, here bound to Group
-        Schema schema2 = Group.bind(new SchemaBuilder().build(Pet2.class));
+        Schema schema2 = Group.bind(SchemaParser.parse("Pet/1 -> string name, f64 weight?"));
         // parse old schema from buf1
         Schema oldSchema = ((MetaSchema)metaCodec.decode(buf1)).toSchema();
         // downgrade schema2 to be able to read the old schema
@@ -79,23 +82,4 @@ public class SchemaUpgradeWithGroup {
         System.out.println("Buf1 size: " + buf1.limit());
         System.out.println("Buf2 size: " + buf2.limit());
     }
-
-    @Id(1)
-    @Name("Pet")
-    public static class Pet1 extends MsgObject {
-        String name;
-
-        public Pet1() {}
-        public Pet1(String name) {
-            this.name = name;
-        }
-    }
-
-    @Id(1)
-    @Name("Pet")
-    public static class Pet2 extends MsgObject {
-        String name;
-        Double weight;
-    }
-
 }
