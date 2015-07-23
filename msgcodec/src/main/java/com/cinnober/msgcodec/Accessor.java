@@ -42,7 +42,7 @@ public interface Accessor<O, V> {
     V getValue(O obj);
 
     /**
-     * Set the value for the field in the spcecified object.
+     * Set the value for the field in the specified object.
      * @param obj the object to set the field value in, not null.
      * @param value the field value.
      */

@@ -23,11 +23,17 @@
  */
 package com.cinnober.msgcodec;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+
+import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.TypeDef.Type;
 
 /**
  * The schema binder can re-bind a schema to another schema.
@@ -82,7 +88,8 @@ public class SchemaBinder {
                     GroupBinding superBinding = newGroups.get(dstGroup.getSuperGroup()).getBinding();
                     groupBinding = new GroupBinding(superBinding.getFactory(), null);
                 } else {
-                    groupBinding = new GroupBinding(Object::new, null);
+                	groupBinding = dstGroup.getBinding();
+                	
                 }
                 for (FieldDef dstField : dstGroup.getFields()) {
                     newFields.add(IgnoreAccessor.bindField(dstField));
@@ -92,9 +99,9 @@ public class SchemaBinder {
                     throw new IncompatibleSchemaException("Different group inheritance" + details(dstGroup, dir));
                 }
                 groupBinding = srcGroup.getBinding();
-                for (FieldDef dstField : dstGroup.getFields()) {
-                    FieldDef srcField = srcGroup.getField(dstField.getName());
-                    newFields.add(bindField(srcField, dstField, dstGroup, dst, dir));
+                for (FieldDef srcField : srcGroup.getFields()) {
+                    FieldDef dstField = dstGroup.getField(srcField.getName());
+                    newFields.add(bindField(srcField, dstField, srcGroup, dst, dir));
                 }
             }
 
@@ -108,7 +115,10 @@ public class SchemaBinder {
             newGroups.put(newGroup.getName(), newGroup);
         }
         
-        return new Schema(newGroups.values(), dst.getNamedTypes(), dst.getAnnotations(), src.getBinding());
+        
+        Schema s = new Schema(newGroups.values(), dst.getNamedTypes(), dst.getAnnotations(), src.getBinding());
+        
+        return s;
     }
 
     private FieldDef bindField(FieldDef srcField, FieldDef dstField, GroupDef dstGroup, Schema dst, Direction dir)
@@ -137,7 +147,6 @@ public class SchemaBinder {
                 case BOTH:
                     throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
                 case INBOUND:
-                {
                     // TODO: attempt to narrow the binding, e.g. int64 in src and int32 in dst
                     // narrow can also mean having more enum symbols in src than in dst
                     Accessor narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dstType);
@@ -149,20 +158,34 @@ public class SchemaBinder {
                             narrowAccessor,
                             dstType.getDefaultJavaType(),
                             dstType.getDefaultJavaComponentType()));
-                }
                 case OUTBOUND:
+                	
+                    Accessor widenAccessor = widenAccessor(srcField.getAccessor(), srcType, dstType);
+                    if (widenAccessor == null) {
+                        throw new IncompatibleSchemaException("Source type not eq or narrower " +
+                                details(dstGroup, dstField, dir));
+                    }
+                    return dstField.bind(new FieldBinding(
+                    		widenAccessor,
+                            dstType.getDefaultJavaType(),
+                            dstType.getDefaultJavaComponentType()));
+                	
                     // TODO: attempt to widen the binding, e.g. int32 in src and int64 in dst
                     // widening can also mean having more enum symbols in dst than in src
-                    throw new IncompatibleSchemaException("Destination type not eq or wider" +
-                            details(dstGroup, dstField, dir));
+//                    throw new IncompatibleSchemaException("Destination type not eq or wider" +
+//                            details(dstGroup, dstField, dir));
                 default:
                     throw new RuntimeException("Unhandled case: " + dir);
             }
         }
     }
 
+    static HashMap<Accessor, HashMap<Integer, Integer>> mappingIn = new HashMap<>();
+    static HashMap<Accessor, HashMap<Integer, Integer>> mappingOut = new HashMap<>();
+    
     @SuppressWarnings({"unchecked","rawtypes"})
     private Accessor narrowAccessor(Accessor accessor, TypeDef srcType, TypeDef dstType) {
+//    	System.out.println("narrowAccessor, src: " + srcType + " dst: " + dstType);
         switch (srcType.getType()) {
             case INT64:
             case UINT64:
@@ -206,13 +229,65 @@ public class SchemaBinder {
                     default:
                         return null;
                 }
-            // TODO: enum, float, etc
+            case ENUM:
+//            	System.out.println("narrowAccessor - ENUM. src = " + srcType + " dst = " + dstType);
+            	if(dstType.getType() != Type.ENUM) {
+            		return null;
+            	}
+            	mappingIn.put(accessor, createEnumMap(dstType, srcType));
+            	mappingOut.put(accessor, createEnumMap(srcType, dstType));
+            	return new ConverterAccessor<>(accessor, SchemaBinder::enumToEnum, SchemaBinder::enumToEnum);
+                
+            // TODO: float, etc
             default:
                 return null;
         }
     }
     
+    HashMap<Integer, Integer> createEnumMap(TypeDef src, TypeDef dst) {
+    	HashMap<Integer, Integer> map = new HashMap<>();
+    	
+    	TypeDef.Enum srcEnum = (TypeDef.Enum) src; 
+    	TypeDef.Enum dstEnum = (TypeDef.Enum) dst; 
+    	HashMap<String, Integer> dstMap = new HashMap<>();
+    	
+    	for(Symbol s: dstEnum.getSymbols()) {
+    		dstMap.put(s.getName(), s.getId());
+    	}
+    	
+    	for(Symbol s : srcEnum.getSymbols()) {
+    		map.put(s.getId(), dstMap.get(s.getName()));
+    	}
+    	
+    	return map;
+    }
+    
+    @SuppressWarnings({"unchecked","rawtypes"})
+    private Accessor widenAccessor(Accessor accessor, TypeDef srcType, TypeDef dstType) {
+//    	System.out.println("widenAccessor: " + srcType + " " + dstType);
+        switch (srcType.getType()) {
+        	case INT32:
+        	case UINT32:
+        		switch (dstType.getType()) {
+                	case INT64:
+                		return new ConverterAccessor<>(accessor, SchemaBinder::intToLong, SchemaBinder::longToInt);
+                	default:
+                		return null;
+        		}
+        	case ENUM:
+//            	System.out.println("widenAccessor - ENUM");
+            	mappingIn.put(accessor, createEnumMap(dstType, srcType));
+            	mappingOut.put(accessor, createEnumMap(srcType, dstType));
+            	return new ConverterAccessor<>(accessor, SchemaBinder::enumToEnum, SchemaBinder::enumToEnum);
+        	default:
+        		return null;
+        
+        }
+    }
+    
+    
     private static Integer longToInt(Long v) {
+//    	System.out.println("*** longToInt ***: " + v);
         return v.intValue();
     }
     private static Short longToShort(Long v) {
@@ -246,6 +321,7 @@ public class SchemaBinder {
         return v.longValue();
     }
     private static Long intToLong(Integer v) {
+//    	System.out.println("*** intToLong ***: " + v);
         return v.longValue();
     }
     private static Short uByteToShort(Byte v) {
@@ -267,6 +343,12 @@ public class SchemaBinder {
         return v & 0xffffffffL;
     }
 
+    private static Object enumToEnum(Object v) {
+//    	return translate.get(v);
+//    	System.out.println("enumToEnum: ");
+    	return null;
+    }
+    
     private static String details(GroupDef group, FieldDef field, Direction dir) {
         return String.format(", field '%s' in %s group '%s'.",
                 field.getName(), dir, group.getName());
@@ -307,6 +389,8 @@ public class SchemaBinder {
         private final Function<S,D> srcToDstFn;
         private final Function<D,S> dstToSrcFn;
         ConverterAccessor(Accessor<T,S> accessor, Function<S,D> srcToDstFn, Function<D,S> dstToSrcFn) {
+    		Field field = ((FieldAccessor) accessor).getField();
+//        	System.out.println("    new accessor: " + accessor + " " + field.getType());
             this.accessor = accessor;
             this.srcToDstFn = srcToDstFn;
             this.dstToSrcFn = dstToSrcFn;
@@ -317,7 +401,31 @@ public class SchemaBinder {
         }
         @Override
         public void setValue(T obj, D value) {
-            accessor.setValue(obj, dstToSrcFn.apply(value));
+//        	System.out.println("setValue: " + obj + " to: " + value);
+        	
+        	if (accessor instanceof FieldAccessor) {
+        		
+//        		String a = null;
+//        		System.out.println(a.toString());
+        		Field field = ((FieldAccessor) accessor).getField();
+//    			System.out.println("FieldAccessor: " + field + " class: " + field.getType());
+        		if(field.getType().isEnum()) {
+        			try {
+        				Object arr = field.getType().getDeclaredMethod("values").invoke(null);
+        				Integer n = mappingIn.get(accessor).get(value);
+        				Object o = Array.get(arr, n);
+        				
+//        				System.out.println("Mapping: " + mappingOut + " accessor: " + accessor);
+        				
+//        	    		System.out.println("setValue: " + obj + " convertedFrom: " + value + " to: " + o);
+        	        	accessor.setValue(obj, (S) o);
+        	        	return;
+        			} catch (Exception e) {
+        				e.printStackTrace();
+        			}
+        		}
+        	}
+        	accessor.setValue(obj, dstToSrcFn.apply(value));
         }
     }
 }
