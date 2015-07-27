@@ -35,14 +35,13 @@ public class UpdateSchemaTest {
         Schema schema = new SchemaBuilder().build(Version1.class);
         MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec.encode(new Version1(124, EnumV1.VALUE1), bout);
+        codec.encode(new Version1(124, EnumV1.VALUE1, 1.2f), bout);
 
         Schema schema2 = new SchemaBuilder().build(Version2.class);
         MsgCodec codec2 = new BlinkCodecFactory(schema2).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(124L, msg.number);
-        assertEquals(EnumV2.VALUE2, msg.enumeration); // wrong enum constant
-                                                      // expected (ordinal = 1)
+        assertEquals(EnumV2.VALUE2, msg.enumeration);
     }
 
     @Test
@@ -53,7 +52,7 @@ public class UpdateSchemaTest {
 
         MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version1(24, EnumV1.VALUE1), bout);
+        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.2f), bout);
 
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
@@ -69,7 +68,7 @@ public class UpdateSchemaTest {
 
         MsgCodec codec1 = new BlinkCodecFactory(schema2).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version2(24, EnumV2.VALUE1), bout);
+        codec1.encode(new Version2(24, EnumV2.VALUE1, 1.2), bout);
 
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
         Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
@@ -90,13 +89,15 @@ public class UpdateSchemaTest {
     public static class Version1 extends MsgObject {
         public int number;
         public EnumV1 enumeration;
+        public float decimal;
 
         public Version1() {
         }
 
-        public Version1(int value, EnumV1 eValue) {
+        public Version1(int value, EnumV1 eValue, float d) {
             number = value;
             enumeration = eValue;
+            decimal = d;
         }
     }
 
@@ -105,13 +106,15 @@ public class UpdateSchemaTest {
     public static class Version2 extends MsgObject {
         public long number;
         public EnumV2 enumeration;
+        public double decimal;
 
         public Version2() {
         }
 
-        public Version2(long value, EnumV2 eValue) {
+        public Version2(long value, EnumV2 eValue, double d) {
             number = value;
             enumeration = eValue;
+            decimal = d;
         }
     }
 

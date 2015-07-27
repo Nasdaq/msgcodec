@@ -155,10 +155,8 @@ public class SchemaBinder {
             case BOTH:
                 throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
             case INBOUND:
-                // TODO: attempt to narrow the binding, e.g. int64 in src and
-                // int32 in dst
-                // narrow can also mean having more enum symbols in src than in
-                // dst
+                // TODO: attempt to narrow the binding, e.g. int64 in src and int32 in dst
+                // narrow can also mean having more enum symbols in src than in dst
                 Accessor narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dstType, dir);
                 if (narrowAccessor == null) {
                     throw new IncompatibleSchemaException(
@@ -176,12 +174,9 @@ public class SchemaBinder {
                 return dstField.bind(new FieldBinding(widenAccessor, dstType.getDefaultJavaType(),
                         dstType.getDefaultJavaComponentType()));
 
-            // TODO: attempt to widen the binding, e.g. int32 in src and int64
-            // in dst
-            // widening can also mean having more enum symbols in dst than in
-            // src
-            // throw new IncompatibleSchemaException("Destination type not eq or
-            // wider" +
+            // TODO: attempt to widen the binding, e.g. int32 in src and int64 in dst
+            // widening can also mean having more enum symbols in dst than in src
+            // throw new IncompatibleSchemaException("Destination type not eq or wider" +
             // details(dstGroup, dstField, dir));
             default:
                 throw new RuntimeException("Unhandled case: " + dir);
@@ -472,8 +467,7 @@ public class SchemaBinder {
 
         ConverterAccessor(Accessor<T, S> accessor, Function<S, D> srcToDstFn, Function<D, S> dstToSrcFn) {
             // Field field = ((FieldAccessor) accessor).getField();
-            // System.out.println(" new accessor: " + accessor + " " +
-            // field.getType());
+            // System.out.println(" new accessor: " + accessor + " " + field.getType());
             this.accessor = accessor;
             this.srcToDstFn = srcToDstFn;
             this.dstToSrcFn = dstToSrcFn;
@@ -486,8 +480,7 @@ public class SchemaBinder {
 
         @Override
         public void setValue(T obj, D value) {
-            // System.out.println("setValue: " + obj + " accessor: " +
-            // accessor);
+            // System.out.println("setValue: " + obj + " accessor: " + accessor);
 
             if (accessor instanceof FieldAccessor) {
                 Field field = ((FieldAccessor) accessor).getField();
@@ -495,12 +488,10 @@ public class SchemaBinder {
                     try {
                         Object arr = field.getType().getDeclaredMethod("values").invoke(null);
                         Integer n = mapping.get(accessor).get(value);
-                        // System.out.println(" n: " + n + " arr: " + arr + "
-                        // value: " + value);
+                        // System.out.println(" n: " + n + " arr: " + arr + " value: " + value);
                         Object o = Array.get(arr, n);
 
-                        // System.out.println("setValue: " + obj + "
-                        // convertedFrom: " + value + " to: " + o);
+                        // System.out.println("setValue: " + obj + " convertedFrom: " + value + " to: " + o);
                         accessor.setValue(obj, (S) o);
                         return;
                     } catch (Exception e) {
