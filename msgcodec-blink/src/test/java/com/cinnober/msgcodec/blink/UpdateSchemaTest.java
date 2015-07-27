@@ -20,18 +20,16 @@ import com.cinnober.msgcodec.anot.Name;
 
 public class UpdateSchemaTest {
 
-
-	
-	public void printStream(ByteArrayOutputStream stream) {
+    public void printStream(ByteArrayOutputStream stream) {
         byte[] arr = stream.toByteArray();
-        
-        for(int i=0;i<arr.length;i++) {
-        	System.out.print(arr[i] & 0xFF);
-        	System.out.print(" ");
+
+        for (int i = 0; i < arr.length; i++) {
+            System.out.print(arr[i] & 0xFF);
+            System.out.print(" ");
         }
-    	System.out.println("");
-	}
-	
+        System.out.println("");
+    }
+
     @Test
     public void testUpdateNoSchemaConverter() throws IOException {
         Schema schema = new SchemaBuilder().build(Version1.class);
@@ -43,10 +41,10 @@ public class UpdateSchemaTest {
         MsgCodec codec2 = new BlinkCodecFactory(schema2).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(124L, msg.number);
-        assertEquals(EnumV2.VALUE2, msg.enumeration);  // wrong enum constant expected (ordinal = 1)
+        assertEquals(EnumV2.VALUE2, msg.enumeration); // wrong enum constant
+                                                      // expected (ordinal = 1)
     }
-	
-	
+
     @Test
     public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
@@ -62,7 +60,6 @@ public class UpdateSchemaTest {
         assertEquals(24, msg.number);
         assertEquals(EnumV2.VALUE1, msg.enumeration);
     }
-	
 
     @Test
     public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
@@ -79,44 +76,43 @@ public class UpdateSchemaTest {
         assertEquals(24, msg.number);
         assertEquals(EnumV1.VALUE1, msg.enumeration);
     }
-    
-    
+
     public static enum EnumV1 {
-    	VALUE3,
-    	VALUE1,
-    	VALUE2,
+        VALUE3, VALUE1, VALUE2,
     }
+
     public static enum EnumV2 {
-    	VALUE1,
-    	VALUE2,
-    	VALUE3,
-    	ADDITIONAL_VALUE,
+        VALUE1, VALUE2, VALUE3, ADDITIONAL_VALUE,
     }
-    
+
     @Name("Payload")
     @Id(1)
     public static class Version1 extends MsgObject {
-    	public int number;
-    	public EnumV1 enumeration;
-    	
-    	public Version1() {}
-    	public Version1(int value, EnumV1 eValue) {
-    		number = value;
-    		enumeration = eValue; 
-    	}
+        public int number;
+        public EnumV1 enumeration;
+
+        public Version1() {
+        }
+
+        public Version1(int value, EnumV1 eValue) {
+            number = value;
+            enumeration = eValue;
+        }
     }
 
     @Name("Payload")
     @Id(1)
     public static class Version2 extends MsgObject {
-    	public long number;
-    	public EnumV2 enumeration;
-    	public Version2() {}
-    	
-    	public Version2(long value, EnumV2 eValue) {
-    		number = value;
-    		enumeration = eValue; 
-    	}
+        public long number;
+        public EnumV2 enumeration;
+
+        public Version2() {
+        }
+
+        public Version2(long value, EnumV2 eValue) {
+            number = value;
+            enumeration = eValue;
+        }
     }
-    
+
 }
