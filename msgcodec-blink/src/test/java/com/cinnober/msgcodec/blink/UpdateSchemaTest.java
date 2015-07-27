@@ -32,28 +32,8 @@ public class UpdateSchemaTest {
     	System.out.println("");
 	}
 	
-	
     @Test
-    public void testUpdate() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
-
-        MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version1(24, EnumV1.VALUE1), bout);
-
-        // bytes, groupid, enumeration, number
-//        printStream(bout);
-        
-        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
-        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(24, msg.number);
-        assertEquals(EnumV2.VALUE1, msg.enumeration);
-    }
-	
-    @Test
-    public void testUpdate2() throws IOException {
+    public void testUpdateNoSchemaConverter() throws IOException {
         Schema schema = new SchemaBuilder().build(Version1.class);
         MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -62,10 +42,44 @@ public class UpdateSchemaTest {
         Schema schema2 = new SchemaBuilder().build(Version2.class);
         MsgCodec codec2 = new BlinkCodecFactory(schema2).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(124, msg.number);
-        assertEquals(null, msg.enumeration);
+        assertEquals(124L, msg.number);
+        assertEquals(EnumV2.VALUE2, msg.enumeration);  // wrong enum constant expected (ordinal = 1)
     }
+	
+	
+    @Test
+    public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema2 = new SchemaBuilder().build(Version2.class);
+        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
 
+        MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        codec1.encode(new Version1(24, EnumV1.VALUE1), bout);
+
+        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
+        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(24, msg.number);
+        assertEquals(EnumV2.VALUE1, msg.enumeration);
+    }
+	
+
+    @Test
+    public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema2 = new SchemaBuilder().build(Version2.class);
+        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
+
+        MsgCodec codec1 = new BlinkCodecFactory(schema2).createCodec();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        codec1.encode(new Version2(24, EnumV2.VALUE1), bout);
+
+        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
+        Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(24, msg.number);
+        assertEquals(EnumV1.VALUE1, msg.enumeration);
+    }
+    
     
     public static enum EnumV1 {
     	VALUE3,
@@ -98,6 +112,11 @@ public class UpdateSchemaTest {
     	public long number;
     	public EnumV2 enumeration;
     	public Version2() {}
+    	
+    	public Version2(long value, EnumV2 eValue) {
+    		number = value;
+    		enumeration = eValue; 
+    	}
     }
     
 }
