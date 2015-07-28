@@ -11,9 +11,6 @@ import com.cinnober.msgcodec.anot.Name;
 public class SchemaUpgradeTest {
 
 	
-	/*
-	 * TODO: how to test?, everything is private as it should
-	 * 
     @SuppressWarnings({ "rawtypes", "unchecked", "unused" })
 	@Test
     public void testUpgradeEnumWidening() throws IncompatibleSchemaException {
@@ -26,17 +23,17 @@ public class SchemaUpgradeTest {
         Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
         
         Accessor a1 = schema.getGroup("FooReq").getField("req").getBinding().getAccessor();
-        
-//        a1.setValue(msg2, new Integer(13));
-//        assertEquals(13, ((Long)a1.getValue(msg2)).intValue());
-        
+        a1.setValue(msg2, new Integer(13));
+        assertEquals(13, ((Integer)a1.getValue(msg2)).intValue());
+
         Accessor a2 = schema.getGroup("FooReq").getField("value").getBinding().getAccessor();
-//        a2.setValue(msg1, Version1.VALUE1);
-        a2.setValue(msg2, 0);
-//        System.out.println("get value: " + a2.getValue(msg1) + " " + a2.getValue(msg1).getClass());
-        assertEquals(Version2.VALUE1, a2.get.getValue(msg1));
+        a1.setValue(msg2, 1);
+        assertEquals(1, ((Integer)a1.getValue(msg2)).intValue());
+        
+        //TODO: how to verify the internal enum mapping?
+        
     }
-*/
+
     
     enum Version1 {
     	VALUE1,
