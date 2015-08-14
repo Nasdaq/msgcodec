@@ -41,7 +41,7 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
     
     public FieldDef bindField(FieldDef field) {
         return field.bind(new FieldBinding(this, field.getType().getDefaultJavaType(),
-                field.getType().getDefaultJavaComponentType()));
+                field.getType().getDefaultJavaComponentType(), null));
     }
     
     /**

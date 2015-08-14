@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import com.cinnober.msgcodec.TypeDef.Type;
+
 /**
  * Group is a generic group object.
  *
@@ -170,8 +172,19 @@ public class Group {
         }
         for (FieldDef field : group.getFields()) {
             TypeDef type = schema.resolveToType(field.getType(), true);
+            SymbolMapping<?> symbolMapping = null;
+            
+            if (type.getType() == Type.ENUM) {
+                symbolMapping = new SymbolMapping.IdentityIntegerEnumMapping((TypeDef.Enum) type);
+            } else if (type.getType() == Type.SEQUENCE) {
+                TypeDef componentType = schema.resolveToType(((TypeDef.Sequence) type).getComponentType(), false);
+                if (componentType != null && componentType.getType() == Type.ENUM) {
+                    symbolMapping = new SymbolMapping.IdentityIntegerEnumMapping((TypeDef.Enum) componentType);
+                }
+            }
+            
             FieldDef boundField = field.bind(new FieldBinding(getAccessor(accessors, allFields.size()),
-                    type.getDefaultJavaType(), type.getDefaultJavaComponentType()));
+                    type.getDefaultJavaType(), type.getDefaultJavaComponentType(), symbolMapping));
             allFields.add(boundField);
             declaredFields.add(boundField);
         }

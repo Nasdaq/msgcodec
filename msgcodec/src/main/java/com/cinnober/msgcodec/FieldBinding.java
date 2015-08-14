@@ -36,6 +36,7 @@ public class FieldBinding {
     private final Accessor<?, ?> accessor;
     private final Class<?> javaClass;
     private final Class<?> componentJavaClass;
+    private final SymbolMapping<?> symbolMapping;
 
     /**
      * Create a new field binding.
@@ -44,10 +45,11 @@ public class FieldBinding {
      * @param componentJavaClass the java class of the component if sequence, or null.
      */
     public FieldBinding(Accessor<?, ?> accessor, Class<?> javaClass,
-        Class<?> componentJavaClass) {
+        Class<?> componentJavaClass, SymbolMapping<?> symbolMapping) {
         this.accessor = Objects.requireNonNull(accessor);
-        this.javaClass = javaClass;
+        this.javaClass = Objects.requireNonNull(javaClass);
         this.componentJavaClass = componentJavaClass;
+        this.symbolMapping = symbolMapping; 
     }
 
     /** Returns the field accessor.
@@ -73,6 +75,10 @@ public class FieldBinding {
     public Class<?> getComponentJavaClass() {
         return componentJavaClass;
     }
+    
+    public SymbolMapping<?> getSymbolMapping() {
+        return symbolMapping;
+    }
 
     @Override
     public boolean equals(Object obj) {
@@ -86,7 +92,8 @@ public class FieldBinding {
         return
             Objects.equals(accessor, other.accessor) &&
             Objects.equals(javaClass, other.javaClass) &&
-            Objects.equals(componentJavaClass, other.componentJavaClass);
+            Objects.equals(componentJavaClass, other.componentJavaClass) &&
+            Objects.equals(symbolMapping, other.symbolMapping);
     }
 
     @Override
@@ -95,6 +102,7 @@ public class FieldBinding {
         hash = 79 * hash + Objects.hashCode(this.accessor);
         hash = 79 * hash + Objects.hashCode(this.javaClass);
         hash = 79 * hash + Objects.hashCode(this.componentJavaClass);
+        hash = 79 * hash + Objects.hashCode(this.symbolMapping);
         return hash;
     }
 }

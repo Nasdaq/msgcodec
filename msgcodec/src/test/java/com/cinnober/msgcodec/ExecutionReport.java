@@ -163,7 +163,7 @@ public class ExecutionReport {
                            public void setValue(ExecutionReport obj, String value) {
                            obj.setClOrdID(value);
                        }
-                   }, String.class, null)),
+                   }, String.class, null, null)),
                new FieldDef("cumQty", 14, true, TypeDef.DECIMAL, null,
                    new FieldBinding(new Accessor<ExecutionReport, BigDecimal>() {
                        @Override
@@ -174,7 +174,7 @@ public class ExecutionReport {
                            public void setValue(ExecutionReport obj, BigDecimal value) {
                            obj.setCumQty(value);
                        }
-               }, BigDecimal.class, null)),
+               }, BigDecimal.class, null, null)),
                new FieldDef("execID", 17, true, TypeDef.STRING, null,
                    new FieldBinding(new Accessor<ExecutionReport, String>() {
                            @Override
@@ -185,7 +185,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, String value) {
                                obj.setClOrdID(value);
                            }
-                   }, String.class, null)),
+                   }, String.class, null, null)),
                new FieldDef("lastPx", 31, false, TypeDef.DECIMAL, null,
                    new FieldBinding(new Accessor<ExecutionReport, BigDecimal>() {
                            @Override
@@ -196,7 +196,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, BigDecimal value) {
                                obj.setLastPx(value);
                            }
-                   }, BigDecimal.class, null)),
+                   }, BigDecimal.class, null, null)),
               new FieldDef("orderID", 37, true, TypeDef.STRING, null,
                    new FieldBinding(new Accessor<ExecutionReport, String>() {
                            @Override
@@ -207,7 +207,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, String value) {
                                obj.setOrderID(value);
                            }
-                   }, String.class, null)),
+                   }, String.class, null, null)),
               new FieldDef("ordStatus", 39, true, TypeDef.INT32, null,
                    new FieldBinding(new Accessor<ExecutionReport, Integer>() {
                            @Override
@@ -218,7 +218,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, Integer value) {
                                obj.setOrdStatus(value);
                            }
-                   }, int.class, null)),
+                   }, int.class, null, null)),
               new FieldDef("origClOrdID", 41, false, TypeDef.STRING, null,
                    new FieldBinding(new Accessor<ExecutionReport, String>() {
                            @Override
@@ -229,7 +229,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, String value) {
                                obj.setOrigClOrdID(value);
                            }
-                   }, String.class, null)),
+                   }, String.class, null, null)),
               new FieldDef("price", 44, false, TypeDef.DECIMAL, null,
                    new FieldBinding(new Accessor<ExecutionReport, BigDecimal>() {
                            @Override
@@ -240,7 +240,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, BigDecimal value) {
                                obj.setPrice(value);
                            }
-                   }, BigDecimal.class, null)),
+                   }, BigDecimal.class, null, null)),
               new FieldDef("side", 54, true, TypeDef.INT32, null,
                    new FieldBinding(new Accessor<ExecutionReport, Integer>() {
                            @Override
@@ -251,7 +251,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, Integer value) {
                                obj.setSide(value);
                            }
-                   }, int.class, null)),
+                   }, int.class, null, null)),
               new FieldDef("symbol", 55, true, TypeDef.STRING, null,
                    new FieldBinding(new Accessor<ExecutionReport, String>() {
                            @Override
@@ -262,7 +262,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, String value) {
                                obj.setSymbol(value);
                            }
-                   }, String.class, null)),
+                   }, String.class, null, null)),
               new FieldDef("execType", 150, true, TypeDef.INT32, null,
                    new FieldBinding(new Accessor<ExecutionReport, Integer>() {
                            @Override
@@ -273,7 +273,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, Integer value) {
                                obj.setExecType(value);
                            }
-                   }, int.class, null)),
+                   }, int.class, null, null)),
               new FieldDef("leavesQty", 151, true, TypeDef.DECIMAL, null,
                    new FieldBinding(new Accessor<ExecutionReport, BigDecimal>() {
                            @Override
@@ -284,7 +284,7 @@ public class ExecutionReport {
                                public void setValue(ExecutionReport obj, BigDecimal value) {
                                obj.setLeavesQty(value);
                            }
-                   }, BigDecimal.class, null))
+                   }, BigDecimal.class, null, null))
               ),
             null, new GroupBinding(new Factory<ExecutionReport>() {
                 @Override

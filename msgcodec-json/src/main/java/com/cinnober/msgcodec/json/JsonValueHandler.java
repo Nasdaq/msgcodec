@@ -30,21 +30,20 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.CreateAccessor;
 import com.cinnober.msgcodec.DecodeException;
-import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.ObjectInstantiationException;
+import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.util.TimeFormat;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -96,24 +95,11 @@ public abstract class JsonValueHandler<T> {
      * @param <T> the java type
      * @param type the type definition, not null.
      * @param javaClass the java class, not null.
-     * @return the json value handler, not null.
-     */
-    public static <T> JsonValueHandler<T> getValueHandlerXXX(TypeDef type, Class<T> javaClass) {
-        return getValueHandler(type, javaClass, true, null);
-    }
-    /**
-     * Returns a the basic value handler for the specified type definition and Java class.
-     *
-     * <p><b>Note:</b> the types SEQUENCE, REFERENCE and DYNAMIC_REFERENCE are not supported.
-     *
-     * @param <T> the java type
-     * @param type the type definition, not null.
-     * @param javaClass the java class, not null.
      * @param jsSafe true if unsafe JavaScript numeric values should be encoded as strings, otherwise false.
      * @return the json value handler, not null.
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, boolean jsSafe, Accessor accessor) {
+    @SuppressWarnings({"unchecked"})
+    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, SymbolMapping<T> symbolMapping, boolean jsSafe, Accessor accessor) {
         
         
         if(accessor.getClass() == CreateAccessor.class) {
@@ -177,13 +163,7 @@ public abstract class JsonValueHandler<T> {
             checkType(javaClass, double.class, Double.class);
             return (JsonValueHandler<T>) JsonValueHandler.FLOAT64;
         case ENUM:
-            if (javaClass.isEnum()) {
-                return new JsonValueHandler.EnumHandler((TypeDef.Enum)type, javaClass);
-            } else if(javaClass.equals(Integer.class) || javaClass.equals(int.class)) {
-                return (JsonValueHandler<T>) new JsonValueHandler.IntEnumHandler((TypeDef.Enum)type);
-            } else {
-                throw new IllegalArgumentException("Illegal enum java class: " + javaClass);
-            }
+            return new JsonValueHandler.EnumHandler<T>(symbolMapping);
         case TIME:
             if (javaClass.equals(Date.class)) {
                 return (JsonValueHandler<T>) new JsonValueHandler.DateTimeHandler((TypeDef.Time)type);
@@ -703,25 +683,27 @@ public abstract class JsonValueHandler<T> {
         }
     }
 
-    public static class EnumHandler<E extends Enum<E>> extends JsonValueHandler<E> {
-        private final EnumSymbols<E> enumSymbols;
+    public static class EnumHandler<E> extends JsonValueHandler<E> {
+        private final SymbolMapping<E> symbolMapping;
+        
         /**
          * Create a new Java enum handler.
-         * @param type the enum type, not null.
-         * @param enumClass the Java enum class, not null.
+         * @param enumDef the enum definition, not null.
          */
-        public EnumHandler(TypeDef.Enum type, Class<E> enumClass) {
-            this.enumSymbols = new EnumSymbols<>(type, enumClass);
+        public EnumHandler(SymbolMapping<E> symbolMapping) {
+            Objects.requireNonNull(symbolMapping);
+            this.symbolMapping = symbolMapping;
         }
+        
         @Override
         public void writeValue(E value, JsonGenerator g) throws IOException {
-            Symbol symbol = enumSymbols.getSymbol(value);
-            g.writeString(symbol.getName());
+            g.writeString(symbolMapping.getName(value));
         }
+        
         @Override
         public E readValue(JsonParser p) throws IOException {
             String str = p.getText();
-            E value = enumSymbols.getEnum(str);
+            E value = symbolMapping.lookup(str);
             if (value == null) {
                 throw new DecodeException("Not a valid symbol: " + str);
             }
@@ -743,39 +725,6 @@ public abstract class JsonValueHandler<T> {
     }
     
     
-    public static class IntEnumHandler extends JsonValueHandler<Integer> {
-        private final Map<String, Integer> idByName;
-        private final Map<Integer, String> nameById;
-        /**
-         * Create a new int enum handler.
-         * @param typeDef the enum type, not null.
-         */
-        public IntEnumHandler(TypeDef.Enum typeDef) {
-            idByName = new HashMap<>(typeDef.getSymbols().size() * 2);
-            nameById = new HashMap<>(typeDef.getSymbols().size() * 2);
-            for (Symbol symbol : typeDef.getSymbols()) {
-                idByName.put(symbol.getName(), symbol.getId());
-                nameById.put(symbol.getId(), symbol.getName());
-            }
-        }
-        @Override
-        public void writeValue(Integer value, JsonGenerator g) throws IOException {
-            String name = nameById.get(value);
-            if (name == null) {
-                throw new IllegalArgumentException("Not a valid enum: " + value);
-            }
-            g.writeString(name);
-        }
-        @Override
-        public Integer readValue(JsonParser p) throws IOException {
-            String str = p.getText();
-            Integer value = idByName.get(str);
-            if (value == null) {
-                throw new DecodeException("Not a valid symbol: " + str);
-            }
-            return value;
-        }
-    }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static class ListSequenceHandler extends JsonValueHandler<List> {

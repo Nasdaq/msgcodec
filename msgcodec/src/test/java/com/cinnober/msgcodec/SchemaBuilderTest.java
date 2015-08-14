@@ -23,7 +23,10 @@
  */
 package com.cinnober.msgcodec;
 
+import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
+import com.cinnober.msgcodec.anot.Sequence;
+
 import org.junit.Test;
 import java.util.List;
 import static org.junit.Assert.*;
@@ -31,6 +34,7 @@ import static org.junit.Assert.*;
 
 /**
  * @author mikael.brannstrom
+ * @author Tommy Norling
  *
  */
 public class SchemaBuilderTest {
@@ -148,11 +152,38 @@ public class SchemaBuilderTest {
     public void testPrivate2() {
         SchemaBuilder builder = new SchemaBuilder();
         try {
-            Schema schema = builder.build(SecretMessage2.class);
+            builder.build(SecretMessage2.class);
             fail("Expected exception: no default constructor");
         } catch (IllegalArgumentException e) {}
     }
+    
+    @Test
+    public void testSymbolMapping() {
+        SchemaBuilder builder = new SchemaBuilder();
+        Schema schema = builder.build(EnumMessage.class);
+        
+        GroupDef group = schema.getGroup(1); 
+        
+        SymbolMapping<TestEnum> enumMapping = new SymbolMapping.IdentityEnumMapping<>(TestEnum.class);
+        SymbolMapping<Integer> intMapping = 
+                new SymbolMapping.IdentityIntegerEnumMapping(
+                        (TypeDef.Enum) schema.getNamedTypes().stream()
+                        .filter(t -> t.getName().equals("TestEnum")).findAny().get().getType());
+        
+        assertNull("No mapping unless an enum", group.getField("notEnum").getBinding().getSymbolMapping());
+        
+        assertEquals("Enum has identity mapping", enumMapping, group.getField("e1").getBinding().getSymbolMapping());
+        
+        assertEquals("Integer enum has identity mapping", 
+                intMapping, group.getField("e2").getBinding().getSymbolMapping());
 
+        assertEquals("Enum list has identity mapping", 
+                enumMapping, group.getField("e3").getBinding().getSymbolMapping());
+
+        assertEquals("Enum array has identity mapping", 
+                enumMapping, group.getField("e4").getBinding().getSymbolMapping());
+    }
+    
     public static class FieldOrderMsg extends MsgObject {
         @Id(1)
         public int i1;
@@ -166,5 +197,26 @@ public class SchemaBuilderTest {
         public int i5;
         @Id(6)
         public int i6;
+    }
+    
+    public static enum TestEnum {
+        V1,
+        V2,
+        V3
+    }
+    
+    @Id(1)
+    public static class EnumMessage {
+        public int notEnum;
+        
+        public TestEnum e1;
+        
+        @Enumeration(TestEnum.class)
+        public int e2;
+        
+        @Sequence(TestEnum.class)
+        public List<TestEnum> e3;
+        
+        public TestEnum[] e4;
     }
 }

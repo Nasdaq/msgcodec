@@ -23,9 +23,6 @@
  */
 package com.cinnober.msgcodec;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,7 +30,6 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import com.cinnober.msgcodec.TypeDef.Symbol;
-import com.cinnober.msgcodec.TypeDef.Type;
 
 /**
  * The schema binder can re-bind a schema to another schema.
@@ -56,8 +52,6 @@ import com.cinnober.msgcodec.TypeDef.Type;
  * @author mikael.brannstrom
  */
 public class SchemaBinder {
-
-    static HashMap<Accessor, HashMap<Integer, Integer>> mapping = new HashMap<>();
     private final Schema src;
 
     /**
@@ -168,22 +162,22 @@ public class SchemaBinder {
             case INBOUND:
                 // TODO: attempt to narrow the binding, e.g. int64 in src and int32 in dst
                 // narrow can also mean having more enum symbols in src than in dst
-                Accessor narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dstType, dir);
+                Accessor<?, ?> narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dstType, dir);
                 if (narrowAccessor == null) {
                     throw new IncompatibleSchemaException(
                             "Source type not eq or wider" + details(dstGroup, dstField, dir));
                 }
-                return dstField.bind(new FieldBinding(narrowAccessor, dstType.getDefaultJavaType(),
-                        dstType.getDefaultJavaComponentType()));
+//                return dstField.bind(new FieldBinding(narrowAccessor, dstType.getDefaultJavaType(),
+//                        dstType.getDefaultJavaComponentType()));
             case OUTBOUND:
 
-                Accessor widenAccessor = widenAccessor(srcField.getAccessor(), srcType, dstType, dir);
+                Accessor<?, ?> widenAccessor = widenAccessor(srcField.getAccessor(), srcType, dstType, dir);
                 if (widenAccessor == null) {
                     throw new IncompatibleSchemaException(
                             "Source type not eq or narrower " + details(dstGroup, dstField, dir));
                 }
-                return dstField.bind(new FieldBinding(widenAccessor, dstType.getDefaultJavaType(),
-                        dstType.getDefaultJavaComponentType()));
+//                return dstField.bind(new FieldBinding(widenAccessor, dstType.getDefaultJavaType(),
+//                        dstType.getDefaultJavaComponentType()));
 
             // TODO: attempt to widen the binding, e.g. int32 in src and int64 in dst
             // widening can also mean having more enum symbols in dst than in src
@@ -249,39 +243,38 @@ public class SchemaBinder {
             }
 
         case ENUM:
-            if (dstType.getType() != Type.ENUM) {
-                return null;
-            }
-            if (dir == Direction.INBOUND) {
-                mapping.put(accessor, createEnumMap(dstType, srcType));
-            } else {
-                mapping.put(accessor, createEnumMap(srcType, dstType));
-            }
-            return new ConverterAccessor<>(accessor, SchemaBinder::enumToEnum, SchemaBinder::enumToEnum);
-
+        	switch (dstType.getType()) {
+        	case ENUM:
+        	    Map<Symbol, Symbol> srcToDstMapping = createSymbolEnumMap(srcType, dstType);
+        	    Map<Symbol, Symbol> dstToSrcMapping = createSymbolEnumMap(dstType, srcType);
+        		
+                return new ConverterAccessor<>(accessor, srcToDstMapping::get, dstToSrcMapping::get);
+        	default:
+        		return null;
+        	}
         default:
             return null;
         }
     }
 
-    HashMap<Integer, Integer> createEnumMap(TypeDef src, TypeDef dst) {
-        HashMap<Integer, Integer> map = new HashMap<>();
+    HashMap<Symbol, Symbol> createSymbolEnumMap(TypeDef src, TypeDef dst) {
+        HashMap<Symbol, Symbol> map = new HashMap<>();
 
         TypeDef.Enum srcEnum = (TypeDef.Enum) src;
         TypeDef.Enum dstEnum = (TypeDef.Enum) dst;
-        HashMap<String, Integer> dstMap = new HashMap<>();
+        HashMap<String, Symbol> dstMap = new HashMap<>();
 
         for (Symbol s : dstEnum.getSymbols()) {
-            dstMap.put(s.getName(), s.getId());
+            dstMap.put(s.getName(), s);
         }
 
         for (Symbol s : srcEnum.getSymbols()) {
-            map.put(s.getId(), dstMap.get(s.getName()));
+            map.put(s, dstMap.get(s.getName()));
         }
 
         return map;
     }
-
+    
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private Accessor widenAccessor(Accessor accessor, TypeDef srcType, TypeDef dstType, Direction dir) {
         switch (srcType.getType()) {
@@ -339,12 +332,15 @@ public class SchemaBinder {
             }
 
         case ENUM:
-            if (dir == Direction.INBOUND) {
-                mapping.put(accessor, createEnumMap(srcType, dstType));
-            } else {
-                mapping.put(accessor, createEnumMap(dstType, srcType));
-            }
-            return new ConverterAccessor<>(accessor, SchemaBinder::enumToEnum, SchemaBinder::enumToEnum);
+        	switch (dstType.getType()) {
+        	case ENUM:
+        		Map<Symbol, Symbol> srcToDstMapping = createSymbolEnumMap(srcType, dstType);
+        		Map<Symbol, Symbol> dstToSrcMapping = createSymbolEnumMap(dstType, srcType);
+        		
+                return new ConverterAccessor<>(accessor, srcToDstMapping::get, dstToSrcMapping::get);
+        	default:
+        		return null;
+        	}
         default:
             return null;
 
@@ -431,10 +427,6 @@ public class SchemaBinder {
         return v.doubleValue();
     }
 
-    private static Object enumToEnum(Object v) {
-        return null;
-    }
-
     private static String details(GroupDef group, FieldDef field, Direction dir) {
         return String.format(", field '%s' in %s group '%s'.", field.getName(), dir, group.getName());
     }
@@ -451,13 +443,15 @@ public class SchemaBinder {
         /**
          * Inbound groups/messages, to be received and decoded.
          */
-        INBOUND("inbound"), /**
-                             * Outbound groups/messages, to be sent and encoded.
-                             */
-        OUTBOUND("outbound"), /**
-                               * Both inbound and outbound groups/messages, to
-                               * be received/sent and decoded/encoded.
-                               */
+        INBOUND("inbound"), 
+        /**
+          * Outbound groups/messages, to be sent and encoded.
+          */
+        OUTBOUND("outbound"), 
+        /**
+          * Both inbound and outbound groups/messages, to
+          * be received/sent and decoded/encoded.
+          */
         BOTH("in/out-bound");
         private final String s;
 
@@ -477,8 +471,6 @@ public class SchemaBinder {
         private final Function<D, S> dstToSrcFn;
 
         ConverterAccessor(Accessor<T, S> accessor, Function<S, D> srcToDstFn, Function<D, S> dstToSrcFn) {
-            // Field field = ((FieldAccessor) accessor).getField();
-            // System.out.println(" new accessor: " + accessor + " " + field.getType());
             this.accessor = accessor;
             this.srcToDstFn = srcToDstFn;
             this.dstToSrcFn = dstToSrcFn;
@@ -491,23 +483,6 @@ public class SchemaBinder {
 
         @Override
         public void setValue(T obj, D value) {
-            if (accessor instanceof FieldAccessor) {
-                Field field = ((FieldAccessor) accessor).getField();
-                if (field.getType().isEnum()) {
-                    try {
-                        Object arr = field.getType().getDeclaredMethod("values").invoke(null);
-                        Integer n = mapping.get(accessor).get(value);
-                        // System.out.println(" n: " + n + " arr: " + arr + " value: " + value);
-                        Object o = Array.get(arr, n);
-
-                        // System.out.println("setValue: " + obj + " convertedFrom: " + value + " to: " + o);
-                        accessor.setValue(obj, (S) o);
-                        return;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
             accessor.setValue(obj, dstToSrcFn.apply(value));
         }
     }

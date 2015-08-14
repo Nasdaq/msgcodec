@@ -59,7 +59,7 @@ public final class IgnoreAccessor<O, V> implements Accessor<O, V> {
      */
     public static FieldDef bindField(FieldDef field) {
         return field.bind(new FieldBinding(instance(), field.getType().getDefaultJavaType(),
-                field.getType().getDefaultJavaComponentType()));
+                field.getType().getDefaultJavaComponentType(), null));
     }
 
     /**

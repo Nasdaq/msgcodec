@@ -30,6 +30,7 @@ import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Sequence;
 import com.cinnober.msgcodec.io.ByteSink;
@@ -140,6 +141,7 @@ public class JsonCodec implements MsgCodec {
                         fieldDef.getType(),
                         fieldDef.getJavaClass(),
                         fieldDef.getComponentJavaClass(),
+                        fieldDef.getBinding().getSymbolMapping(),
                         fieldDef.getAccessor(),
                         jsSafe);
                 boolean required = fieldDef.isRequired();
@@ -156,12 +158,13 @@ public class JsonCodec implements MsgCodec {
         }
     }
 
-    @SuppressWarnings({ "rawtypes" })
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private JsonValueHandler createValueHandler(
             Schema schema,
             TypeDef type,
             Class<?> javaClass,
             Class<?> componentJavaClass,
+            SymbolMapping<?> symbolMapping,
             Accessor accessor,
             boolean jsSafe) {
         type = schema.resolveToType(type, true);
@@ -170,18 +173,18 @@ public class JsonCodec implements MsgCodec {
         case SEQUENCE:
             if (javaClass.isArray()) {
                 return new JsonValueHandler.ArraySequenceHandler(
-                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, accessor, jsSafe),
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, symbolMapping, accessor, jsSafe),
                         componentJavaClass);
             } else { // collection
                 return new JsonValueHandler.ListSequenceHandler(
-                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, accessor, jsSafe));
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, symbolMapping, accessor, jsSafe));
             }
         case REFERENCE:
             return lookupGroupByName(group.getName());
         case DYNAMIC_REFERENCE:
             return dynamicGroupHandler; // TODO: restrict to some base type (if group is not null)
         default:
-            return JsonValueHandler.getValueHandler(type, javaClass, jsSafe, accessor);
+            return JsonValueHandler.getValueHandler(type, javaClass, (SymbolMapping) symbolMapping, jsSafe, accessor);
         }
     }
 

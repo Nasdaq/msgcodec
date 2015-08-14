@@ -30,73 +30,184 @@ import org.junit.Test;
 
 import com.cinnober.msgcodec.SchemaBinder.Direction;
 import com.cinnober.msgcodec.anot.Annotate;
+import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Name;
 
 public class SchemaUpgradeTest {
 
 	
-    @SuppressWarnings({ "rawtypes", "unchecked", "unused" })
+    @SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
     public void testUpgradeEnumWidening() throws IncompatibleSchemaException {
 
-    	FooReqV1 msg1 = new FooReqV1();
-        FooReqV2 msg2 = new FooReqV2();
+    	EnumValueV1 originalMsg = new EnumValueV1();
+    	EnumValueV2 upgradedMsg = new EnumValueV2();
         
-        Schema schema1 = new SchemaBuilder().addMessages(FooReqV1.class, FooRspV1.class).build();
-        Schema schema2 = new SchemaBuilder().addMessages(FooReqV2.class, FooRspV2.class).build();
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
-        
-        Accessor a1 = schema.getGroup("FooReq").getField("req").getBinding().getAccessor();
-        a1.setValue(msg2, new Integer(13));
-        assertEquals(13, ((Integer)a1.getValue(msg2)).intValue());
+        Schema original = new SchemaBuilder().addMessages(EnumValueV1.class).build();
+        Schema upgraded = new SchemaBuilder().addMessages(EnumValueV2.class).build();
+        Schema inbound = new SchemaBinder(upgraded).bind(original.unbind(), g -> Direction.INBOUND);
+        Schema outbound = new SchemaBinder(original).bind(upgraded.unbind(), g -> Direction.OUTBOUND);
 
-        Accessor a2 = schema.getGroup("FooReq").getField("value").getBinding().getAccessor();
-        a1.setValue(msg2, 1);
-        assertEquals(1, ((Integer)a1.getValue(msg2)).intValue());
+        Accessor inboundAccessor = inbound.getGroup("EnumValue").getField("value").getBinding().getAccessor();
+        Accessor outboundAccessor = outbound.getGroup("EnumValue").getField("value").getBinding().getAccessor();
+
+        // Verify that inbound values are transformed when set in the message
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE1.name(), Version1.VALUE1.ordinal()));
+        assertEquals(Version2.VALUE1, upgradedMsg.value);
         
-        //TODO: how to verify the internal enum mapping?
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE2.name(), Version1.VALUE2.ordinal()));
+        assertEquals(Version2.VALUE2, upgradedMsg.value);
         
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE3.name(), Version1.VALUE3.ordinal()));
+        assertEquals(Version2.VALUE3, upgradedMsg.value);
+       
+        inboundAccessor.setValue(upgradedMsg, null);
+        assertEquals(null, upgradedMsg.value);
+
+        // Verify that outbound values are transformed when retrieved from the message
+        originalMsg.value = Version1.VALUE1;
+        assertEquals(new TypeDef.Symbol(Version2.VALUE1.name(), 2), outboundAccessor.getValue(originalMsg));
+
+        originalMsg.value = Version1.VALUE2;
+        assertEquals(new TypeDef.Symbol(Version2.VALUE2.name(), 1), outboundAccessor.getValue(originalMsg));
+        
+        originalMsg.value = Version1.VALUE3;
+        assertEquals(new TypeDef.Symbol(Version2.VALUE3.name(), 3), outboundAccessor.getValue(originalMsg));
+        
+        originalMsg.value = null;
+        assertEquals(null, outboundAccessor.getValue(originalMsg));
     }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void testUpgradeIntEnumWidening() throws IncompatibleSchemaException {
 
+        IntEnumValueV1 originalMsg = new IntEnumValueV1();
+        IntEnumValueV2 upgradedMsg = new IntEnumValueV2();
+        
+        Schema original = new SchemaBuilder().addMessages(IntEnumValueV1.class).build();
+        Schema upgraded = new SchemaBuilder().addMessages(IntEnumValueV2.class).build();
+        Schema inbound = new SchemaBinder(upgraded).bind(original.unbind(), g -> Direction.INBOUND);
+        Schema outbound = new SchemaBinder(original).bind(upgraded.unbind(), g -> Direction.OUTBOUND);
+
+        Accessor inboundAccessor = inbound.getGroup("EnumValue").getField("value").getBinding().getAccessor();
+        Accessor outboundAccessor = outbound.getGroup("EnumValue").getField("value").getBinding().getAccessor();
+
+        // Verify that inbound values are transformed when set in the message
+
+        // Version2.VALUE1
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE1.name(), Version1.VALUE1.ordinal()));
+        assertEquals(2, upgradedMsg.value);
+        
+        // Version2.VALUE2
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE2.name(), Version1.VALUE2.ordinal()));
+        assertEquals(1, upgradedMsg.value);
+        
+        // Version2.VALUE3
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE3.name(), Version1.VALUE3.ordinal()));
+        assertEquals(3, upgradedMsg.value);
+       
+        // Verify that outbound values are transformed when retrieved from the message
+        originalMsg.value = Version1.VALUE1.ordinal();
+        assertEquals(new TypeDef.Symbol(Version2.VALUE1.name(), 2), outboundAccessor.getValue(originalMsg));
+
+        originalMsg.value = Version1.VALUE2.ordinal();
+        assertEquals(new TypeDef.Symbol(Version2.VALUE2.name(), 1), outboundAccessor.getValue(originalMsg));
+        
+        originalMsg.value = Version1.VALUE3.ordinal();
+        assertEquals(new TypeDef.Symbol(Version2.VALUE3.name(), 3), outboundAccessor.getValue(originalMsg));
+    }
+    
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Test
+    public void testUpgradeIntegerEnumWidening() throws IncompatibleSchemaException {
+
+        IntegerEnumValueV1 originalMsg = new IntegerEnumValueV1();
+        IntegerEnumValueV2 upgradedMsg = new IntegerEnumValueV2();
+        
+        Schema original = new SchemaBuilder().addMessages(IntegerEnumValueV1.class).build();
+        Schema upgraded = new SchemaBuilder().addMessages(IntegerEnumValueV2.class).build();
+        Schema inbound = new SchemaBinder(upgraded).bind(original.unbind(), g -> Direction.INBOUND);
+        Schema outbound = new SchemaBinder(original).bind(upgraded.unbind(), g -> Direction.OUTBOUND);
+
+        Accessor inboundAccessor = inbound.getGroup("EnumValue").getField("value").getBinding().getAccessor();
+        Accessor outboundAccessor = outbound.getGroup("EnumValue").getField("value").getBinding().getAccessor();
+
+        // Verify that inbound values are transformed when set in the message
+
+        // Version2.VALUE1
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE1.name(), Version1.VALUE1.ordinal()));
+        assertEquals(Integer.valueOf(2), upgradedMsg.value);
+        
+        // Version2.VALUE2
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE2.name(), Version1.VALUE2.ordinal()));
+        assertEquals(Integer.valueOf(1), upgradedMsg.value);
+        
+        // Version2.VALUE3
+        inboundAccessor.setValue(upgradedMsg, new TypeDef.Symbol(Version1.VALUE3.name(), Version1.VALUE3.ordinal()));
+        assertEquals(Integer.valueOf(3), upgradedMsg.value);
+       
+        inboundAccessor.setValue(upgradedMsg, null);
+        assertEquals(null, upgradedMsg.value);
+
+        // Verify that outbound values are transformed when retrieved from the message
+        originalMsg.value = Version1.VALUE1.ordinal();
+        assertEquals(new TypeDef.Symbol(Version2.VALUE1.name(), 2), outboundAccessor.getValue(originalMsg));
+
+        originalMsg.value = Version1.VALUE2.ordinal();
+        assertEquals(new TypeDef.Symbol(Version2.VALUE2.name(), 1), outboundAccessor.getValue(originalMsg));
+        
+        originalMsg.value = Version1.VALUE3.ordinal();
+        assertEquals(new TypeDef.Symbol(Version2.VALUE3.name(), 3), outboundAccessor.getValue(originalMsg));
+        
+        originalMsg.value = null;
+        assertEquals(null, outboundAccessor.getValue(originalMsg));
+    }
     
     enum Version1 {
     	VALUE1,
     	VALUE2,
     	VALUE3,
     }
+    
     enum Version2 {
-    	VALUE1,
-    	VALUE2,
-    	VALUE3,
     	ADDITIONAL_VALUE,
+    	VALUE2,
+    	VALUE1,
+    	VALUE3,
     }
     
-    @Annotate("dir=c2s")
-    @Name("FooReq")
-    public static class FooReqV1 extends MsgObject {
+    @Name("EnumValue")
+    public static class EnumValueV1 extends MsgObject {
         public Version1 value;
-    	public int req;
     }
 
-    @Annotate("dir=s2c")
-    @Name("FooRsp")
-    public static class FooRspV1 extends MsgObject {
-        public Version1 value;
-    	public double resp;
-    }
-
-    @Annotate("dir=c2s")
-    @Name("FooReq")
-    public static class FooReqV2 extends MsgObject {
+    @Name("EnumValue")
+    public static class EnumValueV2 extends MsgObject {
         public Version2 value;
-    	public long req;
-    }
- 
-    @Annotate("dir=s2c")
-    @Name("FooRsp")
-    public static class FooRspV2 extends MsgObject {
-        public Version2 value;
-    	public double resp;
     }
     
+    @Name("EnumValue")
+    public static class IntEnumValueV1 extends MsgObject {
+        @Enumeration(Version1.class)
+        public int value;
+    }
+
+    @Name("EnumValue")
+    public static class IntEnumValueV2 extends MsgObject {
+        @Enumeration(Version2.class)
+        public int value;
+    }
+    
+    @Name("EnumValue")
+    public static class IntegerEnumValueV1 extends MsgObject {
+        @Enumeration(Version1.class)
+        public Integer value;
+    }
+
+    @Name("EnumValue")
+    public static class IntegerEnumValueV2 extends MsgObject {
+        @Enumeration(Version2.class)
+        public Integer value;
+    }
 }

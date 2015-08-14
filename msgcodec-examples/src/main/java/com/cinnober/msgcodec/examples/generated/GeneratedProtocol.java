@@ -32,6 +32,7 @@ import com.cinnober.msgcodec.GroupBinding;
 import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.NamedType;
 import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import java.util.Arrays;
@@ -69,11 +70,11 @@ public class GeneratedProtocol {
         return new GroupDef("User", 1001, null,
                 Arrays.asList(new FieldDef[] { // allow for comma at the end
                         new FieldDef("id", 1, true, TypeDef.UINT64, null,
-                                new FieldBinding(new FieldAccessor(User.class.getField("id")), long.class, null)),
+                                new FieldBinding(new FieldAccessor(User.class.getField("id")), long.class, null, null)),
                         new FieldDef("name", 2, false, TypeDef.STRING, null,
-                                new FieldBinding(new FieldAccessor(User.class.getField("name")), String.class, null)),
+                                new FieldBinding(new FieldAccessor(User.class.getField("name")), String.class, null, null)),
                         new FieldDef("email", 3, false, TypeDef.STRING, null,
-                                new FieldBinding(new FieldAccessor(User.class.getField("email")), String.class, null)),
+                                new FieldBinding(new FieldAccessor(User.class.getField("email")), String.class, null, null)),
                     }
                 ),
                 null,
@@ -85,9 +86,10 @@ public class GeneratedProtocol {
         return new GroupDef("Animal", 1002, null,
                 Arrays.asList(new FieldDef[] { // allow for comma at the end
                         new FieldDef("name", 1, true, TypeDef.UINT64, null,
-                                new FieldBinding(new FieldAccessor(Animal.class.getField("name")), String.class, null)),
+                                new FieldBinding(new FieldAccessor(Animal.class.getField("name")), String.class, null, null)),
                         new FieldDef("kind", 2, true, new TypeDef.Reference("Kind"), null,
-                                new FieldBinding(new FieldAccessor(Animal.class.getField("kind")), int.class, null)),
+                                new FieldBinding(new FieldAccessor(Animal.class.getField("kind")), int.class, null,
+                                        new SymbolMapping.IdentityIntegerEnumMapping(createKindTypeDef()))),
                     }
                 ),
                 null,
@@ -96,11 +98,15 @@ public class GeneratedProtocol {
     }
 
     private static NamedType createNamedTypeKind() {
-        return new NamedType("Kind", new TypeDef.Enum(Arrays.asList(new Symbol[]{ // allow for comma at the end
-            new Symbol("CREEPY", Animal.KIND_CREEPY),
-            new Symbol("CUTE", Animal.KIND_CUTE),
-            new Symbol("ANNOYING", Animal.KIND_ANNOYING),
-        })), null);
+        return new NamedType("Kind", createKindTypeDef(), null);
+    }
+    
+    private static TypeDef.Enum createKindTypeDef() {
+        return new TypeDef.Enum(Arrays.asList(new Symbol[]{ // allow for comma at the end
+                new Symbol("CREEPY", Animal.KIND_CREEPY),
+                new Symbol("CUTE", Animal.KIND_CUTE),
+                new Symbol("ANNOYING", Animal.KIND_ANNOYING),
+        }));
     }
 
 }

@@ -24,6 +24,8 @@
 package com.cinnober.msgcodec;
 
 import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.SymbolMapping.IdentityEnumMapping;
+import com.cinnober.msgcodec.SymbolMapping.IdentityIntegerEnumMapping;
 import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Enumeration;
@@ -436,7 +438,7 @@ public class SchemaBuilder {
         visitFields(gv, group, parentGroup, group, new HashMap<>(), namedTypes, groups);
     }
 
-    @SuppressWarnings({ "rawtypes" })
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     private void visitFields(
             GroupDefVisitor gv,
             Class<?> group,
@@ -479,8 +481,8 @@ public class SchemaBuilder {
                 if (idAnot != null) {
                     id = idAnot.value();
                 }
-                Accessor<Object, Object> accessor = new FieldAccessor(field);
-//                System.out.println("new field accessor: " + accessor + " field: " + field);
+                Accessor accessor = new FieldAccessor(field);
+                SymbolMapping symbolMapping = null;
 
                 Required requiredAnot = field.getAnnotation(Required.class);
                 if (strict && requiredAnot != null && type.isPrimitive()) {
@@ -507,6 +509,37 @@ public class SchemaBuilder {
                         dynamicAnot, unsignedAnot, smallDecimalAnot, maxSizeAnot,
                         namedTypes, groups);
                 
+                // Setup enum mappings
+                if (typeDef.getType() == TypeDef.Type.REFERENCE) {
+                    NamedType namedType = namedTypes.get(((TypeDef.Reference) typeDef).getRefType());
+
+                    if (namedType != null && namedType.getType().getType() == TypeDef.Type.ENUM) {
+                        if (type.isEnum()) {
+                            symbolMapping = new IdentityEnumMapping<>(type);
+                        } else {
+                            symbolMapping = new IdentityIntegerEnumMapping((TypeDef.Enum) namedType.getType());
+                        }
+                    }
+                } else if (typeDef.getType() == TypeDef.Type.SEQUENCE) {
+                    TypeDef componentTypeDef = ((TypeDef.Sequence) typeDef).getComponentType();
+                    
+                    if (componentTypeDef.getType() == TypeDef.Type.REFERENCE) {
+                        NamedType namedType = namedTypes.get(((TypeDef.Ref) componentTypeDef).getRefType());
+                        
+                        if (namedType != null) {
+                            componentTypeDef = namedType.getType();
+                        }
+                    }
+
+                    if (componentTypeDef.getType() == TypeDef.Type.ENUM) {
+                        if (componentType.isEnum()) {
+                            symbolMapping = new IdentityEnumMapping(componentType);
+                        } else {
+                            symbolMapping = new IdentityIntegerEnumMapping((TypeDef.Enum) componentTypeDef);
+                        }
+                    }
+                }
+                
                 FieldDefVisitor fv = null;
                 if (gv != null) {
                     fv = gv.visitField(
@@ -514,7 +547,7 @@ public class SchemaBuilder {
                         id,
                         required,
                         typeDef,
-                        new FieldBinding(accessor, type, componentType));
+                        new FieldBinding(accessor, type, componentType, symbolMapping));
                 }
 
                 visitAnnotations(field, fv);
@@ -527,7 +560,7 @@ public class SchemaBuilder {
             }
         }
     }
-
+    
     /**
      * Returns the field type, by also resolving any generic type variables using
      * the supplied generic parameters map.

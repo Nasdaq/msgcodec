@@ -28,6 +28,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.cinnober.msgcodec.anot.Id;
@@ -69,6 +70,15 @@ public class EnumSymbols<E extends Enum<E>> {
             enumById.put(symbol.getId(), en);
             enumByName.put(symbol.getName(), en);
         }
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj != null && obj instanceof EnumSymbols) {
+            EnumSymbols<?> other = (EnumSymbols<?>) obj; 
+            return enumClass == other.enumClass && Objects.equals(typeDef, other.typeDef);
+        }
+        return false;
     }
 
     /** Returns the Java enumeration for the symbol name.
@@ -112,6 +122,11 @@ public class EnumSymbols<E extends Enum<E>> {
      */
     public Class<E> getEnumClass() {
         return enumClass;
+    }
+    
+    @Override
+    public int hashCode() {
+        return Objects.hash(enumClass, typeDef);
     }
 
     /** Create a mapping from Java enumeration to the corresponding symbols.
