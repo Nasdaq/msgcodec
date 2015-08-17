@@ -38,6 +38,15 @@ import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
 import com.cinnober.msgcodec.messages.MetaProtocol;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * @author mikael.brannstrom
