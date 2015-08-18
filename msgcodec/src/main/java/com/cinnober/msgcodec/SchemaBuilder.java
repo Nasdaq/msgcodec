@@ -480,6 +480,7 @@ public class SchemaBuilder {
                     id = idAnot.value();
                 }
                 Accessor<Object, Object> accessor = new FieldAccessor(field);
+//                System.out.println("new field accessor: " + accessor + " field: " + field);
 
                 Required requiredAnot = field.getAnnotation(Required.class);
                 if (strict && requiredAnot != null && type.isPrimitive()) {

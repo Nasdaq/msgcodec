@@ -1,3 +1,27 @@
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 The MsgCodec Authors
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package com.cinnober.msgcodec.blink;
 
 import static org.junit.Assert.assertEquals;
@@ -76,6 +100,27 @@ public class UpdateSchemaTest {
         assertEquals(EnumV1.VALUE1, msg.enumeration);
     }
 
+    
+    @Test
+    public void testRemovedAndAddedFields() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema3 = new SchemaBuilder().build(Version3.class);
+        Schema schema = new SchemaBinder(schema3).bind(schema1, g -> Direction.INBOUND);
+
+        MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        
+        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
+
+        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
+        Version3 msg = (Version3) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(0L, msg.newfield1);
+        assertEquals(0.0f, msg.newfield2, 1e-8);
+        assertEquals(null, msg.newEnum);
+        assertEquals(24L, msg.number);
+    }
+    
+    
     public static enum EnumV1 {
         VALUE3, VALUE1, VALUE2,
     }
@@ -116,6 +161,26 @@ public class UpdateSchemaTest {
             enumeration = eValue;
             decimal = d;
         }
+    }
+
+    @Name("Payload")
+    @Id(1)
+    public static class Version3 extends MsgObject {
+        public long number;
+        public short newfield1;
+        public double newfield2;
+        public EnumV2 newEnum;
+        
+        public Version3() {
+        }
+
+    }
+    
+    
+    public static void test() {
+        Integer a = 3;
+        String s = a.toString();
+        System.out.println(s);
     }
 
 }

@@ -26,6 +26,7 @@ package com.cinnober.msgcodec.blink;
 
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.ConstructorFactory;
+import com.cinnober.msgcodec.CreateAccessor;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldAccessor;
@@ -535,6 +536,11 @@ class BaseByteCodeGenerator {
                     }
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
                     writemv.visitInsn(NULL);
+                } else if (accessor.getClass() == CreateAccessor.class) {
+                    writemv.visitInsn(NULL);
+                    writemv.visitInsn(POP);
+                    writemv.visitInsn(POP);
+                    continue;
                 } else {
                     writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
@@ -738,6 +744,51 @@ class BaseByteCodeGenerator {
                     readValue.run();
                     // discard
                     mv.visitInsn(POP);
+                } else if(accessor.getClass() == CreateAccessor.class) {
+//                    System.out.println("    CreateAccessor: " + accessor);
+//                    mv.visitInsn(POP);
+                    
+//                    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+//                    mv.visitLdcInsn("READ - createAccessor");
+//                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);                    
+                    
+//                    Field f = ((CreateAccessor)accessor).getField();
+                    mv.visitVarInsn(ALOAD, 2); // instance
+
+                    Label tryStart = new Label();
+                    Label tryEnd = new Label();
+                    Label tryCatch = new Label();
+                    Label tryAfter = new Label();
+                    mv.visitTryCatchBlock(tryStart, tryEnd, tryCatch, "java/lang/Exception");
+                    
+                    mv.visitLabel(tryStart);
+                    mv.visitVarInsn(ALOAD, 1); // input stream
+                    
+//                    generateDecodeValue(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass,
+//                            field.getComponentJavaClass(), schema, genClassInternalName,
+//                            group.getName() + "." + field.getName(), javaClassCodec);
+                    
+                    generateDecodeDummy(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass,
+                            field.getComponentJavaClass(), schema, genClassInternalName,
+                            group.getName() + "." + field.getName(), javaClassCodec);
+                    
+                    mv.visitLabel(tryEnd);
+                    mv.visitJumpInsn(GOTO, tryAfter);
+                    mv.visitLabel(tryCatch);
+                    int caughtExVar = nextVar.next();
+                    mv.visitVarInsn(ASTORE, caughtExVar);
+                    mv.visitTypeInsn(NEW, "com/cinnober/msgcodec/blink/FieldDecodeException");
+                    mv.visitInsn(DUP);
+                    mv.visitLdcInsn(field.getName());
+                    mv.visitVarInsn(ALOAD, caughtExVar);
+                    mv.visitMethodInsn(INVOKESPECIAL, "com/cinnober/msgcodec/blink/FieldDecodeException",
+                            "<init>", "(Ljava/lang/String;Ljava/lang/Throwable;)V", false);
+                    mv.visitInsn(ATHROW);
+                    mv.visitLabel(tryAfter);
+                    
+                    
+//                    readValue.run();
+                    mv.visitInsn(POP);
                 } else {
                     // accessor
                     mv.visitVarInsn(ALOAD, 0);
@@ -751,6 +802,16 @@ class BaseByteCodeGenerator {
                     if (javaClass.isPrimitive()) {
                         box(mv, javaClass);
                     }
+                    /*
+                    System.out.println("GenClass: " + genClassInternalName + ", Accessor: " + "accessor_" + group.getName() + "_" + field.getName());
+                    
+                    mv.visitInsn(DUP);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "toString", "()Ljava/lang/String;", false);                    
+                    mv.visitVarInsn(ASTORE, 0);
+                    mv.visitFieldInsn(GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+                    mv.visitVarInsn(ALOAD, 0);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);                    
+                    */
                     // store
                     mv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "setValue",
                             "(Ljava/lang/Object;Ljava/lang/Object;)V", true);
@@ -1597,6 +1658,101 @@ class BaseByteCodeGenerator {
         }
     }
 
+    
+    protected void generateDecodeDummy(MethodVisitor mv, int byteSourceVar, LocalVariable nextVar,
+            boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, Schema schema,
+            String genClassInternalName, String debugValueLabel, boolean javaClassCodec) {
+        type = schema.resolveToType(type, false);
+        GroupDef refGroup = schema.resolveToGroup(type);
+
+        switch (type.getType()) {
+            case INT8:
+                generateDecodeInt8Value(required, mv);
+                break;
+            case UINT8:
+                generateDecodeUInt8Value(required, mv);
+                break;
+            case INT16:
+                generateDecodeInt16Value(required, mv);
+                break;
+            case UINT16:
+                generateDecodeUInt16Value(required, mv);
+                break;
+            case INT32:
+                generateDecodeInt32Value(required, mv);
+                break;
+            case UINT32:
+                generateDecodeUInt32Value(required, mv);
+                break;
+            case INT64:
+                generateDecodeInt64Value(required, mv);
+                break;
+            case UINT64:
+                generateDecodeUInt64Value(required, mv);
+                break;
+            case FLOAT32:
+                generateDecodeFloat32Value(required, mv);
+                break;
+            case FLOAT64:
+                generateDecodeFloat64Value(required, mv);
+                break;
+            case BIGINT:
+                generateDecodeBigIntValue(required, mv);
+                break;
+            case DECIMAL:
+                generateDecodeDecimalValue(required, mv);
+                break;
+            case BIGDECIMAL:
+                generateDecodeBigDecimalValue(required, mv);
+                break;
+            case STRING:
+                generateDecodeStringValue((TypeDef.StringUnicode) type, mv, required);
+                break;
+            case BINARY:
+                generateDecodeBinaryValue((TypeDef.Binary) type, mv, required);
+                break;
+            case BOOLEAN:
+                generateDecodeBooleanValue(required, mv);
+                break;
+            case ENUM:
+                
+                if (required) {
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readUInt32",
+                            "(Lcom/cinnober/msgcodec/io/ByteSource;)I", false);
+                } else {
+                    mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readUInt32Null",
+                            "(Lcom/cinnober/msgcodec/io/ByteSource;)Ljava/lang/Integer;", false);
+                }
+                
+                mv.visitInsn(POP);
+                
+                break;
+            case TIME:
+                generateDecodeTimeValue((TypeDef.Time) type, javaClass, required, mv, nextVar);
+                break;
+            case SEQUENCE:
+                generateDecodeSequenceValue(javaClass, nextVar, required, mv, componentJavaClass,
+                        byteSourceVar, type, schema, genClassInternalName, debugValueLabel, javaClassCodec);
+                break;
+            case REFERENCE:
+                generateDecodeRefValue(refGroup, required, mv, byteSourceVar, genClassInternalName, javaClass,
+                        type, javaClassCodec);
+                break;
+            case DYNAMIC_REFERENCE:
+                generateDecodeDynRefValue(mv, required, refGroup, javaClass);
+                break;
+            default:
+                throw new RuntimeException("Unhandled case: " + type.getType());
+        }
+
+        if (!required && javaClass.isPrimitive()) {
+            // PENDING: null check and throw DecodeException (instead of NPE): Cannot represent absent (null) value.
+            unbox(mv, javaClass);
+        } else if (required && !javaClass.isPrimitive()) {
+            box(mv, javaClass);
+        }
+    }
+    
     /**
      * Generate value decoding using the blink input.
      *

@@ -114,7 +114,18 @@ public class SchemaBinder {
                 groupBinding = srcGroup.getBinding();
                 for (FieldDef dstField : dstGroup.getFields()) {
                     FieldDef srcField = srcGroup.getField(dstField.getName());
-                    newFields.add(bindField(srcField, dstField, srcGroup, dst, dir));
+                    
+                    if(srcField == null) {
+                        try {
+                            newFields.add(new CreateAccessor(null).bindField(dstField));
+                        } catch (SecurityException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                    else {
+                        newFields.add(bindField(srcField, dstField, srcGroup, dst, dir));
+                    }
                 }
             }
 
@@ -475,13 +486,13 @@ public class SchemaBinder {
 
         @Override
         public D getValue(T obj) {
+            System.out.println("getValue: " + obj + " accessor: " + accessor);
+            
             return srcToDstFn.apply(accessor.getValue(obj));
         }
 
         @Override
         public void setValue(T obj, D value) {
-            // System.out.println("setValue: " + obj + " accessor: " + accessor);
-
             if (accessor instanceof FieldAccessor) {
                 Field field = ((FieldAccessor) accessor).getField();
                 if (field.getType().isEnum()) {
