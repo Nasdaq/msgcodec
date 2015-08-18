@@ -120,7 +120,44 @@ public class UpdateSchemaTest {
         assertEquals(24L, msg.number);
     }
     
+    @Test
+    public void testRemovedAndAddedFields2() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema3 = new SchemaBuilder().build(Version3.class);
+        Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND);
+
+        MsgCodec codec1 = new BlinkCodecFactory(schema3).createCodec();
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        
+        codec1.encode(new Version3(10, (short) 11, 12.0, EnumV2.VALUE1), bout);
+
+        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
+        Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(0L, msg.decimal, 1e-8);
+        assertEquals(10, msg.number);
+    }
+
+    @Test (expected = IncompatibleSchemaException.class)
+    public void testRemovedAndAddedFieldsNarrow() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema3 = new SchemaBuilder().build(Version3.class);
+        new SchemaBinder(schema1).bind(schema3, g -> Direction.INBOUND);
+    }
+
+    @Test (expected = IncompatibleSchemaException.class)
+    public void testRemovedAndAddedFieldsNarrow2() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema3 = new SchemaBuilder().build(Version3.class);
+        new SchemaBinder(schema3).bind(schema1, g -> Direction.OUTBOUND);
+    }
     
+    @Test (expected = IncompatibleSchemaException.class)
+    public void testRemovedAndAddedFieldsNarrow3() throws IOException, IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().build(Version1.class);
+        Schema schema3 = new SchemaBuilder().build(Version3.class);
+        new SchemaBinder(schema1).bind(schema3, g -> Direction.BOTH);
+    }
+
     public static enum EnumV1 {
         VALUE3, VALUE1, VALUE2,
     }
@@ -173,14 +210,15 @@ public class UpdateSchemaTest {
         
         public Version3() {
         }
+        
+        public Version3(long v1, short v2, double v3, EnumV2 v4) {
+            number = v1;
+            newfield1 = v2;
+            newfield2 = v3;
+            newEnum = v4;
+        }
 
     }
     
-    
-    public static void test() {
-        Integer a = 3;
-        String s = a.toString();
-        System.out.println(s);
-    }
 
 }
