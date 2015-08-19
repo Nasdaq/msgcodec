@@ -36,10 +36,13 @@ import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.io.ByteArrays;
+import com.cinnober.msgcodec.io.ByteBuf;
+import com.cinnober.msgcodec.io.ByteBufferBuf;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
@@ -227,6 +230,19 @@ public class BlinkCodecTest {
         assertArrayEquals(expected, bout.toByteArray());
 
     }
+    
+    @Test
+    public void testMultipleDynamics() throws IllegalArgumentException, IOException {
+        Schema schema = new SchemaBuilder().build(DynamicMsgs.class, IntMsg.class);
+        byte[] byteData = new byte[1024];
+        ByteBuf buffer = new ByteBufferBuf(ByteBuffer.wrap(byteData));
+        MsgCodec codec = new BlinkCodecFactory(schema).createCodec();
+
+        codec.encode(new DynamicMsgs(new IntMsg(42), null, null), buffer);
+        
+        buffer.clear();
+        codec.encode(new DynamicMsgs(new IntMsg(42), new IntMsg(1), new IntMsg(2)), buffer);
+    }
 
     @Test
     public void testDates1() throws IOException {
@@ -376,5 +392,35 @@ public class BlinkCodecTest {
     @Id(5)
     public static abstract class AbstractMessage extends MsgObject {
     }
-
+    
+    @Id(7)
+    public static class DynamicMsgs {
+        @Dynamic
+        AbstractMessage first;
+        @Dynamic
+        AbstractMessage second;
+        @Dynamic
+        AbstractMessage third;
+        
+        public DynamicMsgs() {
+        }
+        
+        public DynamicMsgs(AbstractMessage first, AbstractMessage second, AbstractMessage third) {
+            this.first = first;
+            this.second = second;
+            this.third = third;
+        }
+    }
+    
+    @Id(8)
+    public static class IntMsg extends AbstractMessage {
+        int value;
+        
+        public IntMsg() {
+        }
+        
+        public IntMsg(int value) {
+            this.value = value;
+        }
+    }
 }
