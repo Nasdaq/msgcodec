@@ -142,7 +142,7 @@ public class XmlCodecTest {
 
         MsgCodec codec = new XmlCodec(schema);
 
-        Hello msg = (Hello) codec.decode(new ByteArrayInputStream("<hello/>".getBytes("UTF-8")));
+        codec.decode(new ByteArrayInputStream("<hello/>".getBytes("UTF-8")));
     }
     @Test(expected = IllegalArgumentException.class)
     public void testEncodeHelloMissingField() throws Exception {

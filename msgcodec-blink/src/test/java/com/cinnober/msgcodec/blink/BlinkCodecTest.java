@@ -30,7 +30,6 @@ import com.cinnober.msgcodec.Group;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
-import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
@@ -39,15 +38,6 @@ import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
 import com.cinnober.msgcodec.messages.MetaProtocol;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-import static org.junit.Assert.*;
-import org.junit.Test;
 
 /**
  * @author mikael.brannstrom

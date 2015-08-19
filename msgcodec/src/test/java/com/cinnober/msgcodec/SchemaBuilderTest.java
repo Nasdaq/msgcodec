@@ -148,7 +148,7 @@ public class SchemaBuilderTest {
     public void testPrivate2() {
         SchemaBuilder builder = new SchemaBuilder();
         try {
-            Schema schema = builder.build(SecretMessage2.class);
+            builder.build(SecretMessage2.class);
             fail("Expected exception: no default constructor");
         } catch (IllegalArgumentException e) {}
     }

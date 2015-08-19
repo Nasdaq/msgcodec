@@ -16,3 +16,4 @@ bin/
 /.nb-gradle/profiles/private/
 /.nb-gradle/private/
 /.nb-gradle-properties
+/.metadata/

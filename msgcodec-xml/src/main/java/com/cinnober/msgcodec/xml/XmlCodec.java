@@ -130,7 +130,7 @@ public class XmlCodec implements MsgCodec {
 
     private static final String ANOT_XML_NAMESPACE = "xml:ns";
     private static final String ANOT_FIELD = "xml:field";
-    private static final String ANOTVALUE_FIELD_ATTRIBUTE = "attribute";
+//    private static final String ANOTVALUE_FIELD_ATTRIBUTE = "attribute";
     private static final String ANOTVALUE_FIELD_ELEMENT = "element";
     private static final String ANOTVALUE_FIELD_INLINE = "inline";
 

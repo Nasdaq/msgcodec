@@ -24,22 +24,73 @@
 
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.Accessor;
-import com.cinnober.msgcodec.ConstructorFactory;
-import com.cinnober.msgcodec.EnumSymbols;
-import com.cinnober.msgcodec.Factory;
-import com.cinnober.msgcodec.FieldAccessor;
-import com.cinnober.msgcodec.FieldDef;
-import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.IgnoreAccessor;
-import com.cinnober.msgcodec.JavaClassGroupTypeAccessor;
-import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.SchemaBinding;
-import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Symbol;
-import com.cinnober.msgcodec.io.ByteArrays;
-import com.cinnober.msgcodec.io.ByteSink;
-import com.cinnober.msgcodec.io.ByteSource;
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.AASTORE;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.ATHROW;
+import static org.objectweb.asm.Opcodes.BALOAD;
+import static org.objectweb.asm.Opcodes.BASTORE;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.DALOAD;
+import static org.objectweb.asm.Opcodes.DASTORE;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.FALOAD;
+import static org.objectweb.asm.Opcodes.FASTORE;
+import static org.objectweb.asm.Opcodes.F_SAME;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.IALOAD;
+import static org.objectweb.asm.Opcodes.IASTORE;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFNE;
+import static org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.objectweb.asm.Opcodes.IFNULL;
+import static org.objectweb.asm.Opcodes.IF_ACMPEQ;
+import static org.objectweb.asm.Opcodes.IF_ICMPGE;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LADD;
+import static org.objectweb.asm.Opcodes.LALOAD;
+import static org.objectweb.asm.Opcodes.LASTORE;
+import static org.objectweb.asm.Opcodes.LDIV;
+import static org.objectweb.asm.Opcodes.LLOAD;
+import static org.objectweb.asm.Opcodes.LMUL;
+import static org.objectweb.asm.Opcodes.LSTORE;
+import static org.objectweb.asm.Opcodes.LSUB;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.NEWARRAY;
+import static org.objectweb.asm.Opcodes.NULL;
+import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.SALOAD;
+import static org.objectweb.asm.Opcodes.SASTORE;
+import static org.objectweb.asm.Opcodes.SWAP;
+import static org.objectweb.asm.Opcodes.T_BOOLEAN;
+import static org.objectweb.asm.Opcodes.T_BYTE;
+import static org.objectweb.asm.Opcodes.T_DOUBLE;
+import static org.objectweb.asm.Opcodes.T_FLOAT;
+import static org.objectweb.asm.Opcodes.T_INT;
+import static org.objectweb.asm.Opcodes.T_LONG;
+import static org.objectweb.asm.Opcodes.T_SHORT;
+import static org.objectweb.asm.Opcodes.V1_7;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
@@ -52,15 +103,29 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
-import static org.objectweb.asm.Opcodes.*;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.util.CheckClassAdapter;
 import org.objectweb.asm.util.TraceClassVisitor;
+
+import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.ConstructorFactory;
+import com.cinnober.msgcodec.EnumSymbols;
+import com.cinnober.msgcodec.Factory;
+import com.cinnober.msgcodec.FieldAccessor;
+import com.cinnober.msgcodec.FieldDef;
+import com.cinnober.msgcodec.GroupDef;
+import com.cinnober.msgcodec.IgnoreAccessor;
+import com.cinnober.msgcodec.JavaClassGroupTypeAccessor;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.TypeDef;
+import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.io.ByteArrays;
 
 /**
  *
@@ -69,11 +134,11 @@ import org.objectweb.asm.util.TraceClassVisitor;
 class BaseByteCodeGenerator {
     protected static final Logger log = Logger.getLogger(BaseByteCodeGenerator.class.getName());
     
-
-    private static final String BYTE_SINK_INAME = Type.getInternalName(ByteSink.class);
-    private static final String BYTE_SOURCE_INAME = Type.getInternalName(ByteSource.class);
-    private static final String SCHEMA_INAME = Type.getInternalName(Schema.class);
-    private static final String SCHEMA_BINDING_INAME = Type.getInternalName(SchemaBinding.class);
+//
+//    private static final String BYTE_SINK_INAME = Type.getInternalName(ByteSink.class);
+//    private static final String BYTE_SOURCE_INAME = Type.getInternalName(ByteSource.class);
+//    private static final String SCHEMA_INAME = Type.getInternalName(Schema.class);
+//    private static final String SCHEMA_BINDING_INAME = Type.getInternalName(SchemaBinding.class);
 
 
     protected final String GENERATED_CLASS_INAME = "com/cinnober/msgcodec/blink/GeneratedBlinkCodec";
