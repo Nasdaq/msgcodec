@@ -196,8 +196,6 @@ public class ByteBuffers {
         src.limit(srcIndex+length).position(srcIndex);
         dst.limit(dstIndex+length).position(dstIndex);
         dst.put(src);
-        src.limit(src.capacity());
-        dst.limit(dst.capacity());
     }
 
     /**

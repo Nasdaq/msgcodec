@@ -76,6 +76,7 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec {
             if (size < 1<<7) {
                 buf.shift(start+2, size, -1);
                 buf.position(start);
+                buf.limit(buf.capacity());
                 BlinkOutput.writeVLC7(buf, size);
                 buf.position(end-1);
             } else if (size < 1<<14) {
@@ -86,6 +87,7 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec {
                 int sizeOfSize = BlinkOutput.sizeOfUnsignedVLC(size);
                 buf.shift(start+2, size, sizeOfSize-2);
                 buf.position(start);
+                buf.limit(buf.capacity());
                 BlinkOutput.writeVLC(buf, size, sizeOfSize);
                 buf.position(end + sizeOfSize - 2);
             }
