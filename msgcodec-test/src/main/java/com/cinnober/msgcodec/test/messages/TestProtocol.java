@@ -49,6 +49,9 @@ public class TestProtocol {
                 SequencesMessage.class,
                 StringsMessage.class,
                 GenericEmployeeMessage.class,
+                DynamicMessages.class,
+                DynamicMessages.AbstractMessage.class,
+                DynamicMessages.IntMsg.class,
             });
     }
 
@@ -71,6 +74,7 @@ public class TestProtocol {
         putAll(messages, "Enums.", EnumsMessage.createMessages());
         putAll(messages, "Integers.", IntegersMessage.createMessages());
         putAll(messages, "GenericEmployees.", GenericEmployeeMessage.createMessages());
+        putAll(messages, "DynamicMessages", DynamicMessages.createMessages());
 
         return messages;
     }

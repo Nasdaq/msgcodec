@@ -151,7 +151,7 @@ public class ByteBufferBuf implements ByteBuf {
         }
         if (buf.hasArray()) {
             final byte[] data = buf.array();
-            final int pos = buf.arrayOffset();
+            final int pos = position();
             if (len < 128) {
                 boolean ascii = true;
                 int end = pos+len;

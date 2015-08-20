@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,9 @@ import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 
 import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.io.ByteBuf;
+import com.cinnober.msgcodec.io.ByteBufferBuf;
+
 import org.junit.Assert;
 
 /**
@@ -65,13 +69,13 @@ import org.junit.Assert;
 public abstract class TestMessagesSuite extends Suite {
 
     protected TestMessagesSuite(Class<?> rootClass, MsgCodec codec) throws InitializationError {
-        super(rootClass, createRunners(codec));
+        super(rootClass, createRunners(rootClass, codec));
     }
 
-    private static List<Runner> createRunners(MsgCodec codec) {
+    private static List<Runner> createRunners(Class<?> rootClass, MsgCodec codec) {
         List<Runner> runners = new ArrayList<>();
         for (Map.Entry<String, Object> messageEntry : TestProtocol.createMessages().entrySet()) {
-            runners.add(new EncodeDecodeTest(codec, messageEntry.getKey(), messageEntry.getValue()));
+            runners.add(new EncodeDecodeTest(rootClass, codec, messageEntry.getKey(), messageEntry.getValue()));
         }
         return runners;
     }
@@ -82,12 +86,14 @@ public abstract class TestMessagesSuite extends Suite {
         private final String label;
         private final Object message;
         private final Description description;
+        private final Class<?> rootClass;
 
-        private EncodeDecodeTest(MsgCodec codec, String label, Object message) {
+        private EncodeDecodeTest(Class<?> rootClass, MsgCodec codec, String label, Object message) {
             this.codec = codec;
             this.label = label;
             this.message = message;
             this.description = Description.createTestDescription(EncodeDecodeTest.class, label);
+            this.rootClass = rootClass;
         }
 
         @Override
@@ -110,6 +116,7 @@ public abstract class TestMessagesSuite extends Suite {
 
                 ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
                 Object object = codec.decode(in);
+                
                 if (object == null) {
                     fail("Decoded message is null");
                 } else if (!object.getClass().equals(message.getClass())) {
@@ -119,7 +126,44 @@ public abstract class TestMessagesSuite extends Suite {
             } catch (Throwable e) {
                 notifier.fireTestFailure(new Failure(description, e));
             }
+            
+            if (!rootClass.getName().contains("XmlTestMessagesSuite")) {
+                // Ugly ignore hack, since xml parser is not compatible with buffer read that requires exact read sizes
+                
+                byte[] byteData = new byte[4096]; // extra large buffer since ByteBufferBuf.read does not follow specs
+                ByteBuf buffer = new ByteBufferBuf(ByteBuffer.wrap(byteData));
+                try {
+                    codec.encode(message, buffer);
 
+                    buffer.clear();
+                    Object object = codec.decode(buffer);
+                    if (object == null) {
+                        fail("Decoded message is null");
+                    } else if (!object.getClass().equals(message.getClass())) {
+                        fail("Decoded message is not same type as encoded message");
+                    }
+                    Assert.assertEquals(message, object);
+                } catch (Throwable e) {
+                    notifier.fireTestFailure(new Failure(description, e));
+                }
+
+                buffer = new ByteBufferBuf(ByteBuffer.allocateDirect(65536));
+                try {
+                    codec.encode(message, buffer);
+
+                    buffer.clear();
+                    Object object = codec.decode(buffer);
+                    if (object == null) {
+                        fail("Decoded message is null");
+                    } else if (!object.getClass().equals(message.getClass())) {
+                        fail("Decoded message is not same type as encoded message");
+                    }
+                    Assert.assertEquals(message, object);
+                } catch (Throwable e) {
+                    notifier.fireTestFailure(new Failure(description, e));
+                }
+            }
+            
             notifier.fireTestFinished(description);
         }
 
