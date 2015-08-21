@@ -127,8 +127,8 @@ public abstract class TestMessagesSuite extends Suite {
                 notifier.fireTestFailure(new Failure(description, e));
             }
             
+            // Ugly ignore hack, since xml parser is not compatible with buffer read that requires exact read sizes
             if (!rootClass.getName().contains("XmlTestMessagesSuite")) {
-                // Ugly ignore hack, since xml parser is not compatible with buffer read that requires exact read sizes
                 
                 byte[] byteData = new byte[4096]; // extra large buffer since ByteBufferBuf.read does not follow specs
                 ByteBuf buffer = new ByteBufferBuf(ByteBuffer.wrap(byteData));

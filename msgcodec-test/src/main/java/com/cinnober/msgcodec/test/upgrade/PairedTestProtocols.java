@@ -39,6 +39,7 @@ public class PairedTestProtocols {
         return new SchemaBuilder().build(
             new Class<?>[] {
                 UpgradeEnumsMessages.Original.class,
+                UpgradeAddRemoveFieldMessages.Version1.class,
             });
     }
     
@@ -46,6 +47,7 @@ public class PairedTestProtocols {
         return new SchemaBuilder().build(
             new Class<?>[] {
                 UpgradeEnumsMessages.Upgraded.class,
+                UpgradeAddRemoveFieldMessages.Version2.class,
             });
     }
 
@@ -62,6 +64,7 @@ public class PairedTestProtocols {
         Map<String, PairedMessages> messages = new LinkedHashMap<>();
 
         putAll(messages, "Enums.", UpgradeEnumsMessages.createMessages());
+        putAll(messages, "AddRemoveFields", UpgradeAddRemoveFieldMessages.createMessages());
 
         return messages;
     }
