@@ -24,9 +24,23 @@
 package com.cinnober.msgcodec.blink;
 
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Test;
+
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Group;
+import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
@@ -38,15 +52,6 @@ import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
 import com.cinnober.msgcodec.messages.MetaProtocol;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-import static org.junit.Assert.*;
-import org.junit.Test;
 
 /**
  * @author mikael.brannstrom
