@@ -45,8 +45,8 @@ public class ManyDynamicMessage extends MsgObject {
 
 	@Dynamic
 	public TheMessage msg3;
-//
-//	@Dynamic
-//	public TheMessage msg4;
+
+	@Dynamic
+	public TheMessage msg4;
 
 }

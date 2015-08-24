@@ -28,16 +28,12 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
-import org.openjdk.jmh.annotations.Measurement;
-import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OutputTimeUnit;
 import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
 
 import com.cinnober.msgcodec.Schema;
@@ -153,7 +149,7 @@ public class BenchmarkDynamic {
 		msgDynamic3 = createThreeReal();
 		msgDynamic4 = createFourReal();
 		msgLargeManyFieldsDynamic = createDynamicFieldsMsg();
-		// msgFourDynamic = createFourRealMsg();
+		 msgFourDynamic = createFourRealMsg();
 
 		msgStaticDynamic = createRealMsg();
 		msgStaticManyFieldsLarge = createManyFieldsMsg();
@@ -235,22 +231,22 @@ public class BenchmarkDynamic {
 	
 	
 	// --
-	// @Benchmark
-	// public Object benchmarkDecodeManyDynamic() throws IOException {
-	// buf3.position(0).limit(sizeEncodeManyDynamic);
-	// return codec.decode(buf3);
-	// }
+	 @Benchmark
+	 public Object benchmarkDecodeManyDynamic() throws IOException {
+	 buf3.position(0).limit(sizeEncodeManyDynamic);
+	 return codec.decode(buf3);
+	 }
 
-	// @Benchmark
-	// public int benchmarkEncodeManyDynamic() throws IOException {
-	// buf3.clear();
-	// codec.encode(msgFourDynamic, buf3);
-	// return buf3.position();
-	// }
+	 @Benchmark
+	 public int benchmarkEncodeManyDynamic() throws IOException {
+	 buf3.clear();
+	 codec.encode(msgFourDynamic, buf3);
+	 return buf3.position();
+	 }
 
 
 
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeFourDynamicOneType() throws IOException {
 		buf1.clear();
 		codec.encode(msgDynamic1, buf1);
@@ -262,7 +258,7 @@ public class BenchmarkDynamic {
 		codec.encode(msgDynamic1, buf1);
 		return buf1.position();
 	}
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeFourDynamicTwoType() throws IOException {
 		buf1.clear();
 		codec.encode(msgDynamic1, buf1);
@@ -274,7 +270,7 @@ public class BenchmarkDynamic {
 		codec.encode(msgDynamic1, buf1);
 		return buf1.position();
 	}
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeFourDynamicThreeType() throws IOException {
 		buf1.clear();
 		codec.encode(msgDynamic1, buf1);
@@ -288,7 +284,7 @@ public class BenchmarkDynamic {
 	}
 	
 	
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeFourDynamicFourTypes() throws IOException {
 		buf1.clear();
 		codec.encode(msgDynamic1, buf1);
@@ -302,13 +298,13 @@ public class BenchmarkDynamic {
 	}
 
 	// --
-//	@Benchmark 
+	@Benchmark 
 	public Object benchmarkDecodeDynamic() throws IOException {
 		buf1.position(0).limit(encodedSizeDynamic);
 		return codec.decode(buf1);
 	}
 
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeDynamic() throws IOException {
 		buf1.clear();
 		codec.encode(msgDynamic1, buf1);
@@ -318,7 +314,7 @@ public class BenchmarkDynamic {
 	 * @return the decoded object
 	 * @throws IOException
 	 */
-//	@Benchmark
+	@Benchmark
 	public Object benchmarkDecodeStatic() throws IOException {
 		buf1.position(0).limit(encodedSizeNotDynamic);
 		return codec.decode(buf1);
@@ -328,7 +324,7 @@ public class BenchmarkDynamic {
 	 * @return the size of the encoded data in the buffer,the end position in the buffer.
 	 * @throws IOException
 	 */
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeStatic() throws IOException {
 		buf1.clear();
 		codec.encode(msgStaticDynamic, buf1);
@@ -340,7 +336,7 @@ public class BenchmarkDynamic {
 	 * @return
 	 * @throws IOException
 	 */
-//	@Benchmark
+	@Benchmark
 	public Object benchmarkDecodeDynamicManyFields() throws IOException {
 		buf2.position(0).limit(encodedSizeManyFieldsDynamic);
 		return codec.decode(buf2);
@@ -350,7 +346,7 @@ public class BenchmarkDynamic {
 	 * @return
 	 * @throws IOException
 	 */
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeDynamicManyFields() throws IOException {
 		buf2.clear();
 		codec.encode(msgLargeManyFieldsDynamic, buf2);
@@ -361,7 +357,7 @@ public class BenchmarkDynamic {
 	 * @return
 	 * @throws IOException
 	 */
-//	@Benchmark
+	@Benchmark
 	public Object benchmarkDecodeStaticManyFields() throws IOException {
 		buf2.position(0).limit(encodedSizeManyFieldsStatic);
 		return codec.decode(buf2);
@@ -371,7 +367,7 @@ public class BenchmarkDynamic {
 	 * @return
 	 * @throws IOException
 	 */
-//	@Benchmark
+	@Benchmark
 	public int benchmarkEncodeStaticManyFields() throws IOException {
 		buf2.clear();
 		codec.encode(msgStaticManyFieldsLarge, buf2);
@@ -470,7 +466,7 @@ public class BenchmarkDynamic {
 		encodedSizeManyFieldsDynamic = benchmarkEncodeDynamicManyFields();
 		encodedSizeManyFieldsStatic = benchmarkEncodeStaticManyFields();
 
-		// sizeEncodeManyDynamic = benchmarkEncodeManyDynamic();
+		 sizeEncodeManyDynamic = benchmarkEncodeManyDynamic();
 	}
 
 	/**
@@ -483,12 +479,12 @@ public class BenchmarkDynamic {
 		// b.benchmarkEncodeManyDynamic();
 	}
 
-	// private ManyDynamicMessage createFourRealMsg() {
-	// ManyDynamicMessage msg = new ManyDynamicMessage();
-	// msg.msg = new TheRealMessage("qwerty12345678_1");
-	// msg.msg2 = new TheRealMessage2("qwerty12345678_2");
-	// msg.msg3 = new TheRealMessage3("qwerty12345678_3");
-	// msg.msg4 = new TheRealMessage4("qwerty12345678_4");
-	// return msg;
-	// }
+	 private ManyDynamicMessage createFourRealMsg() {
+	 ManyDynamicMessage msg = new ManyDynamicMessage();
+	 msg.msg = new TheRealMessage("qwerty12345678_1");
+	 msg.msg2 = new TheRealMessage2("qwerty12345678_2");
+	 msg.msg3 = new TheRealMessage3("qwerty12345678_3");
+	 msg.msg4 = new TheRealMessage4("qwerty12345678_4");
+	 return msg;
+	 }
 }
