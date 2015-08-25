@@ -24,12 +24,14 @@
 package com.cinnober.msgcodec;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
 import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.TypeDef.Type;
 
 /**
  * The schema binder can re-bind a schema to another schema.
@@ -155,34 +157,73 @@ public class SchemaBinder {
             if (srcType.equals(dstType)) {
                 return dstField.bind(srcField.getBinding());
             }
+            
+            Class<?> javaType = dstType.getDefaultJavaType();
+            Class<?> javaComponentType = dstType.getDefaultJavaComponentType();
 
             switch (dir) {
             case BOTH:
                 throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
             case INBOUND:
-                // TODO: attempt to narrow the binding, e.g. int64 in src and int32 in dst
-                // narrow can also mean having more enum symbols in src than in dst
-                Accessor<?, ?> narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dstType, dir);
+                Accessor<?, ?> narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
                 if (narrowAccessor == null) {
                     throw new IncompatibleSchemaException(
                             "Source type not eq or wider" + details(dstGroup, dstField, dir));
                 }
-//                return dstField.bind(new FieldBinding(narrowAccessor, dstType.getDefaultJavaType(),
-//                        dstType.getDefaultJavaComponentType()));
+                SymbolMapping<?> inboundMapping = srcField.getBinding().getSymbolMapping();
+                
+                if (inboundMapping != null) {
+                    switch (dstType.getType()) {
+                    case ENUM:
+                        inboundMapping = new ConverterSymbolMapping<>(
+                                inboundMapping, ((TypeDef.Enum) dstType).getSymbols());
+                    break;
+                    case SEQUENCE:
+                        TypeDef componentType = dst.resolveToType(
+                                ((TypeDef.Sequence) dstType).getComponentType(), true);
+                        if (componentType != null && componentType.getType() == Type.ENUM) {
+                            inboundMapping = new ConverterSymbolMapping<>(
+                                    inboundMapping, ((TypeDef.Enum) componentType).getSymbols());
+                            javaType = srcField.getJavaClass();
+                            javaComponentType = srcField.getComponentJavaClass();
+                            break;
+                        }
+                    default:
+                        throw new IncompatibleSchemaException("Symbol mapping but no enum");
+                    }
+                }
+                
+                return dstField.bind(new FieldBinding(narrowAccessor, javaType, javaComponentType, inboundMapping));
             case OUTBOUND:
-
-                Accessor<?, ?> widenAccessor = widenAccessor(srcField.getAccessor(), srcType, dstType, dir);
+                Accessor<?, ?> widenAccessor = widenAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
                 if (widenAccessor == null) {
                     throw new IncompatibleSchemaException(
                             "Source type not eq or narrower " + details(dstGroup, dstField, dir));
                 }
-//                return dstField.bind(new FieldBinding(widenAccessor, dstType.getDefaultJavaType(),
-//                        dstType.getDefaultJavaComponentType()));
-
-            // TODO: attempt to widen the binding, e.g. int32 in src and int64 in dst
-            // widening can also mean having more enum symbols in dst than in src
-            // throw new IncompatibleSchemaException("Destination type not eq or wider" +
-            // details(dstGroup, dstField, dir));
+                SymbolMapping<?> outboundMapping = srcField.getBinding().getSymbolMapping();
+                
+                if (outboundMapping != null) {
+                    switch (dstType.getType()) {
+                    case ENUM:
+                        outboundMapping = new ConverterSymbolMapping<>(
+                                outboundMapping, ((TypeDef.Enum) dstType).getSymbols());
+                    break;
+                    case SEQUENCE:
+                        TypeDef componentType = dst.resolveToType(
+                                ((TypeDef.Sequence) dstType).getComponentType(), true);
+                        if (componentType != null && componentType.getType() == Type.ENUM) {
+                            outboundMapping = new ConverterSymbolMapping<>(
+                                    outboundMapping, ((TypeDef.Enum) componentType).getSymbols());
+                            javaType = srcField.getJavaClass();
+                            javaComponentType = srcField.getComponentJavaClass();
+                            break;
+                        }
+                    default:
+                        throw new IncompatibleSchemaException("Symbol mapping but no enum");
+                    }
+                }
+                
+                return dstField.bind(new FieldBinding(widenAccessor, javaType, javaComponentType, outboundMapping));
             default:
                 throw new RuntimeException("Unhandled case: " + dir);
             }
@@ -190,7 +231,7 @@ public class SchemaBinder {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Accessor narrowAccessor(Accessor accessor, TypeDef srcType, TypeDef dstType, Direction dir) {
+    private Accessor narrowAccessor(Accessor accessor, TypeDef srcType, Schema dst, TypeDef dstType, Direction dir) {
         switch (srcType.getType()) {
         case INT64:
         case UINT64:
@@ -243,20 +284,26 @@ public class SchemaBinder {
             }
 
         case ENUM:
-        	switch (dstType.getType()) {
-        	case ENUM:
-        	    Map<Symbol, Symbol> srcToDstMapping = createSymbolEnumMap(srcType, dstType);
-        	    Map<Symbol, Symbol> dstToSrcMapping = createSymbolEnumMap(dstType, srcType);
-        		
-                return new ConverterAccessor<>(accessor, srcToDstMapping::get, dstToSrcMapping::get);
-        	default:
-        		return null;
+        	if (dstType.getType() == Type.ENUM) {
+                return accessor;
         	}
+        	return null;
+        case SEQUENCE:
+            if (dstType.getType() == Type.SEQUENCE) {
+                TypeDef srcComponentType = src.resolveToType(((TypeDef.Sequence) srcType).getComponentType(), true);
+                TypeDef dstComponentType = dst.resolveToType(((TypeDef.Sequence) dstType).getComponentType(), true);
+                
+                if (srcComponentType != null && dstComponentType != null 
+                        && srcComponentType.getType() == Type.ENUM && dstComponentType.getType() == Type.ENUM) {
+                    return accessor;                    
+                }
+            }
+            return null;
         default:
             return null;
         }
     }
-
+    
     HashMap<Symbol, Symbol> createSymbolEnumMap(TypeDef src, TypeDef dst) {
         HashMap<Symbol, Symbol> map = new HashMap<>();
 
@@ -276,7 +323,7 @@ public class SchemaBinder {
     }
     
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Accessor widenAccessor(Accessor accessor, TypeDef srcType, TypeDef dstType, Direction dir) {
+    private Accessor widenAccessor(Accessor accessor, TypeDef srcType, Schema dst, TypeDef dstType, Direction dir) {
         switch (srcType.getType()) {
         case INT8:
         case UINT8:
@@ -332,15 +379,21 @@ public class SchemaBinder {
             }
 
         case ENUM:
-        	switch (dstType.getType()) {
-        	case ENUM:
-        		Map<Symbol, Symbol> srcToDstMapping = createSymbolEnumMap(srcType, dstType);
-        		Map<Symbol, Symbol> dstToSrcMapping = createSymbolEnumMap(dstType, srcType);
-        		
-                return new ConverterAccessor<>(accessor, srcToDstMapping::get, dstToSrcMapping::get);
-        	default:
-        		return null;
-        	}
+            if (dstType.getType() == Type.ENUM) {
+                return accessor;
+            }
+            return null;
+        case SEQUENCE:
+            if (dstType.getType() == Type.SEQUENCE) {
+                TypeDef srcComponentType = src.resolveToType(((TypeDef.Sequence) srcType).getComponentType(), true);
+                TypeDef dstComponentType = dst.resolveToType(((TypeDef.Sequence) dstType).getComponentType(), true);
+                
+                if (srcComponentType != null && dstComponentType != null 
+                        && srcComponentType.getType() == Type.ENUM && dstComponentType.getType() == Type.ENUM) {
+                    return accessor;                    
+                }
+            }
+            return null;
         default:
             return null;
 
@@ -484,6 +537,93 @@ public class SchemaBinder {
         @Override
         public void setValue(T obj, D value) {
             accessor.setValue(obj, dstToSrcFn.apply(value));
+        }
+    }
+    
+    private static class ConverterSymbolMapping<E> implements SymbolMapping<E> {
+        private final Map<Integer, E> idToValue = new HashMap<>();
+        private final Map<String, E> nameToValue = new HashMap<>();
+        private final Map<E, Symbol> valueToSymbol = new HashMap<>();
+
+        /*
+         * Create a SymbolMapping mapping dstSymbols to the object representation in the srcMapping
+         */
+        ConverterSymbolMapping(SymbolMapping<E> srcMapping, Collection<Symbol> dstSymbols) {
+            for (Symbol symbol : dstSymbols) {
+                E value = null;
+                
+                try {
+                    value = srcMapping.lookup(symbol.getName());
+                } catch (IllegalArgumentException e) {
+                    // Ignore, should just be a case of widening
+                }
+                
+                if (value != null) {
+                    valueToSymbol.put(value, symbol);
+                    idToValue.put(symbol.getId(), value);
+                    nameToValue.put(symbol.getName(), value);
+                }
+            }
+        }
+        
+        @Override
+        public E lookup(Integer id) throws IllegalArgumentException {
+            if (id == null) {
+                return null;
+            }
+            
+            E value = idToValue.get(id);
+            
+            if (value == null) {
+                throw new IllegalArgumentException("Attempted to lookup nonexistant enum value with id: " + id);
+            }
+            
+            return value;
+        }
+
+        @Override
+        public E lookup(String name) throws IllegalArgumentException {
+            if (name == null) {
+                return null;
+            }
+            
+            E value = nameToValue.get(name);
+            
+            if (value == null) {
+                throw new IllegalArgumentException("Attempted to lookup nonexistant enum value with name: " + name);
+            }
+            
+            return value;
+        }
+
+        @Override
+        public Integer getId(E value) throws IllegalArgumentException {
+            if (value == null) {
+                return null;
+            }
+            
+            Symbol symbol = valueToSymbol.get(value);
+            
+            if (symbol == null) {
+                throw new IllegalArgumentException("Attempted to get id of unmapped enum value: " + value);
+            }
+            
+            return symbol.getId();
+        }
+
+        @Override
+        public String getName(E value) throws IllegalArgumentException {
+            if (value == null) {
+                return null;
+            }
+
+            Symbol symbol = valueToSymbol.get(value);
+            
+            if (symbol == null) {
+                throw new IllegalArgumentException("Attempted to get id of unmapped enum value: " + value);
+            }
+            
+            return symbol.getName();
         }
     }
 }

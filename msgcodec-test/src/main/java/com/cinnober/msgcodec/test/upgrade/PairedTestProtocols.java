@@ -38,16 +38,22 @@ public class PairedTestProtocols {
     public static Schema getOriginalSchema() {
         return new SchemaBuilder().build(
             new Class<?>[] {
+                UpgradeEnumArrayMessages.Original.class,
                 UpgradeEnumsMessages.Original.class,
                 UpgradeAddRemoveFieldMessages.Version1.class,
+                UpgradeEnumSequenceMessages.Original.class,
+                UpgradeIntegerEnumsMessages.Original.class,
             });
     }
     
     public static Schema getUpgradedSchema() {
         return new SchemaBuilder().build(
             new Class<?>[] {
+                UpgradeEnumArrayMessages.Upgraded.class,
                 UpgradeEnumsMessages.Upgraded.class,
                 UpgradeAddRemoveFieldMessages.Version2.class,
+                UpgradeEnumSequenceMessages.Upgraded.class,
+                UpgradeIntegerEnumsMessages.Upgraded.class,
             });
     }
 
@@ -63,8 +69,11 @@ public class PairedTestProtocols {
     public static Map<String, PairedMessages> createMessages() {
         Map<String, PairedMessages> messages = new LinkedHashMap<>();
 
+        putAll(messages, "EnumArray.", UpgradeEnumArrayMessages.createMessages());
         putAll(messages, "Enums.", UpgradeEnumsMessages.createMessages());
         putAll(messages, "AddRemoveFields", UpgradeAddRemoveFieldMessages.createMessages());
+        putAll(messages, "EnumSequence.", UpgradeEnumSequenceMessages.createMessages());
+        putAll(messages, "IntegerEnums.", UpgradeIntegerEnumsMessages.createMessages());
 
         return messages;
     }

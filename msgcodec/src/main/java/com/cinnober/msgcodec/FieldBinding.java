@@ -43,6 +43,7 @@ public class FieldBinding {
      * @param accessor the accessor of the field, not null.
      * @param javaClass the java class of the field, not null.
      * @param componentJavaClass the java class of the component if sequence, or null.
+     * @param symbolMapping The symbol mapping if this field is bound to an enum or Sequence of enums
      */
     public FieldBinding(Accessor<?, ?> accessor, Class<?> javaClass,
         Class<?> componentJavaClass, SymbolMapping<?> symbolMapping) {

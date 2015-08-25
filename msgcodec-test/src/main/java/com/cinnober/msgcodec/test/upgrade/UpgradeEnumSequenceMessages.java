@@ -26,16 +26,19 @@ package com.cinnober.msgcodec.test.upgrade;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
+import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.test.upgrade.PairedTestProtocols.PairedMessages;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author Tommy Norling
  *
  */
-public class UpgradeEnumsMessages { 
+public class UpgradeEnumSequenceMessages { 
     /**
      * Returns message pairs suitable for testing a codec. This includes border cases.
      * Each message is labeled with a name, e.g. "zero" or "border1" that describes what
@@ -52,14 +55,14 @@ public class UpgradeEnumsMessages {
 
         original = new Original();
         upgraded = new Upgraded();
-        original.value = V1.FIRST;
-        upgraded.value = V2.FIRST;
+        original.value = Arrays.asList(V1.FIRST, V1.FIRST);
+        upgraded.value = Arrays.asList(V2.FIRST, V2.FIRST);
         messages.put("SameID", new PairedMessages(original, upgraded));
         
         original = new Original();
         upgraded = new Upgraded();
-        original.value = V1.TWO;
-        upgraded.value = V2.TWO;
+        original.value = Arrays.asList(V1.ONE, V1.TWO);
+        upgraded.value = Arrays.asList(V2.ONE, V2.TWO);
         messages.put("DifferentID", new PairedMessages(original, upgraded));
 
         return messages;
@@ -79,15 +82,17 @@ public class UpgradeEnumsMessages {
         THREE
     }
     
-    @Id(42)
-    @Name("UpgradeEnumsMessage")
+    @Id(44)
+    @Name("UpgradeEnumSequenceMessage")
     public static class Original extends MsgObject {
-        V1 value;
+        @Sequence(V1.class)
+        List<V1> value;
     }
     
-    @Id(42)
-    @Name("UpgradeEnumsMessage")
+    @Id(44)
+    @Name("UpgradeEnumSequenceMessage")
     public static class Upgraded extends MsgObject {
-        V2 value;
+        @Sequence(V2.class)
+        List<V2> value;
     }
 }

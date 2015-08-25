@@ -35,7 +35,7 @@ import java.util.Map;
  * @author Tommy Norling
  *
  */
-public class UpgradeEnumsMessages { 
+public class UpgradeEnumArrayMessages { 
     /**
      * Returns message pairs suitable for testing a codec. This includes border cases.
      * Each message is labeled with a name, e.g. "zero" or "border1" that describes what
@@ -52,14 +52,14 @@ public class UpgradeEnumsMessages {
 
         original = new Original();
         upgraded = new Upgraded();
-        original.value = V1.FIRST;
-        upgraded.value = V2.FIRST;
+        original.value = new V1[]{V1.FIRST, V1.FIRST};
+        upgraded.value = new V2[]{V2.FIRST, V2.FIRST};
         messages.put("SameID", new PairedMessages(original, upgraded));
         
         original = new Original();
         upgraded = new Upgraded();
-        original.value = V1.TWO;
-        upgraded.value = V2.TWO;
+        original.value = new V1[]{V1.ONE, V1.TWO};
+        upgraded.value = new V2[]{V2.ONE, V2.TWO};
         messages.put("DifferentID", new PairedMessages(original, upgraded));
 
         return messages;
@@ -79,15 +79,15 @@ public class UpgradeEnumsMessages {
         THREE
     }
     
-    @Id(42)
-    @Name("UpgradeEnumsMessage")
+    @Id(45)
+    @Name("UpgradeEnumArrayMessage")
     public static class Original extends MsgObject {
-        V1 value;
+        V1[] value;
     }
     
-    @Id(42)
-    @Name("UpgradeEnumsMessage")
+    @Id(45)
+    @Name("UpgradeEnumArrayMessage")
     public static class Upgraded extends MsgObject {
-        V2 value;
+        V2[] value;
     }
 }
