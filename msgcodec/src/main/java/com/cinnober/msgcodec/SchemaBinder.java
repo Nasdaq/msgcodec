@@ -117,7 +117,7 @@ public class SchemaBinder {
                     
                     if(srcField == null) {
                         try {
-                            newFields.add(new CreateAccessor(null).bindField(dstField));
+                            newFields.add(new CreateAccessor(dstField).bindField(dstField));
                         } catch (SecurityException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
@@ -486,8 +486,6 @@ public class SchemaBinder {
 
         @Override
         public D getValue(T obj) {
-            System.out.println("getValue: " + obj + " accessor: " + accessor);
-            
             return srcToDstFn.apply(accessor.getValue(obj));
         }
 

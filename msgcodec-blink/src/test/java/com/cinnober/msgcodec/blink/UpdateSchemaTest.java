@@ -41,6 +41,7 @@ import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.SchemaBinder.Direction;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
+import com.cinnober.msgcodec.anot.Unsigned;
 
 public class UpdateSchemaTest {
 
@@ -78,6 +79,8 @@ public class UpdateSchemaTest {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.2f), bout);
 
+        printStream(bout);
+        
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(24, msg.number);
@@ -90,14 +93,16 @@ public class UpdateSchemaTest {
         Schema schema2 = new SchemaBuilder().build(Version2.class);
         Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
 
-        MsgCodec codec1 = new BlinkCodecFactory(schema2).createCodec();
+        MsgCodec codec1 = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version2(24, EnumV2.VALUE1, 1.2), bout);
+        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
 
-        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
-        Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        printStream(bout);
+        
+        MsgCodec codec2 = new BlinkCodecFactory(schema2).createCodec();
+        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(24, msg.number);
-        assertEquals(EnumV1.VALUE1, msg.enumeration);
+        assertEquals(EnumV2.VALUE1, msg.enumeration);
     }
 
     
@@ -131,6 +136,13 @@ public class UpdateSchemaTest {
         
         codec1.encode(new Version3(10, (short) 11, 12.0, EnumV2.VALUE1), bout);
 
+        byte[] data = bout.toByteArray();
+        System.out.println("DATA:");
+        for(int i=0;i<data.length;i++) {
+            System.out.println("    " + data[i]);
+        }
+        System.out.println();
+        
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
         Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(0L, msg.decimal, 1e-8);
@@ -163,15 +175,15 @@ public class UpdateSchemaTest {
     }
 
     public static enum EnumV2 {
-        VALUE1, VALUE2, VALUE3, ADDITIONAL_VALUE,
+        DUMMY_1, VALUE1, VALUE2, VALUE3, ADDITIONAL_VALUE,
     }
 
     @Name("Payload")
     @Id(1)
     public static class Version1 extends MsgObject {
-        public int number;
-        public EnumV1 enumeration;
         public float decimal;
+        public EnumV1 enumeration;
+        public int number;
 
         public Version1() {
         }
@@ -186,9 +198,42 @@ public class UpdateSchemaTest {
     @Name("Payload")
     @Id(1)
     public static class Version2 extends MsgObject {
-        public long number;
-        public EnumV2 enumeration;
         public double decimal;
+        
+//        public byte dummy_11byte;
+//        @Unsigned
+//        public byte dummy_12byte;
+//        public Byte dummy_13byte;
+//        @Unsigned
+//        public Byte dummy_14byte;
+//        
+//        public short dummy_21short;
+//        @Unsigned
+//        public short dummy_22short;
+//        public Short dummy_23short;
+//        @Unsigned
+//        public Short dummy_24short;
+        
+        public int dummy_31int;
+//        @Unsigned
+//        public int dummy_32int;
+//        public Integer dummy_33int;
+//        @Unsigned
+//        public Integer dummy_34int;
+
+//        public float dummy_41float;
+//        public Float dummy_42float;
+
+//      public int dummy_31int;
+//      @Unsigned
+//      public int dummy_32int;
+//      public Integer dummy_33int;
+//      @Unsigned
+//      public Integer dummy_34int;
+        
+        
+        public EnumV2 enumeration;
+        public long number;
 
         public Version2() {
         }

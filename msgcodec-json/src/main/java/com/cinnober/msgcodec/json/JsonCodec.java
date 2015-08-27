@@ -23,6 +23,7 @@
  */
 package com.cinnober.msgcodec.json;
 
+import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
@@ -139,6 +140,7 @@ public class JsonCodec implements MsgCodec {
                         fieldDef.getType(),
                         fieldDef.getJavaClass(),
                         fieldDef.getComponentJavaClass(),
+                        fieldDef.getAccessor(),
                         jsSafe);
                 boolean required = fieldDef.isRequired();
                 FieldHandler fieldHandler = new FieldHandler(
@@ -160,6 +162,7 @@ public class JsonCodec implements MsgCodec {
             TypeDef type,
             Class<?> javaClass,
             Class<?> componentJavaClass,
+            Accessor accessor,
             boolean jsSafe) {
         type = schema.resolveToType(type, true);
         GroupDef group = schema.resolveToGroup(type);
@@ -167,18 +170,18 @@ public class JsonCodec implements MsgCodec {
         case SEQUENCE:
             if (javaClass.isArray()) {
                 return new JsonValueHandler.ArraySequenceHandler(
-                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, jsSafe),
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, accessor, jsSafe),
                         componentJavaClass);
             } else { // collection
                 return new JsonValueHandler.ListSequenceHandler(
-                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, jsSafe));
+                        createValueHandler(schema, ((Sequence)type).getComponentType(), componentJavaClass, null, accessor, jsSafe));
             }
         case REFERENCE:
             return lookupGroupByName(group.getName());
         case DYNAMIC_REFERENCE:
             return dynamicGroupHandler; // TODO: restrict to some base type (if group is not null)
         default:
-            return JsonValueHandler.getValueHandler(type, javaClass, jsSafe);
+            return JsonValueHandler.getValueHandler(type, javaClass, jsSafe, accessor);
         }
     }
 

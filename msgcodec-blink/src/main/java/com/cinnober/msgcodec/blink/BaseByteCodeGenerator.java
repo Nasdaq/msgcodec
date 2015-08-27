@@ -488,7 +488,7 @@ class BaseByteCodeGenerator {
             mv.visitEnd();
         }
     }
-
+    
     protected void generateWriteStaticGroupForType(Schema schema, ClassVisitor cv, String genClassInternalName,
             boolean javaClassCodec) {
         for (GroupDef group : schema.getGroups()) {
@@ -536,11 +536,86 @@ class BaseByteCodeGenerator {
                     }
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
                     writemv.visitInsn(NULL);
+                    /*
                 } else if (accessor.getClass() == CreateAccessor.class) {
-                    writemv.visitInsn(NULL);
-                    writemv.visitInsn(POP);
-                    writemv.visitInsn(POP);
-                    continue;
+                    
+                    
+                    switch(field.getType().getType()) {
+                        case INT8:
+                        case UINT8:
+                        case INT16:
+                        case UINT16:
+                        case INT32:
+                        case UINT32:
+                            writemv.visitInsn(ICONST_0);
+                            break;
+                        case INT64:
+                        case UINT64:
+                            writemv.visitInsn(LCONST_0);
+                            break;
+                        case FLOAT32:
+                            writemv.visitInsn(FCONST_0);
+                            break;
+                        case FLOAT64:
+                            writemv.visitInsn(DCONST_0);
+                            break;
+                        default:
+                            throw new RuntimeException("Unhandled case: " + field.getType().getType());
+                    }
+                    if(!field.isRequired()) {
+                        box(writemv, javaClass);
+                    }
+                    
+                    switch(field.getType().getType()) {
+                        case INT8:
+                            generateEncodeInt8Value(field.isRequired(), writemv);
+                            break;
+                        case UINT8:
+                            generateEncodeUInt8Value(field.isRequired(), writemv);
+                            break;
+                        case INT16:
+                            generateEncodeInt16Value(field.isRequired(), writemv);
+                            break;
+                        case UINT16:
+                            generateEncodeUInt16Value(field.isRequired(), writemv);
+                            break;
+                        case INT32:
+                            generateEncodeInt32Value(field.isRequired(), writemv);
+                            break;
+                        case UINT32:
+                            generateEncodeUInt32Value(field.isRequired(), writemv);
+                            break;
+                        case INT64:
+                            generateEncodeInt64Value(field.isRequired(), writemv);
+                            break;
+                        case UINT64:
+                            generateEncodeUInt64Value(field.isRequired(), writemv);
+                            break;
+                        case FLOAT32:
+                            generateEncodeFloat32Value(field.isRequired(), writemv);
+                            break;
+                        case FLOAT64:
+                            generateEncodeFloat64Value(field.isRequired(), writemv);
+                            break;
+                    default:
+                        throw new RuntimeException("Unhandled case: " + field.getType().getType());
+                    }
+                    continue;*/
+                } else if (accessor.getClass() == CreateAccessor.class) {
+                    writemv.visitVarInsn(ALOAD, 0);
+                    writemv.visitFieldInsn(GETFIELD, genClassInternalName,
+                            "accessor_" + group.getName() + "_" + field.getName(),
+                            "Lcom/cinnober/msgcodec/Accessor;");
+                    writemv.visitVarInsn(ALOAD, 2); // instance
+                    writemv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "getValue",
+                            "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+                    if (javaClass.isPrimitive()) {
+                        writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(javaClass)));
+                        unbox(writemv, javaClass);
+                    } else {
+                        writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+                    }
+                    
                 } else {
                     writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
@@ -1556,6 +1631,9 @@ class BaseByteCodeGenerator {
         type = schema.resolveToType(type, false);
         GroupDef refGroup = schema.resolveToGroup(type);
 
+        System.out.println("decode value: " + type.getType() + " " + required);
+
+        
         switch (type.getType()) {
             case INT8:
                 generateDecodeInt8Value(required, mv);
@@ -1639,6 +1717,11 @@ class BaseByteCodeGenerator {
             boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, Schema schema,
             String genClassInternalName, String debugValueLabel, boolean javaClassCodec) {
         type = schema.resolveToType(type, false);
+        
+        
+        required = false;
+        System.out.println("read dummy: " + type.getType() + " " + required);
+        
         switch (type.getType()) {
             case ENUM:
                 if (required) {

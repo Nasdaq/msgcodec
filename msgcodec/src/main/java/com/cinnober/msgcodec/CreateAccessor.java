@@ -24,7 +24,7 @@
 
 package com.cinnober.msgcodec;
 
-import java.lang.reflect.Field;
+import com.cinnober.msgcodec.TypeDef.Type;
 
 /**
  * The field accessor is an accessor for an creating a default field.
@@ -36,32 +36,8 @@ import java.lang.reflect.Field;
  */
 public final class CreateAccessor<O, V> implements Accessor<O, V> {
 
-    private final Field field;
-    
-    @SuppressWarnings("rawtypes")
-//    private static final CreateAccessor INSTANCE = new CreateAccessor();
-
-    /**
-     * Returns an ignore accessor.
-     * @param <O> the object type, that contains the field.
-     * @param <V> the field value type.
-     * @return the ignore accessor, not null.
-     */
-//    @SuppressWarnings("unchecked")
-//    public static <O,V> CreateAccessor<O, V> instance() {
-//        return INSTANCE;
-//    }
-
-    /**
-     * Bind the specified field to be ignored during decoding.
-     * @param field the field to be bound, not null.
-     * @return the bound field, not null.
-     */
-//    public static FieldDef bindField(FieldDef field) {
-//        return field.bind(new FieldBinding(instance(), field.getType().getDefaultJavaType(),
-//                field.getType().getDefaultJavaComponentType()));
-//    }
-
+    private final FieldDef field;
+    private final V value;
     
     public FieldDef bindField(FieldDef field) {
         return field.bind(new FieldBinding(this, field.getType().getDefaultJavaType(),
@@ -71,15 +47,71 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
     /**
      * Create a new ignore accessor.
      */
-    public CreateAccessor(Field field) {
+    @SuppressWarnings("unchecked")
+    public CreateAccessor(FieldDef field) {
         this.field = field;
+
+        if(field.getJavaClass() == null) {
+            if(field.isRequired()) {
+                if(field.getType().getType() == Type.INT16 || field.getType().getType() == Type.UINT16) {
+                    value = (V) Short.valueOf((short) 0);
+                }
+                else if(field.getType().getType() == Type.BOOLEAN) {
+                    value = (V) Boolean.valueOf(false);
+                }
+                else if(field.getType().getType() == Type.INT8 || field.getType().getType() == Type.UINT8) {
+                    value = (V) Byte.valueOf((byte) 0);
+                }
+                else if(field.getType().getType() == Type.INT32 || field.getType().getType() == Type.UINT32) {
+                    value = (V) Integer.valueOf(0);
+                }
+                else if(field.getType().getType() == Type.FLOAT32) {
+                    value = (V) Float.valueOf(0.0f);
+                }
+                else if(field.getType().getType() == Type.FLOAT64) {
+                    value = (V) Double.valueOf(0.0);
+                }
+                else {
+                    value = null;
+                }
+                return;
+            }
+            value = null;
+            return;
+        }
+        
+        if(field.getJavaClass() != null && field.getJavaClass().isPrimitive()) {
+            if(field.getJavaClass() == short.class) {
+                value = (V) Short.valueOf((short) 0);
+            }
+            else if(field.getJavaClass() == int.class) {
+                value = (V) Integer.valueOf(0);
+            }
+            else if(field.getJavaClass() == boolean.class) {
+                value = (V) Boolean.valueOf(false);
+            }
+            else if(field.getJavaClass() == byte.class) {
+                value = (V) Byte.valueOf((byte) 0);
+            }
+            else if(field.getJavaClass() == double.class) {
+                value = (V) Double.valueOf(0.0);
+            }
+            else if(field.getJavaClass() == float.class) {
+                value = (V) Float.valueOf(0.0f);
+            }
+            else {
+                value = null;
+            }
+            return;
+        }
+        value = null;
     }
 
     /**
      * Returns the underlying field.
      * @return the underlying field, not null.
      */
-    public Field getField() {
+    public FieldDef getField() {
         return field;
     }
     
@@ -90,7 +122,7 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
      */
     @Override
     public V getValue(O obj) {
-        return null;
+        return value;
     }
 
     /**
@@ -102,6 +134,4 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
     public void setValue(Object obj, Object value) {
         // ignore
     }
-
-    // equals and hashCode can be inherited from Object, since we have a single instance.
 }

@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.CreateAccessor;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Epoch;
@@ -83,7 +84,7 @@ public abstract class JsonValueHandler<T> {
     public static final JsonValueHandler<BigInteger> BIGINT_SAFE = new BigIntHandler(true);
     public static final JsonValueHandler<Float> FLOAT32 = new Float32Handler();
     public static final JsonValueHandler<Double> FLOAT64 = new Float64Handler();
-
+    
     static final long MAX_SAFE_INTEGER = 9007199254740991L;
     static final long MIN_SAFE_INTEGER = -9007199254740991L;
 
@@ -98,7 +99,7 @@ public abstract class JsonValueHandler<T> {
      * @return the json value handler, not null.
      */
     public static <T> JsonValueHandler<T> getValueHandlerXXX(TypeDef type, Class<T> javaClass) {
-        return getValueHandler(type, javaClass, true);
+        return getValueHandler(type, javaClass, true, null);
     }
     /**
      * Returns a the basic value handler for the specified type definition and Java class.
@@ -112,7 +113,16 @@ public abstract class JsonValueHandler<T> {
      * @return the json value handler, not null.
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, boolean jsSafe) {
+    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, boolean jsSafe, Accessor accessor) {
+        
+        
+        if(accessor.getClass() == CreateAccessor.class) {
+            switch (type.getType()) {
+            case ENUM:
+                return new JsonValueHandler.DummyEnumHandler((TypeDef.Enum)type, javaClass);
+            }
+        }
+        
         switch (type.getType()) {
         case INT8:
             checkType(javaClass, byte.class, Byte.class);
@@ -236,6 +246,10 @@ public abstract class JsonValueHandler<T> {
         private Int8Handler() {}
         @Override
         public void writeValue(Byte value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
             g.writeNumber(value);
         }
         @Override
@@ -247,6 +261,10 @@ public abstract class JsonValueHandler<T> {
         private Int16Handler() {}
         @Override
         public void writeValue(Short value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
             g.writeNumber(value);
         }
         @Override
@@ -258,6 +276,10 @@ public abstract class JsonValueHandler<T> {
         private Int32Handler() {}
         @Override
         public void writeValue(Integer value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
             g.writeNumber(value);
         }
         @Override
@@ -399,6 +421,11 @@ public abstract class JsonValueHandler<T> {
             if (maxSize != -1 && value.length > maxSize) {
                 throw new IllegalArgumentException("Binary length ("+value.length+") exceeds max size "+maxSize);
             }
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
+            
             g.writeBinary(value);
         }
         @Override
@@ -414,6 +441,10 @@ public abstract class JsonValueHandler<T> {
         private BooleanHandler() {}
         @Override
         public void writeValue(Boolean value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
             g.writeBoolean(value);
         }
         @Override
@@ -462,6 +493,12 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public void writeValue(BigDecimal value, JsonGenerator g) throws IOException {
+            
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
+            
             if (jsSafe && !isJavaScriptSafeSigned(value)) {
                 g.writeString(value.toString());
             } else {
@@ -488,6 +525,11 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public void writeValue(BigInteger value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
+            
             if (jsSafe && !isJavaScriptSafeSigned(value)) {
                 g.writeString(value.toString());
             } else {
@@ -510,6 +552,10 @@ public abstract class JsonValueHandler<T> {
         private Float32Handler() {}
         @Override
         public void writeValue(Float value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
             g.writeNumber(value);
         }
         @Override
@@ -538,6 +584,10 @@ public abstract class JsonValueHandler<T> {
         private Float64Handler() {}
         @Override
         public void writeValue(Double value, JsonGenerator g) throws IOException {
+            if(value == null) {
+                g.writeNull();
+                return;
+            }
             g.writeNumber(value);
         }
         @Override
@@ -721,6 +771,21 @@ public abstract class JsonValueHandler<T> {
             return value;
         }
     }
+    
+    public static class DummyEnumHandler<E extends Enum<E>> extends JsonValueHandler<E> {
+        public DummyEnumHandler(TypeDef.Enum type, Class<E> enumClass) {
+        }
+        @Override
+        public void writeValue(E value, JsonGenerator g) throws IOException {
+            g.writeString((String) null);
+        }
+        @Override
+        public E readValue(JsonParser p) throws IOException {
+            return null;
+        }
+    }
+    
+    
     public static class IntEnumHandler extends JsonValueHandler<Integer> {
         private final Map<String, Integer> idByName;
         private final Map<Integer, String> nameById;
@@ -849,11 +914,18 @@ public abstract class JsonValueHandler<T> {
 
         void writeValue(Object group, JsonGenerator g) throws IOException {
             Object value = accessor.getValue(group);
+            
+            if(accessor instanceof CreateAccessor) {
+                g.writeFieldName(name);
+                valueHandler.writeValue(value, g);
+                return;
+            }
+            
             if (value != null) {
                 g.writeFieldName(name);
                 valueHandler.writeValue(value, g);
             } else if (required) {
-                throw new IllegalArgumentException("Missing required field value");
+                throw new IllegalArgumentException("Missing required field value: " + name);
             }
         }
 
@@ -863,7 +935,7 @@ public abstract class JsonValueHandler<T> {
         }
         void readNull() throws IOException {
             if (required) {
-                throw new DecodeException("Found null for non-optional field");
+                throw new DecodeException("Found null for non-optional field: " + name);
             }
         }
 
@@ -938,6 +1010,7 @@ public abstract class JsonValueHandler<T> {
             while (p.nextToken() == JsonToken.FIELD_NAME) {
                 String fieldName = p.getText();
                 FieldHandler fieldHandler = fields.get(fieldName);
+                
                 if (fieldHandler == null) {
                     throw new DecodeException("Unknown field: " + fieldName);
                 }
