@@ -36,6 +36,7 @@ import com.cinnober.msgcodec.IgnoreAccessor;
 import com.cinnober.msgcodec.JavaClassGroupTypeAccessor;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinding;
+import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.io.ByteArrays;
@@ -307,6 +308,8 @@ class BaseByteCodeGenerator {
 
             for (FieldDef field : group.getFields()) {
                 Accessor<?,?> accessor = field.getAccessor();
+                SymbolMapping<?> symbolMapping = field.getBinding().getSymbolMapping();
+                
                 if (isPublicFieldAccessor(accessor)) {
                     // no accessor needed
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
@@ -333,9 +336,35 @@ class BaseByteCodeGenerator {
                             "accessor_" + group.getName() + "_" + field.getName(),
                             "Lcom/cinnober/msgcodec/Accessor;");
                 }
+                
+                // If there is a symbol map we need to include it
+                if (symbolMapping != null) {
+                    
+                    // Create field
+                    String symbolMappingFieldName = "symbolMapping_" + group.getName() + "_" + field.getName();
+                    
+                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                            symbolMappingFieldName, "Lcom/cinnober/msgcodec/SymbolMapping;", null, null);
+                    fv.visitEnd();
 
+                    // Init field in the constructor
+                    ctormv.visitVarInsn(ALOAD, 0); // this
+                    ctormv.visitVarInsn(ALOAD, 2); // schema
+                    ctormv.visitLdcInsn(group.getName());
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/Schema", "getGroup",
+                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/GroupDef;", false);
+                    ctormv.visitLdcInsn(field.getName());
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/GroupDef", "getField",
+                            "(Ljava/lang/String;)Lcom/cinnober/msgcodec/FieldDef;", false);
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/FieldDef", "getBinding",
+                            "()Lcom/cinnober/msgcodec/FieldBinding;", false);
+                    ctormv.visitMethodInsn(INVOKEVIRTUAL, "com/cinnober/msgcodec/FieldBinding", "getSymbolMapping",
+                            "()Lcom/cinnober/msgcodec/SymbolMapping;", false);
+                    
+                    ctormv.visitFieldInsn(PUTFIELD, genClassInternalName,
+                            symbolMappingFieldName, "Lcom/cinnober/msgcodec/SymbolMapping;");
+                }
             }
-
         }
 
         ctormv.visitInsn(RETURN);
@@ -568,7 +597,8 @@ class BaseByteCodeGenerator {
                 }
                 // the output stream and the value is now on the stack
                 generateEncodeValue(writemv, 1, nextWriteVar, field.isRequired(), field.getType(), javaClass,
-                        field.getComponentJavaClass(), schema, genClassInternalName,
+                        field.getComponentJavaClass(), schema, genClassInternalName, 
+                        group.getName() + "_" + field.getName(), 
                         group.getName() + "." + field.getName(), javaClassCodec);
             }
 
@@ -722,8 +752,9 @@ class BaseByteCodeGenerator {
                     
                     mv.visitLabel(tryStart);
                     mv.visitVarInsn(ALOAD, 1); // input stream
-                    generateDecodeValue(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass,
+                    generateDecodeValue(mv, 1, nextVar, field.isRequired(), field.getType(), javaClass, 
                             field.getComponentJavaClass(), schema, genClassInternalName,
+                            group.getName() + "_" + field.getName(),
                             group.getName() + "." + field.getName(), javaClassCodec);
                     mv.visitLabel(tryEnd);
                     mv.visitJumpInsn(GOTO, tryAfter);
@@ -839,6 +870,7 @@ class BaseByteCodeGenerator {
             Class<?> componentJavaClass,
             Schema schema,
             String genClassInternalName,
+            String fieldIdentifier,
             String debugValueLabel,
             boolean javaClassCodec) {
 
@@ -909,15 +941,16 @@ class BaseByteCodeGenerator {
                 generateEncodeBooleanValue(required, mv);
                 break;
             case ENUM:
-                generateEncodeEnumValue((TypeDef.Enum) type, nextVar, javaClass, required, mv,
-                        debugValueLabel);
+                generateEncodeEnumValue((TypeDef.Enum) type, genClassInternalName, fieldIdentifier, nextVar, 
+                        javaClass, required, mv, debugValueLabel);
                 break;
             case TIME:
                 generateEncodeTimeValue((TypeDef.Time) type, javaClass, required, mv);
                 break;
             case SEQUENCE:
                 generateEncodeSequenceValue(javaClass, nextVar, mv, required, outputStreamVar,
-                        componentJavaClass, type, schema, genClassInternalName, debugValueLabel, javaClassCodec);
+                        componentJavaClass, type, schema, genClassInternalName, fieldIdentifier, 
+                        debugValueLabel, javaClassCodec);
                 break;
             case REFERENCE:
                 generateEncodeRefValue(refGroup, required, nextVar, mv, genClassInternalName,
@@ -1309,8 +1342,8 @@ class BaseByteCodeGenerator {
     protected void generateEncodeSequenceValue(
             Class<?> javaClass, LocalVariable nextVar, MethodVisitor mv, boolean required,
             int outputStreamVar,
-            Class<?> componentJavaClass, TypeDef type, Schema schema, String genClassInternalName,
-            String debugValueLabel, boolean javaClassCodec) throws IllegalArgumentException {
+            Class<?> componentJavaClass, TypeDef type, Schema schema, String genClassInternalName, 
+            String fieldIdentifier, String debugValueLabel, boolean javaClassCodec) throws IllegalArgumentException {
 
         // PENDING: merge the two if-cases, and reuse common code blocks (see generateDecodeSquenceValue)
         if (javaClass.isArray()) {
@@ -1373,7 +1406,8 @@ class BaseByteCodeGenerator {
             // encode the element
             TypeDef.Sequence seqType = (TypeDef.Sequence) type;
             generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass,
-                    null, schema, genClassInternalName, debugValueLabel + ".component", javaClassCodec);
+                    null, schema, genClassInternalName, fieldIdentifier, debugValueLabel + ".component", 
+                    javaClassCodec);
 
             mv.visitIincInsn(loopVar, 1);
             mv.visitJumpInsn(GOTO, loopLabel);
@@ -1431,7 +1465,7 @@ class BaseByteCodeGenerator {
             // encode the element
             TypeDef.Sequence seqType = (TypeDef.Sequence) type;
             generateEncodeValue(mv, outputStreamVar, nextVar, true, seqType.getComponentType(), componentJavaClass,
-                    null, schema, genClassInternalName, debugValueLabel + ".component", javaClassCodec);
+                    null, schema, genClassInternalName, fieldIdentifier, debugValueLabel + ".component", javaClassCodec);
 
             mv.visitJumpInsn(GOTO, loopLabel);
             mv.visitLabel(endLabel);
@@ -1486,85 +1520,124 @@ class BaseByteCodeGenerator {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    protected void generateEncodeEnumValue(TypeDef.Enum enumType, LocalVariable nextVar,
-            Class<?> javaClass, boolean required, MethodVisitor mv,
-            String debugValueLabel) throws IllegalArgumentException {
-        if (javaClass.isEnum()) {
-            Label endLabel = new Label();
-            if (!required) {
-                Label nonNullLabel = new Label();
-                mv.visitInsn(DUP);
-                mv.visitJumpInsn(IFNONNULL, nonNullLabel);
-                // null
-                mv.visitInsn(POP);
-                mv.visitInsn(ACONST_NULL);
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeInt32Null",
-                        "(Lcom/cinnober/msgcodec/io/ByteSink;Ljava/lang/Integer;)V", false);
-                mv.visitJumpInsn(GOTO, endLabel);
-                // not null
-                mv.visitLabel(nonNullLabel);
-            }
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
-            //switch
-            EnumSymbols enumSymbols = new EnumSymbols(enumType, javaClass);
-            Enum[] enumValues = ((Class<Enum>)javaClass).getEnumConstants();
-            int[] ordinals = new int[enumValues.length];
-            Label[] labels = new Label[enumValues.length];
-            for (int i=0; i<enumValues.length; i++) {
-                ordinals[i] = i;
-                labels[i] = new Label();
-            }
-            Label defaultLabel = new Label();
-            Label writeLabel = new Label();
-            int symbolIdVar = nextVar.next();
-            mv.visitLookupSwitchInsn(defaultLabel, ordinals, labels);
-            for (int i=0; i<enumValues.length; i++) {
-                mv.visitLabel(labels[i]);
-                Symbol symbol = enumSymbols.getSymbol(enumValues[i]);
-                if (symbol != null) {
-                    mv.visitLdcInsn(symbol.getId());
-                    mv.visitJumpInsn(GOTO, writeLabel);
-                } else {
-                    mv.visitLdcInsn(debugValueLabel);
-                    mv.visitVarInsn(ALOAD, symbolIdVar);
-                    mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unmappableEnumSymbolValue",
-                            "(Ljava/lang/String;Ljava/lang/Enum;)Ljava/lang/IllegalArgumentException;", false);
-                    mv.visitInsn(ATHROW);
-                }
-            }
-            mv.visitLabel(defaultLabel);
-            mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
-            mv.visitInsn(DUP);
-            mv.visitLdcInsn("Should not happen: reached generated switch default case for value " + debugValueLabel);
-            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V", false);
-            mv.visitInsn(ATHROW);
+    protected void generateEncodeEnumValue(TypeDef.Enum enumType, String genClassInternalName, String fieldIdentifier, 
+            LocalVariable nextVar, Class<?> javaClass, boolean required, MethodVisitor mv, String debugValueLabel) 
+                    throws IllegalArgumentException {
 
-            // write
-            mv.visitLabel(writeLabel);
-            if (!required) {
-                box(mv, int.class);
-            }
-            generateEncodeInt32Value(required, mv);
-            // end
-            mv.visitLabel(endLabel);
-        } else if (javaClass == int.class || javaClass == Integer.class) {
-            generateEncodeInt32Value(required, mv);
-        } else {
+        Label writeValueLabel = new Label();
+        
+        // Make sure that no unsupported javaClass is used for an enum
+        if (javaClass != int.class && javaClass != Integer.class && (javaClass == null || !javaClass.isEnum())) {
             throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
         }
+
+        // If null do not look it up
+        if (!required) {
+            Label lookupIdLabel = new Label();
+            mv.visitInsn(DUP);
+            mv.visitJumpInsn(IFNONNULL, lookupIdLabel);
+            
+            // null
+            mv.visitInsn(POP);
+            mv.visitInsn(ACONST_NULL);
+            mv.visitJumpInsn(GOTO, writeValueLabel);
+            
+            // not null
+            mv.visitLabel(lookupIdLabel);
+        } 
+        
+        // SymbolMapping
+        if (required && !javaClass.isEnum()) {
+            box(mv, int.class);
+        }
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, genClassInternalName, "symbolMapping_" + fieldIdentifier, "Lcom/cinnober/msgcodec/SymbolMapping;");
+        mv.visitInsn(SWAP);
+        mv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/SymbolMapping", "getId",
+                "(Ljava/lang/Object;)Ljava/lang/Integer;", true);
+
+        // Write the value
+        mv.visitLabel(writeValueLabel);
+        if (required) {
+            unbox(mv, Integer.class); // TODO: Should null check before this and throw exception since there was no mapping
+        }
+        generateEncodeInt32Value(required, mv);
+
+//        if (javaClass.isEnum()) {
+//            Label endLabel = new Label();
+//            if (!required) {
+//                Label nonNullLabel = new Label();
+//                mv.visitInsn(DUP);
+//                mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+//                // null
+//                mv.visitInsn(POP);
+//                mv.visitInsn(ACONST_NULL);
+//                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeInt32Null",
+//                        "(Lcom/cinnober/msgcodec/io/ByteSink;Ljava/lang/Integer;)V", false);
+//                mv.visitJumpInsn(GOTO, endLabel);
+//                // not null
+//                mv.visitLabel(nonNullLabel);
+//            }
+//            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Enum", "ordinal", "()I", false);
+//            //switch
+//            EnumSymbols enumSymbols = new EnumSymbols(enumType, javaClass);
+//            Enum[] enumValues = ((Class<Enum>)javaClass).getEnumConstants();
+//            int[] ordinals = new int[enumValues.length];
+//            Label[] labels = new Label[enumValues.length];
+//            for (int i=0; i<enumValues.length; i++) {
+//                ordinals[i] = i;
+//                labels[i] = new Label();
+//            }
+//            Label defaultLabel = new Label();
+//            Label writeLabel = new Label();
+//            int symbolIdVar = nextVar.next();
+//            mv.visitLookupSwitchInsn(defaultLabel, ordinals, labels);
+//            for (int i=0; i<enumValues.length; i++) {
+//                mv.visitLabel(labels[i]);
+//                Symbol symbol = enumSymbols.getSymbol(enumValues[i]);
+//                if (symbol != null) {
+//                    mv.visitLdcInsn(symbol.getId());
+//                    mv.visitJumpInsn(GOTO, writeLabel);
+//                } else {
+//                    mv.visitLdcInsn(debugValueLabel);
+//                    mv.visitVarInsn(ALOAD, symbolIdVar);
+//                    mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unmappableEnumSymbolValue",
+//                            "(Ljava/lang/String;Ljava/lang/Enum;)Ljava/lang/IllegalArgumentException;", false);
+//                    mv.visitInsn(ATHROW);
+//                }
+//            }
+//            mv.visitLabel(defaultLabel);
+//            mv.visitTypeInsn(NEW, "java/lang/RuntimeException");
+//            mv.visitInsn(DUP);
+//            mv.visitLdcInsn("Should not happen: reached generated switch default case for value " + debugValueLabel);
+//            mv.visitMethodInsn(INVOKESPECIAL, "java/lang/RuntimeException", "<init>", "(Ljava/lang/String;)V", false);
+//            mv.visitInsn(ATHROW);
+//
+//            // write
+//            mv.visitLabel(writeLabel);
+//            if (!required) {
+//                box(mv, int.class);
+//            }
+//            generateEncodeInt32Value(required, mv);
+//            // end
+//            mv.visitLabel(endLabel);
+//        } else if (javaClass == int.class || javaClass == Integer.class) {
+//            generateEncodeInt32Value(required, mv);
+//        } else {
+//            throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
+//        }
     }
 
     // --- GENERATE DECODE VALUE ---------------------------------------------------------------------------------------
 
     /**
-     * Generate instructions to encode the specified value type.
+     * Generate instructions to decode the specified value type.
      * The value on the stack is the input stream.
      * After this call the input stream is expected to be consumed, and the decoded value be placed on the stack.
      */
     protected void generateDecodeValue(MethodVisitor mv, int byteSourceVar, LocalVariable nextVar,
             boolean required, TypeDef type, Class<?> javaClass, Class<?> componentJavaClass, Schema schema,
-            String genClassInternalName, String debugValueLabel, boolean javaClassCodec) {
+            String genClassInternalName, String fieldIdentifier, String debugValueLabel, boolean javaClassCodec) {
         type = schema.resolveToType(type, false);
         GroupDef refGroup = schema.resolveToGroup(type);
 
@@ -1618,14 +1691,14 @@ class BaseByteCodeGenerator {
                 generateDecodeBooleanValue(required, mv);
                 break;
             case ENUM:
-                generateDecodeEnumValue(required, mv, type, nextVar, javaClass, debugValueLabel);
+                generateDecodeEnumValue(required, mv, type, genClassInternalName, fieldIdentifier, nextVar, javaClass, debugValueLabel);
                 break;
             case TIME:
                 generateDecodeTimeValue((TypeDef.Time) type, javaClass, required, mv, nextVar);
                 break;
             case SEQUENCE:
                 generateDecodeSequenceValue(javaClass, nextVar, required, mv, componentJavaClass,
-                        byteSourceVar, type, schema, genClassInternalName, debugValueLabel, javaClassCodec);
+                        byteSourceVar, type, schema, genClassInternalName, fieldIdentifier, debugValueLabel, javaClassCodec);
                 break;
             case REFERENCE:
                 generateDecodeRefValue(refGroup, required, mv, byteSourceVar, genClassInternalName, javaClass,
@@ -1665,7 +1738,7 @@ class BaseByteCodeGenerator {
                 break;
             default:
                 generateDecodeValue(mv, byteSourceVar, nextVar, required, type, javaClass, componentJavaClass,
-                    schema, genClassInternalName, debugValueLabel, javaClassCodec);
+                    schema, genClassInternalName, null, debugValueLabel, javaClassCodec);
         }
     }
     
@@ -2033,85 +2106,105 @@ class BaseByteCodeGenerator {
     /**
      * @see #generateDecodeInt32Value(boolean, org.objectweb.asm.MethodVisitor) 
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     protected void generateDecodeEnumValue(boolean required, MethodVisitor mv, TypeDef type,
-            LocalVariable nextVar, Class<?> javaClass, String debugValueLabel)
+            String genClassInternalName, String fieldIdentifier, LocalVariable nextVar, 
+            Class<?> javaClass, String debugValueLabel)
             throws IllegalArgumentException {
 
         Label endLabel = new Label();
         if (required) {
             generateDecodeInt32Value(true, mv);
+            box(mv, Integer.class);
         } else {
             generateDecodeInt32Value(false, mv);
             mv.visitInsn(DUP);
-            Label nonNullLabel = new Label();
-            mv.visitJumpInsn(IFNONNULL, nonNullLabel);
-            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
-            mv.visitJumpInsn(GOTO, endLabel);
+            mv.visitJumpInsn(IFNULL, endLabel);
+            
+//            Label nonNullLabel = new Label();
+//            mv.visitJumpInsn(IFNONNULL, nonNullLabel);
+//            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+//            mv.visitJumpInsn(GOTO, endLabel);
 
             // not null
-            mv.visitLabel(nonNullLabel);
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+//            mv.visitLabel(nonNullLabel);
+//            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false); // unbox(mv, Integer.class);
         }
-        // switch
-        TypeDef.Enum enumType = (TypeDef.Enum) type;
-        List<Symbol> symbols = enumType.getSymbols();
-        int numSymbols = symbols.size();
-        int[] ids = new int[numSymbols];
-        Label[] labels = new Label[numSymbols];
-        for (int i=0; i<numSymbols; i++) {
-            ids[i] = symbols.get(i).getId();
-            labels[i] = new Label();
-        }
-        Label defaultLabel = new Label();
-        int symbolIdVar = nextVar.next();
-        mv.visitInsn(DUP);
-        mv.visitVarInsn(ISTORE, symbolIdVar);
-        EnumSymbols enumSymbols = null;
-        if (javaClass.isEnum()) {
-            enumSymbols = new EnumSymbols(enumType, javaClass);
-        }
-        mv.visitLookupSwitchInsn(defaultLabel, ids, labels);
-        for (int i=0; i<numSymbols; i++) {
-            boolean addGotoEnd = true;
-            mv.visitLabel(labels[i]);
-            if (javaClass.isEnum()) {
-                Enum enumValue = enumSymbols.getEnum(ids[i]);
-                if (enumValue != null) {
-                    //mv.visitLdcInsn(Type.getType(javaClass));
-                    mv.visitFieldInsn(GETSTATIC, Type.getInternalName(javaClass),
-                            enumValue.name(),
-                            Type.getDescriptor(javaClass));
-                } else {
-                    mv.visitLdcInsn(debugValueLabel);
-                    mv.visitLdcInsn(ids[i]);
-                    mv.visitLdcInsn(Type.getType(javaClass));
-                    mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unmappableEnumSymbolId",
-                            "(Ljava/lang/String;ILjava/lang/Class;)Lcom/cinnober/msgcodec/DecodeException;", false);
-                    mv.visitInsn(ATHROW);
-                    addGotoEnd = false;
-                }
-            } else if (javaClass == int.class || javaClass == Integer.class) {
-                mv.visitLdcInsn(ids[i]);
-                if (!required) {
-                    box(mv, Integer.class);
-                }
-            } else {
-                throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
-            }
-            if (addGotoEnd) {
-                mv.visitJumpInsn(GOTO, endLabel);
-            }
-        }
-        mv.visitLabel(defaultLabel);
-        mv.visitLdcInsn(debugValueLabel);
-        mv.visitVarInsn(ILOAD, symbolIdVar);
-        mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unknownEnumSymbol",
-                "(Ljava/lang/String;I)Lcom/cinnober/msgcodec/DecodeException;", false);
-        mv.visitInsn(ATHROW);
+        
+        // SymbolMapping
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, genClassInternalName, "symbolMapping_" + fieldIdentifier, "Lcom/cinnober/msgcodec/SymbolMapping;");
+        mv.visitInsn(SWAP);
+        mv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/SymbolMapping", "lookup",
+                "(Ljava/lang/Integer;)Ljava/lang/Object;", true);
+        
+//        // switch
+//        TypeDef.Enum enumType = (TypeDef.Enum) type;
+//        List<Symbol> symbols = enumType.getSymbols();
+//        int numSymbols = symbols.size();
+//        int[] ids = new int[numSymbols];
+//        Label[] labels = new Label[numSymbols];
+//        for (int i=0; i<numSymbols; i++) {
+//            ids[i] = symbols.get(i).getId();
+//            labels[i] = new Label();
+//        }
+//        Label defaultLabel = new Label();
+//        int symbolIdVar = nextVar.next();
+//        mv.visitInsn(DUP);
+//        mv.visitVarInsn(ISTORE, symbolIdVar);
+//        EnumSymbols enumSymbols = null;
+//        if (javaClass.isEnum()) {
+//            enumSymbols = new EnumSymbols(enumType, javaClass);
+//        }
+//        mv.visitLookupSwitchInsn(defaultLabel, ids, labels);
+//        for (int i=0; i<numSymbols; i++) {
+//            boolean addGotoEnd = true;
+//            mv.visitLabel(labels[i]);
+//            if (javaClass.isEnum()) {
+//                Enum enumValue = enumSymbols.getEnum(ids[i]);
+//                if (enumValue != null) {
+//                    //mv.visitLdcInsn(Type.getType(javaClass));
+//                    mv.visitFieldInsn(GETSTATIC, Type.getInternalName(javaClass),
+//                            enumValue.name(),
+//                            Type.getDescriptor(javaClass));
+//                } else {
+//                    mv.visitLdcInsn(debugValueLabel);
+//                    mv.visitLdcInsn(ids[i]);
+//                    mv.visitLdcInsn(Type.getType(javaClass));
+//                    mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unmappableEnumSymbolId",
+//                            "(Ljava/lang/String;ILjava/lang/Class;)Lcom/cinnober/msgcodec/DecodeException;", false);
+//                    mv.visitInsn(ATHROW);
+//                    addGotoEnd = false;
+//                }
+//            } else if (javaClass == int.class || javaClass == Integer.class) {
+//                mv.visitLdcInsn(ids[i]);
+//                if (!required) {
+//                    box(mv, Integer.class);
+//                }
+//            } else {
+//                throw new IllegalArgumentException("Illegal enum javaClass: " + javaClass);
+//            }
+//            if (addGotoEnd) {
+//                mv.visitJumpInsn(GOTO, endLabel);
+//            }
+//        }
+//        mv.visitLabel(defaultLabel);
+//        mv.visitLdcInsn(debugValueLabel);
+//        mv.visitVarInsn(ILOAD, symbolIdVar);
+//        mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unknownEnumSymbol",
+//                "(Ljava/lang/String;I)Lcom/cinnober/msgcodec/DecodeException;", false);
+//        mv.visitInsn(ATHROW);
 
         // end
         mv.visitLabel(endLabel);
+
+        if (!javaClass.isEnum()) {
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Integer.class));
+            if (required) {
+                unbox(mv, Integer.class);
+            }
+        } else {
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
+        }
     }
 
     protected void generateDecodeDynRefValue(MethodVisitor mv, boolean required, GroupDef refGroup,
@@ -2172,7 +2265,7 @@ class BaseByteCodeGenerator {
     protected void generateDecodeSequenceValue(
             Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv,
             Class<?> componentJavaClass, int byteSourceVar, TypeDef type, Schema schema,
-            String genClassInternalName, String debugValueLabel, boolean javaClassCodec)
+            String genClassInternalName, String fieldIdentifier, String debugValueLabel, boolean javaClassCodec)
             throws IllegalArgumentException {
         if (!javaClass.isArray() && javaClass != List.class) {
             throw new IllegalArgumentException("Illegal sequence javaClass: " + javaClass);
@@ -2225,7 +2318,7 @@ class BaseByteCodeGenerator {
         // decode the element
         TypeDef.Sequence seqType = (TypeDef.Sequence) type;
         generateDecodeValue(mv, byteSourceVar, nextVar, true, seqType.getComponentType(), componentJavaClass, null,
-                schema, genClassInternalName, debugValueLabel + ".component", javaClassCodec);
+                schema, genClassInternalName, fieldIdentifier, debugValueLabel + ".component", javaClassCodec);
 
         // store the value
         if (javaClass.isArray()) {

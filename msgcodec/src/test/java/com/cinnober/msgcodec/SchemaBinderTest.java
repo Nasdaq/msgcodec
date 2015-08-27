@@ -72,6 +72,9 @@ public class SchemaBinderTest {
         Schema inbound = new SchemaBinder(upgraded).bind(original.unbind(), g -> Direction.INBOUND);
         Schema outbound = new SchemaBinder(original).bind(upgraded.unbind(), g -> Direction.OUTBOUND);
 
+        assertEquals("Inbound codec has bound enum class", Version2.class, inbound.getGroup("EnumValue").getField("value").getJavaClass());
+        assertEquals("Outbound codec has bound enum class", Version1.class, outbound.getGroup("EnumValue").getField("value").getJavaClass());
+        
         SymbolMapping mapping;
 
         // Verify inbound mappings
@@ -103,6 +106,9 @@ public class SchemaBinderTest {
         Schema inbound = new SchemaBinder(upgraded).bind(original.unbind(), g -> Direction.INBOUND);
         Schema outbound = new SchemaBinder(original).bind(upgraded.unbind(), g -> Direction.OUTBOUND);
 
+        assertEquals("Inbound codec has bound enum class", int.class, inbound.getGroup("EnumValue").getField("value").getJavaClass());
+        assertEquals("Outbound codec has bound enum class", int.class, outbound.getGroup("EnumValue").getField("value").getJavaClass());
+        
         SymbolMapping mapping;
 
         // Verify inbound mappings
@@ -133,6 +139,9 @@ public class SchemaBinderTest {
         Schema upgraded = new SchemaBuilder().addMessages(IntegerEnumValueV2.class).build();
         Schema inbound = new SchemaBinder(upgraded).bind(original.unbind(), g -> Direction.INBOUND);
         Schema outbound = new SchemaBinder(original).bind(upgraded.unbind(), g -> Direction.OUTBOUND);
+
+        assertEquals("Inbound codec has bound enum class", Integer.class, inbound.getGroup("EnumValue").getField("value").getJavaClass());
+        assertEquals("Outbound codec has bound enum class", Integer.class, outbound.getGroup("EnumValue").getField("value").getJavaClass());
 
         SymbolMapping mapping;
 

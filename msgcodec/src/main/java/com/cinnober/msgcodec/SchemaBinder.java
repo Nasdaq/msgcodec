@@ -177,7 +177,8 @@ public class SchemaBinder {
                     case ENUM:
                         inboundMapping = new ConverterSymbolMapping<>(
                                 inboundMapping, ((TypeDef.Enum) dstType).getSymbols());
-                    break;
+                        javaType = srcField.getJavaClass();
+                        break;
                     case SEQUENCE:
                         TypeDef componentType = dst.resolveToType(
                                 ((TypeDef.Sequence) dstType).getComponentType(), true);
@@ -207,6 +208,7 @@ public class SchemaBinder {
                     case ENUM:
                         outboundMapping = new ConverterSymbolMapping<>(
                                 outboundMapping, ((TypeDef.Enum) dstType).getSymbols());
+                        javaType = srcField.getJavaClass();
                     break;
                     case SEQUENCE:
                         TypeDef componentType = dst.resolveToType(

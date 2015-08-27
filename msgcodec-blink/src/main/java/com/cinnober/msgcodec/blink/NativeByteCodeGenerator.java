@@ -169,6 +169,7 @@ class NativeByteCodeGenerator extends BaseByteCodeGenerator {
             TypeDef type,
             Schema schema,
             String genClassInternalName,
+            String fieldIdentifier,
             String debugValueLabel,
             boolean javaClassCodec) throws IllegalArgumentException {
 
@@ -270,7 +271,7 @@ class NativeByteCodeGenerator extends BaseByteCodeGenerator {
     protected void generateDecodeSequenceValue(
             Class<?> javaClass, LocalVariable nextVar, boolean required, MethodVisitor mv,
             Class<?> componentJavaClass, int byteSourceVar, TypeDef type, Schema schema,
-            String genClassInternalName, String debugValueLabel, boolean javaClassCodec)
+            String genClassInternalName, String fieldIdentifier, String debugValueLabel, boolean javaClassCodec)
             throws IllegalArgumentException {
 
         throw new UnsupportedOperationException("Not implemented yet"); // TODO: add support for data area
