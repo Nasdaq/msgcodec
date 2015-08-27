@@ -688,7 +688,7 @@ public abstract class JsonValueHandler<T> {
         
         /**
          * Create a new Java enum handler.
-         * @param enumDef the enum definition, not null.
+         * @param symbolMapping the symbol mapping of the enum
          */
         public EnumHandler(SymbolMapping<E> symbolMapping) {
             Objects.requireNonNull(symbolMapping);
