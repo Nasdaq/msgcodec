@@ -55,7 +55,7 @@ import org.junit.Assert;
  * <pre>
  * public class FooTestUpgradesSuiteImpl extends TestUpgradesSuite {
  *     public FooTestUpgradesSuiteImpl(Class&lt;?&gt; rootClass) {
- *         super(rootClass, s &gt; new FooCodec(s));
+ *         super(rootClass, s -&gt; new FooCodec(s));
  *     }
  * }
  *

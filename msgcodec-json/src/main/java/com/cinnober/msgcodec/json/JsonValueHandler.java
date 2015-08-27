@@ -95,6 +95,7 @@ public abstract class JsonValueHandler<T> {
      * @param <T> the java type
      * @param type the type definition, not null.
      * @param javaClass the java class, not null.
+     * @param symbolMapping the symbol mapping if this is an enum or a sequence of an enum
      * @param jsSafe true if unsafe JavaScript numeric values should be encoded as strings, otherwise false.
      * @return the json value handler, not null.
      */
