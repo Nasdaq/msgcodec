@@ -246,10 +246,6 @@ public abstract class JsonValueHandler<T> {
         private Int8Handler() {}
         @Override
         public void writeValue(Byte value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
             g.writeNumber(value);
         }
         @Override
@@ -261,10 +257,6 @@ public abstract class JsonValueHandler<T> {
         private Int16Handler() {}
         @Override
         public void writeValue(Short value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
             g.writeNumber(value);
         }
         @Override
@@ -276,10 +268,6 @@ public abstract class JsonValueHandler<T> {
         private Int32Handler() {}
         @Override
         public void writeValue(Integer value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
             g.writeNumber(value);
         }
         @Override
@@ -421,11 +409,6 @@ public abstract class JsonValueHandler<T> {
             if (maxSize != -1 && value.length > maxSize) {
                 throw new IllegalArgumentException("Binary length ("+value.length+") exceeds max size "+maxSize);
             }
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
-            
             g.writeBinary(value);
         }
         @Override
@@ -441,10 +424,6 @@ public abstract class JsonValueHandler<T> {
         private BooleanHandler() {}
         @Override
         public void writeValue(Boolean value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
             g.writeBoolean(value);
         }
         @Override
@@ -493,12 +472,6 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public void writeValue(BigDecimal value, JsonGenerator g) throws IOException {
-            
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
-            
             if (jsSafe && !isJavaScriptSafeSigned(value)) {
                 g.writeString(value.toString());
             } else {
@@ -525,11 +498,6 @@ public abstract class JsonValueHandler<T> {
         }
         @Override
         public void writeValue(BigInteger value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
-            
             if (jsSafe && !isJavaScriptSafeSigned(value)) {
                 g.writeString(value.toString());
             } else {
@@ -552,10 +520,6 @@ public abstract class JsonValueHandler<T> {
         private Float32Handler() {}
         @Override
         public void writeValue(Float value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
             g.writeNumber(value);
         }
         @Override
@@ -584,10 +548,6 @@ public abstract class JsonValueHandler<T> {
         private Float64Handler() {}
         @Override
         public void writeValue(Double value, JsonGenerator g) throws IOException {
-            if(value == null) {
-                g.writeNull();
-                return;
-            }
             g.writeNumber(value);
         }
         @Override
@@ -756,9 +716,6 @@ public abstract class JsonValueHandler<T> {
         @Override
         public void writeValue(E value, JsonGenerator g) throws IOException {
             Symbol symbol = enumSymbols.getSymbol(value);
-            if (symbol == null) {
-                throw new IllegalArgumentException("Not a valid enum: " + value);
-            }
             g.writeString(symbol.getName());
         }
         @Override
@@ -916,8 +873,10 @@ public abstract class JsonValueHandler<T> {
             Object value = accessor.getValue(group);
             
             if(accessor instanceof CreateAccessor) {
-                g.writeFieldName(name);
-                valueHandler.writeValue(value, g);
+                if (value != null) {
+                    g.writeFieldName(name);
+                    valueHandler.writeValue(value, g);
+                }
                 return;
             }
             

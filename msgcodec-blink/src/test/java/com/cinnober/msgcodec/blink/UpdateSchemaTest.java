@@ -200,36 +200,29 @@ public class UpdateSchemaTest {
     public static class Version2 extends MsgObject {
         public double decimal;
         
-//        public byte dummy_11byte;
-//        @Unsigned
-//        public byte dummy_12byte;
-//        public Byte dummy_13byte;
-//        @Unsigned
-//        public Byte dummy_14byte;
-//        
-//        public short dummy_21short;
-//        @Unsigned
-//        public short dummy_22short;
-//        public Short dummy_23short;
-//        @Unsigned
-//        public Short dummy_24short;
+        public byte dummy_11byte;
+        @Unsigned
+        public byte dummy_12byte;
+        public Byte dummy_13byte;
+        @Unsigned
+        public Byte dummy_14byte;
+        
+        public short dummy_21short;
+        @Unsigned
+        public short dummy_22short;
+        public Short dummy_23short;
+        @Unsigned
+        public Short dummy_24short;
         
         public int dummy_31int;
-//        @Unsigned
-//        public int dummy_32int;
-//        public Integer dummy_33int;
-//        @Unsigned
-//        public Integer dummy_34int;
+        @Unsigned
+        public int dummy_32int;
+        public Integer dummy_33int;
+        @Unsigned
+        public Integer dummy_34int;
 
-//        public float dummy_41float;
-//        public Float dummy_42float;
-
-//      public int dummy_31int;
-//      @Unsigned
-//      public int dummy_32int;
-//      public Integer dummy_33int;
-//      @Unsigned
-//      public Integer dummy_34int;
+        public float dummy_41float;
+        public Float dummy_42float;
         
         
         public EnumV2 enumeration;

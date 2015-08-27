@@ -117,6 +117,7 @@ public class SchemaBinder {
                     
                     if(srcField == null) {
                         try {
+                            System.out.println("CreateAccessor: " + dstField);
                             newFields.add(new CreateAccessor(dstField).bindField(dstField));
                         } catch (SecurityException e) {
                             // TODO Auto-generated catch block

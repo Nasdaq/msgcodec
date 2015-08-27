@@ -95,4 +95,24 @@ abstract class XmlEnumFormat<T> implements XmlFormat<T> {
         }
     }
 
+    static class DummyJavaEnumFormat<E extends Enum<E>> extends XmlEnumFormat<E> {
+
+//        private final EnumSymbols<E> enumSymbols;
+        public DummyJavaEnumFormat() {
+//            this.enumSymbols = new EnumSymbols<>(typeDef, enumClass);
+        }
+
+        @Override
+        public String format(E value) throws FormatException {
+            System.out.println("DummyJavaEnumFormat: " + value);
+            return null;
+        }
+
+        @Override
+        public E parse(String str) throws FormatException {
+            System.out.println("DummyJavaEnumFormat: " + str);
+            return null;
+        }
+    }
+    
 }

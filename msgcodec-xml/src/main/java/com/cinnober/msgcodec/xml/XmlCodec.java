@@ -23,6 +23,8 @@
  */
 package com.cinnober.msgcodec.xml;
 
+import com.cinnober.msgcodec.Accessor;
+import com.cinnober.msgcodec.CreateAccessor;
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
@@ -49,6 +51,8 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.SequenceItemValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.SimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StaticGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
+import com.cinnober.msgcodec.xml.XmlEnumFormat.DummyJavaEnumFormat;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -264,7 +268,7 @@ public class XmlCodec implements MsgCodec {
                     putElement(elementFields, fieldInstr);
                 }
             } else {
-                XmlFormat format = getXmlFormat(componentType, field.getComponentJavaClass());
+                XmlFormat format = getXmlFormat(componentType, field.getComponentJavaClass(), field.getAccessor());
                 if (field.getJavaClass().isArray()) {
                     ArraySequenceSimpleField fieldInstr = new ArraySequenceSimpleField(
                             nsName,
@@ -335,7 +339,7 @@ public class XmlCodec implements MsgCodec {
             // date, time, dateTime,
             // token (enum)
 
-            XmlFormat format = getXmlFormat(type, field.getJavaClass());
+            XmlFormat format = getXmlFormat(type, field.getJavaClass(), field.getAccessor());
             SimpleField fieldInstr = new SimpleField(nsName, field, requiredFieldSlot, format);
 
             boolean attribute = !ANOTVALUE_FIELD_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
@@ -369,9 +373,13 @@ public class XmlCodec implements MsgCodec {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private XmlFormat getXmlFormat(TypeDef type, Class<?> javaClass) {
+    private XmlFormat getXmlFormat(TypeDef type, Class<?> javaClass, Accessor accessor) {
         switch (type.getType()) {
         case ENUM:
+            if(accessor instanceof CreateAccessor) {
+                return new DummyJavaEnumFormat();
+            }
+            
             if (javaClass.isEnum()) {
                 return new XmlEnumFormat.JavaEnumFormat((Enum) type, javaClass);
             } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {

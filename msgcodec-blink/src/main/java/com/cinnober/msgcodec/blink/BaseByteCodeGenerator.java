@@ -536,10 +536,8 @@ class BaseByteCodeGenerator {
                     }
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
                     writemv.visitInsn(NULL);
-                    /*
                 } else if (accessor.getClass() == CreateAccessor.class) {
-                    
-                    
+//                    writemv.visitInsn(NULL);
                     switch(field.getType().getType()) {
                         case INT8:
                         case UINT8:
@@ -600,7 +598,8 @@ class BaseByteCodeGenerator {
                     default:
                         throw new RuntimeException("Unhandled case: " + field.getType().getType());
                     }
-                    continue;*/
+                    
+                    continue;
                 } else if (accessor.getClass() == CreateAccessor.class) {
                     writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
