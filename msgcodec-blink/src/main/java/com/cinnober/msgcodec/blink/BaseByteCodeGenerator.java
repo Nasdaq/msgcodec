@@ -525,6 +525,21 @@ class BaseByteCodeGenerator {
 
                 Class<?> javaClass = field.getJavaClass();
                 Accessor<?,?> accessor = field.getAccessor();
+                
+                if(accessor.getClass() == CreateAccessor.class) {
+                    if(field.getType().getType() == TypeDef.Type.REFERENCE) {
+                        if(field.isRequired()) {
+                            writemv.visitInsn(ICONST_0);
+                            generateEncodeInt32Value(true, writemv);
+                        }
+                        else {
+                            writemv.visitInsn(ACONST_NULL);
+                            generateEncodeInt32Value(false, writemv);
+                        }
+                        continue;
+                    }
+                }
+                
                 if (isPublicFieldAccessor(accessor)) {                   
                     Field f = ((FieldAccessor)accessor).getField();
                     writemv.visitVarInsn(ALOAD, 2);
@@ -536,85 +551,6 @@ class BaseByteCodeGenerator {
                     }
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
                     writemv.visitInsn(NULL);
-                } else if (accessor.getClass() == CreateAccessor.class) {
-//                    writemv.visitInsn(NULL);
-                    switch(field.getType().getType()) {
-                        case INT8:
-                        case UINT8:
-                        case INT16:
-                        case UINT16:
-                        case INT32:
-                        case UINT32:
-                            writemv.visitInsn(ICONST_0);
-                            break;
-                        case INT64:
-                        case UINT64:
-                            writemv.visitInsn(LCONST_0);
-                            break;
-                        case FLOAT32:
-                            writemv.visitInsn(FCONST_0);
-                            break;
-                        case FLOAT64:
-                            writemv.visitInsn(DCONST_0);
-                            break;
-                        default:
-                            throw new RuntimeException("Unhandled case: " + field.getType().getType());
-                    }
-                    if(!field.isRequired()) {
-                        box(writemv, javaClass);
-                    }
-                    
-                    switch(field.getType().getType()) {
-                        case INT8:
-                            generateEncodeInt8Value(field.isRequired(), writemv);
-                            break;
-                        case UINT8:
-                            generateEncodeUInt8Value(field.isRequired(), writemv);
-                            break;
-                        case INT16:
-                            generateEncodeInt16Value(field.isRequired(), writemv);
-                            break;
-                        case UINT16:
-                            generateEncodeUInt16Value(field.isRequired(), writemv);
-                            break;
-                        case INT32:
-                            generateEncodeInt32Value(field.isRequired(), writemv);
-                            break;
-                        case UINT32:
-                            generateEncodeUInt32Value(field.isRequired(), writemv);
-                            break;
-                        case INT64:
-                            generateEncodeInt64Value(field.isRequired(), writemv);
-                            break;
-                        case UINT64:
-                            generateEncodeUInt64Value(field.isRequired(), writemv);
-                            break;
-                        case FLOAT32:
-                            generateEncodeFloat32Value(field.isRequired(), writemv);
-                            break;
-                        case FLOAT64:
-                            generateEncodeFloat64Value(field.isRequired(), writemv);
-                            break;
-                    default:
-                        throw new RuntimeException("Unhandled case: " + field.getType().getType());
-                    }
-                    
-                    continue;
-                } else if (accessor.getClass() == CreateAccessor.class) {
-                    writemv.visitVarInsn(ALOAD, 0);
-                    writemv.visitFieldInsn(GETFIELD, genClassInternalName,
-                            "accessor_" + group.getName() + "_" + field.getName(),
-                            "Lcom/cinnober/msgcodec/Accessor;");
-                    writemv.visitVarInsn(ALOAD, 2); // instance
-                    writemv.visitMethodInsn(INVOKEINTERFACE, "com/cinnober/msgcodec/Accessor", "getValue",
-                            "(Ljava/lang/Object;)Ljava/lang/Object;", true);
-                    if (javaClass.isPrimitive()) {
-                        writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(box(javaClass)));
-                        unbox(writemv, javaClass);
-                    } else {
-                        writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
-                    }
-                    
                 } else {
                     writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,

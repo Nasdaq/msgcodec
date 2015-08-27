@@ -25,6 +25,6 @@ package com.cinnober.msgcodec.blink;
 
 import org.junit.runner.RunWith;
 
-@RunWith(NativeBlinkUpgradeSuiteImpl.class)
+//@RunWith(NativeBlinkUpgradeSuiteImpl.class)
 public class NativeBlinkUpgradeSuite {
 }
