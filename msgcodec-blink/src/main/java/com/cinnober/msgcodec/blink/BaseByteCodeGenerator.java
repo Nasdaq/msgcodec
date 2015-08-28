@@ -346,9 +346,11 @@ class BaseByteCodeGenerator {
                             "Lcom/cinnober/msgcodec/Accessor;");
                 }
                 
-                // If there is an enum we need a symbol map
-                if ((type != null && type.getType() == TypeDef.Type.ENUM) 
+                if (accessor.getClass() == CreateAccessor.class) {
+                    // No symbol map needed
+                } else if ((type != null && type.getType() == TypeDef.Type.ENUM) 
                         || (componentType != null && componentType.getType() == TypeDef.Type.ENUM)) {
+                    // If there is an enum and we need the symbol map
                     Objects.requireNonNull(symbolMapping);
                     
                     // Create field

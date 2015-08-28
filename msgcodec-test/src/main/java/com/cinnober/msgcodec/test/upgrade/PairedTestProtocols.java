@@ -40,7 +40,7 @@ public class PairedTestProtocols {
             new Class<?>[] {
                 UpgradeEnumArrayMessages.Original.class,
                 UpgradeEnumsMessages.Original.class,
-//                UpgradeAddRemoveFieldMessages.Version1.class,
+                UpgradeAddRemoveFieldMessages.Version1.class,
                 UpgradeEnumSequenceMessages.Original.class,
                 UpgradeIntegerEnumsMessages.Original.class,
             });
@@ -51,7 +51,7 @@ public class PairedTestProtocols {
             new Class<?>[] {
                 UpgradeEnumArrayMessages.Upgraded.class,
                 UpgradeEnumsMessages.Upgraded.class,
-//                UpgradeAddRemoveFieldMessages.Version2.class,
+                UpgradeAddRemoveFieldMessages.Version2.class,
                 UpgradeEnumSequenceMessages.Upgraded.class,
                 UpgradeIntegerEnumsMessages.Upgraded.class,
             });
@@ -71,7 +71,7 @@ public class PairedTestProtocols {
 
         putAll(messages, "EnumArray.", UpgradeEnumArrayMessages.createMessages());
         putAll(messages, "Enums.", UpgradeEnumsMessages.createMessages());
-//        putAll(messages, "AddRemoveFields", UpgradeAddRemoveFieldMessages.createMessages());
+        putAll(messages, "AddRemoveFields", UpgradeAddRemoveFieldMessages.createMessages());
         putAll(messages, "EnumSequence.", UpgradeEnumSequenceMessages.createMessages());
         putAll(messages, "IntegerEnums.", UpgradeIntegerEnumsMessages.createMessages());
 
