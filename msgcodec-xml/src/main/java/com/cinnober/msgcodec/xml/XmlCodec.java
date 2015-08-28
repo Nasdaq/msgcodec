@@ -31,8 +31,8 @@ import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.GroupTypeAccessor;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Enum;
 import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSinkOutputStream;
 import com.cinnober.msgcodec.io.ByteSource;
@@ -52,6 +52,7 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.SimpleField;
 import com.cinnober.msgcodec.xml.XmlElementHandler.StaticGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
 import com.cinnober.msgcodec.xml.XmlEnumFormat.DummyJavaEnumFormat;
+import com.cinnober.msgcodec.xml.XmlEnumFormat.SymbolMappingEnumFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,6 +135,7 @@ public class XmlCodec implements MsgCodec {
 
     private static final String ANOT_XML_NAMESPACE = "xml:ns";
     private static final String ANOT_FIELD = "xml:field";
+    @SuppressWarnings("unused")
     private static final String ANOTVALUE_FIELD_ATTRIBUTE = "attribute";
     private static final String ANOTVALUE_FIELD_ELEMENT = "element";
     private static final String ANOTVALUE_FIELD_INLINE = "inline";
@@ -268,7 +270,8 @@ public class XmlCodec implements MsgCodec {
                     putElement(elementFields, fieldInstr);
                 }
             } else {
-                XmlFormat format = getXmlFormat(componentType, field.getComponentJavaClass(), field.getAccessor());
+                XmlFormat format = getXmlFormat(
+                        componentType, field.getBinding().getSymbolMapping(), field.getComponentJavaClass(), field.getAccessor());
                 if (field.getJavaClass().isArray()) {
                     ArraySequenceSimpleField fieldInstr = new ArraySequenceSimpleField(
                             nsName,
@@ -339,7 +342,7 @@ public class XmlCodec implements MsgCodec {
             // date, time, dateTime,
             // token (enum)
 
-            XmlFormat format = getXmlFormat(type, field.getJavaClass(), field.getAccessor());
+            XmlFormat format = getXmlFormat(type, field.getBinding().getSymbolMapping(), field.getJavaClass(), field.getAccessor());
             SimpleField fieldInstr = new SimpleField(nsName, field, requiredFieldSlot, format);
 
             boolean attribute = !ANOTVALUE_FIELD_ELEMENT.equals(field.getAnnotation(ANOT_FIELD));
@@ -372,21 +375,14 @@ public class XmlCodec implements MsgCodec {
         inlineField.add(fieldInstr);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private XmlFormat getXmlFormat(TypeDef type, Class<?> javaClass, Accessor accessor) {
+    private XmlFormat<?> getXmlFormat(TypeDef type, SymbolMapping<?> symbolMapping, Class<?> javaClass, Accessor accessor) {
         switch (type.getType()) {
         case ENUM:
             if(accessor instanceof CreateAccessor) {
-                return new DummyJavaEnumFormat();
+                return new DummyJavaEnumFormat<>();
             }
+            return new SymbolMappingEnumFormat<>(symbolMapping);
             
-            if (javaClass.isEnum()) {
-                return new XmlEnumFormat.JavaEnumFormat((Enum) type, javaClass);
-            } else if (javaClass.equals(int.class) || javaClass.equals(Integer.class)) {
-                return new XmlEnumFormat.IntEnumFormat((Enum) type);
-            } else {
-                throw new RuntimeException("Unhandled enum type: " + type);
-            }
         case TIME:
             if (javaClass.equals(Date.class)) {
                 return new XmlTimeFormat.DateTimeFormat((TypeDef.Time) type);

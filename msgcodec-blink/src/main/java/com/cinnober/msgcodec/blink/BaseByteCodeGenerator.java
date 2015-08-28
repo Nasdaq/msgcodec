@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -309,6 +310,8 @@ class BaseByteCodeGenerator {
             for (FieldDef field : group.getFields()) {
                 Accessor<?,?> accessor = field.getAccessor();
                 SymbolMapping<?> symbolMapping = field.getBinding().getSymbolMapping();
+                TypeDef type = schema.resolveToType(field.getType(), true);
+                Class<?> componentClass = field.getComponentJavaClass();
                 
                 if (isPublicFieldAccessor(accessor)) {
                     // no accessor needed
@@ -337,8 +340,10 @@ class BaseByteCodeGenerator {
                             "Lcom/cinnober/msgcodec/Accessor;");
                 }
                 
-                // If there is a symbol map we need to include it
-                if (symbolMapping != null) {
+                // If there is an enum we need a symbol map
+                if ((type != null && type.getType() == TypeDef.Type.ENUM) 
+                        || (componentClass != null && componentClass.isEnum())) {
+                    Objects.requireNonNull(symbolMapping);
                     
                     // Create field
                     String symbolMappingFieldName = "symbolMapping_" + group.getName() + "_" + field.getName();

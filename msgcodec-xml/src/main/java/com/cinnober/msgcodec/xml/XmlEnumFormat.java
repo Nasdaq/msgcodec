@@ -23,83 +23,51 @@
  */
 package com.cinnober.msgcodec.xml;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Objects;
 
-import com.cinnober.msgcodec.EnumSymbols;
-import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.SymbolMapping;
 
 /**
  * @author mikael.brannstrom
  *
  */
 abstract class XmlEnumFormat<T> implements XmlFormat<T> {
+    static class SymbolMappingEnumFormat<T> extends XmlEnumFormat<T> {
+        private final SymbolMapping<T> symbolMapping;
 
-    static class IntEnumFormat extends XmlEnumFormat<Integer> {
-        private final Map<String, Integer> idByName;
-        private final Map<Integer, String> nameById;
+        public SymbolMappingEnumFormat(SymbolMapping<T> symbolMapping) {
+            Objects.requireNonNull(symbolMapping);
+            this.symbolMapping = symbolMapping;
+        }
 
-        public IntEnumFormat(TypeDef.Enum typeDef) {
-            idByName = new HashMap<>(typeDef.getSymbols().size() * 2);
-            nameById = new HashMap<>(typeDef.getSymbols().size() * 2);
-            for (Symbol symbol : typeDef.getSymbols()) {
-                idByName.put(symbol.getName(), symbol.getId());
-                nameById.put(symbol.getId(), symbol.getName());
+        @Override
+        public String format(T value) throws FormatException {
+            try {
+                String name = symbolMapping.getName(value);
+                if (name == null) {
+                    throw new FormatException("Not a valid enum: " + value);
+                }
+                return name;
+            } catch (IllegalArgumentException e) {
+                throw new FormatException("Not a valid enum: " + value, e);
             }
         }
 
         @Override
-        public String format(Integer value) throws FormatException {
-            String name = nameById.get(value);
-            if (name == null) {
-                throw new FormatException("Not a valid enum: " + value);
+        public T parse(String str) throws FormatException {
+            try {
+                T value = symbolMapping.lookup(str);
+                if (value == null) {
+                }
+                return value;
+            } catch (IllegalArgumentException e) {
+                throw new FormatException("Not a valid symbol: " + str, e);
             }
-            return name;
-        }
-
-        @Override
-        public Integer parse(String str) throws FormatException {
-            Integer value = idByName.get(str);
-            if (value == null) {
-                throw new FormatException("Not a valid symbol: " + str);
-            }
-            return value;
         }
     }
-
-
-    static class JavaEnumFormat<E extends Enum<E>> extends XmlEnumFormat<E> {
-
-        private final EnumSymbols<E> enumSymbols;
-        public JavaEnumFormat(TypeDef.Enum typeDef, Class<E> enumClass) {
-            this.enumSymbols = new EnumSymbols<>(typeDef, enumClass);
-        }
-
-        @Override
-        public String format(E value) throws FormatException {
-            Symbol symbol = enumSymbols.getSymbol(value);
-            if (symbol == null) {
-                throw new FormatException("Not a valid enum: " + value);
-            }
-            return symbol.getName();
-        }
-
-        @Override
-        public E parse(String str) throws FormatException {
-            E value = enumSymbols.getEnum(str);
-            if (value == null) {
-                throw new FormatException("Not a valid symbol: " + str);
-            }
-            return value;
-        }
-    }
-
+    
     static class DummyJavaEnumFormat<E extends Enum<E>> extends XmlEnumFormat<E> {
-
-//        private final EnumSymbols<E> enumSymbols;
         public DummyJavaEnumFormat() {
-//            this.enumSymbols = new EnumSymbols<>(typeDef, enumClass);
         }
 
         @Override
