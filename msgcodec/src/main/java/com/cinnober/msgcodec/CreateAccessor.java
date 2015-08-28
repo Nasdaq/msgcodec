@@ -45,7 +45,9 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
     }
     
     /**
-     * Create a new ignore accessor.
+     * Create a new create accessor.
+     * 
+     * @param field The affected field
      */
     @SuppressWarnings("unchecked")
     public CreateAccessor(FieldDef field) {

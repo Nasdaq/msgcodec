@@ -97,16 +97,19 @@ public abstract class JsonValueHandler<T> {
      * @param javaClass the java class, not null.
      * @param symbolMapping the symbol mapping if this is an enum or a sequence of an enum
      * @param jsSafe true if unsafe JavaScript numeric values should be encoded as strings, otherwise false.
+     * @param accessor the field accessor, used to determine if a dummy handler is needed
      * @return the json value handler, not null.
      */
-    @SuppressWarnings({"unchecked"})
-    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, SymbolMapping<T> symbolMapping, boolean jsSafe, Accessor accessor) {
-        
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static <T> JsonValueHandler<T> getValueHandler(TypeDef type, Class<T> javaClass, SymbolMapping<T> symbolMapping, 
+            boolean jsSafe, Accessor<?, ?> accessor) {
         
         if(accessor.getClass() == CreateAccessor.class) {
             switch (type.getType()) {
             case ENUM:
                 return new JsonValueHandler.DummyEnumHandler((TypeDef.Enum)type, javaClass);
+            default:
+                // Do nothing for other types
             }
         }
         
