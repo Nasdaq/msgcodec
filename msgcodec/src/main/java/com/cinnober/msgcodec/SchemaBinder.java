@@ -23,15 +23,18 @@
  */
 package com.cinnober.msgcodec;
 
+import com.cinnober.msgcodec.TypeDef.Symbol;
+import com.cinnober.msgcodec.TypeDef.Type;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
-
-import com.cinnober.msgcodec.TypeDef.Symbol;
-import com.cinnober.msgcodec.TypeDef.Type;
+import java.util.stream.Collectors;
 
 /**
  * The schema binder can re-bind a schema to another schema.
@@ -135,6 +138,29 @@ public class SchemaBinder {
         return s;
     }
 
+    private Direction getAcceptableEnumConversion(TypeDef.Enum source, TypeDef.Enum destination) {
+        List<Symbol> sourceSymbols = source.getSymbols();
+        List<Symbol> destinationSymbols = destination.getSymbols();
+        if (sourceSymbols.size() > destinationSymbols.size()) {
+            Set<String> lookupSet = sourceSymbols.stream().map(Symbol::getName).collect(Collectors.toSet());
+            for (Symbol symbol : destinationSymbols) {
+                if (!lookupSet.contains(symbol.getName())) {
+                    return null;
+                }
+            }
+            return Direction.INBOUND;
+        } else {
+            Set<String> lookupSet = destinationSymbols.stream().map(Symbol::getName).collect(Collectors.toSet());
+            for (Symbol symbol : sourceSymbols) {
+                if (!lookupSet.contains(symbol.getName())) {
+                    return null;
+                }
+            }
+            return sourceSymbols.size() == destinationSymbols.size() ? Direction.BOTH : Direction.OUTBOUND;
+        }
+
+    }
+
     private FieldDef bindField(FieldDef srcField, FieldDef dstField, GroupDef dstGroup, Schema dst, Direction dir)
             throws IncompatibleSchemaException {
 
@@ -165,7 +191,7 @@ public class SchemaBinder {
             case BOTH:
                 throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
             case INBOUND:
-                Accessor<?, ?> narrowAccessor = narrowAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
+                Accessor<?, ?> narrowAccessor = inboundAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
                 if (narrowAccessor == null) {
                     throw new IncompatibleSchemaException(
                             "Source type not eq or wider" + details(dstGroup, dstField, dir));
@@ -196,7 +222,7 @@ public class SchemaBinder {
                 
                 return dstField.bind(new FieldBinding(narrowAccessor, javaType, javaComponentType, inboundMapping));
             case OUTBOUND:
-                Accessor<?, ?> widenAccessor = widenAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
+                Accessor<?, ?> widenAccessor = outboundAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
                 if (widenAccessor == null) {
                     throw new IncompatibleSchemaException(
                             "Source type not eq or narrower " + details(dstGroup, dstField, dir));
@@ -233,23 +259,23 @@ public class SchemaBinder {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Accessor narrowAccessor(Accessor accessor, TypeDef srcType, Schema dst, TypeDef dstType, Direction dir) {
+    private Accessor inboundAccessor(Accessor accessor, TypeDef srcType, Schema dst, TypeDef dstType, Direction dir) {
         switch (srcType.getType()) {
         case INT64:
         case UINT64:
             switch (dstType.getType()) {
             case INT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::longToInt, SchemaBinder::intToLong);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::intToLong);
             case UINT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::longToInt, SchemaBinder::uIntToLong);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uIntToLong);
             case INT16:
-                return new ConverterAccessor<>(accessor, SchemaBinder::longToShort, SchemaBinder::shortToLong);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::shortToLong);
             case UINT16:
-                return new ConverterAccessor<>(accessor, SchemaBinder::longToShort, SchemaBinder::uShortToLong);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uShortToLong);
             case INT8:
-                return new ConverterAccessor<>(accessor, SchemaBinder::longToByte, SchemaBinder::byteToLong);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::byteToLong);
             case UINT8:
-                return new ConverterAccessor<>(accessor, SchemaBinder::longToByte, SchemaBinder::uByteToLong);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uByteToLong);
             default:
                 return null;
             }
@@ -257,13 +283,13 @@ public class SchemaBinder {
         case UINT32:
             switch (dstType.getType()) {
             case INT16:
-                return new ConverterAccessor<>(accessor, SchemaBinder::intToShort, SchemaBinder::shortToInt);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::shortToInt);
             case UINT16:
-                return new ConverterAccessor<>(accessor, SchemaBinder::intToShort, SchemaBinder::uShortToInt);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uShortToInt);
             case INT8:
-                return new ConverterAccessor<>(accessor, SchemaBinder::intToByte, SchemaBinder::byteToInt);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::byteToInt);
             case UINT8:
-                return new ConverterAccessor<>(accessor, SchemaBinder::intToByte, SchemaBinder::uByteToInt);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uByteToInt);
             default:
                 return null;
             }
@@ -271,23 +297,24 @@ public class SchemaBinder {
         case UINT16:
             switch (dstType.getType()) {
             case INT8:
-                return new ConverterAccessor<>(accessor, SchemaBinder::shortToByte, SchemaBinder::byteToShort);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::byteToShort);
             case UINT8:
-                return new ConverterAccessor<>(accessor, SchemaBinder::shortToByte, SchemaBinder::uByteToShort);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uByteToShort);
             default:
                 return null;
             }
         case FLOAT64:
             switch (dstType.getType()) {
             case FLOAT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::doubleToFloat, SchemaBinder::floatToDouble);
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::floatToDouble);
             default:
                 return null;
             }
 
         case ENUM:
         	if (dstType.getType() == Type.ENUM) {
-                return accessor;
+                Direction acceptableDirection = getAcceptableEnumConversion((TypeDef.Enum)srcType, (TypeDef.Enum)dstType);
+                return (acceptableDirection == Direction.INBOUND || acceptableDirection == Direction.BOTH) ? accessor : null;
         	}
         	return null;
         case SEQUENCE:
@@ -306,42 +333,24 @@ public class SchemaBinder {
         }
     }
     
-    HashMap<Symbol, Symbol> createSymbolEnumMap(TypeDef src, TypeDef dst) {
-        HashMap<Symbol, Symbol> map = new HashMap<>();
-
-        TypeDef.Enum srcEnum = (TypeDef.Enum) src;
-        TypeDef.Enum dstEnum = (TypeDef.Enum) dst;
-        HashMap<String, Symbol> dstMap = new HashMap<>();
-
-        for (Symbol s : dstEnum.getSymbols()) {
-            dstMap.put(s.getName(), s);
-        }
-
-        for (Symbol s : srcEnum.getSymbols()) {
-            map.put(s, dstMap.get(s.getName()));
-        }
-
-        return map;
-    }
-    
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private Accessor widenAccessor(Accessor accessor, TypeDef srcType, Schema dst, TypeDef dstType, Direction dir) {
+    private Accessor outboundAccessor(Accessor accessor, TypeDef srcType, Schema dst, TypeDef dstType, Direction dir) {
         switch (srcType.getType()) {
         case INT8:
         case UINT8:
             switch (dstType.getType()) {
             case INT16:
-                return new ConverterAccessor<>(accessor, SchemaBinder::byteToShort, SchemaBinder::shortToByte);
+                return new ConverterAccessor<>(accessor, SchemaBinder::byteToShort, SchemaBinder::invalidConversion);
             case UINT16:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToShort, SchemaBinder::shortToByte);
+                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToShort, SchemaBinder::invalidConversion);
             case INT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::byteToInt, SchemaBinder::intToByte);
+                return new ConverterAccessor<>(accessor, SchemaBinder::byteToInt, SchemaBinder::invalidConversion);
             case UINT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToInt, SchemaBinder::intToByte);
+                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToInt, SchemaBinder::invalidConversion);
             case INT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::byteToLong, SchemaBinder::longToByte);
+                return new ConverterAccessor<>(accessor, SchemaBinder::byteToLong, SchemaBinder::invalidConversion);
             case UINT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToLong, SchemaBinder::longToByte);
+                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToLong, SchemaBinder::invalidConversion);
             default:
                 return null;
             }
@@ -350,13 +359,13 @@ public class SchemaBinder {
         case UINT16:
             switch (dstType.getType()) {
             case INT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::shortToInt, SchemaBinder::intToShort);
+                return new ConverterAccessor<>(accessor, SchemaBinder::shortToInt, SchemaBinder::invalidConversion);
             case UINT32:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uShortToInt, SchemaBinder::intToShort);
+                return new ConverterAccessor<>(accessor, SchemaBinder::uShortToInt, SchemaBinder::invalidConversion);
             case INT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::shortToLong, SchemaBinder::longToShort);
+                return new ConverterAccessor<>(accessor, SchemaBinder::shortToLong, SchemaBinder::invalidConversion);
             case UINT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uShortToLong, SchemaBinder::longToShort);
+                return new ConverterAccessor<>(accessor, SchemaBinder::uShortToLong, SchemaBinder::invalidConversion);
             default:
                 return null;
             }
@@ -365,9 +374,9 @@ public class SchemaBinder {
         case UINT32:
             switch (dstType.getType()) {
             case INT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::intToLong, SchemaBinder::longToInt);
+                return new ConverterAccessor<>(accessor, SchemaBinder::intToLong, SchemaBinder::invalidConversion);
             case UINT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uIntToLong, SchemaBinder::longToInt);
+                return new ConverterAccessor<>(accessor, SchemaBinder::uIntToLong, SchemaBinder::invalidConversion);
             default:
                 return null;
             }
@@ -375,14 +384,15 @@ public class SchemaBinder {
         case FLOAT32:
             switch (dstType.getType()) {
             case FLOAT64:
-                return new ConverterAccessor<>(accessor, SchemaBinder::floatToDouble, SchemaBinder::doubleToFloat);
+                return new ConverterAccessor<>(accessor, SchemaBinder::floatToDouble, SchemaBinder::invalidConversion);
             default:
                 return null;
             }
 
         case ENUM:
             if (dstType.getType() == Type.ENUM) {
-                return accessor;
+                Direction acceptableDirection = getAcceptableEnumConversion((TypeDef.Enum)srcType, (TypeDef.Enum)dstType);
+                return (acceptableDirection == Direction.OUTBOUND || acceptableDirection == Direction.BOTH) ? accessor : null;
             }
             return null;
         case SEQUENCE:
@@ -401,6 +411,8 @@ public class SchemaBinder {
 
         }
     }
+
+    private static <V,W> W invalidConversion(V v) { throw new UnsupportedOperationException("Narrowing data conversion not supported!"); }
 
     private static Integer longToInt(Long v) {
         return v.intValue();

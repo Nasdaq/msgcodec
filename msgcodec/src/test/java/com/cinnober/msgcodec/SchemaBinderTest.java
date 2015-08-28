@@ -28,11 +28,10 @@ import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Unsigned;
-
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Ignore;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -50,7 +49,8 @@ public class SchemaBinderTest {
         new SchemaBinder(schema1).bind(schema2, SchemaBinderTest::getDirAtClient);
     }
 
-    @Ignore
+
+    @Ignore()
     @Test(expected = IncompatibleSchemaException.class)
     public void testUpgradeFail() throws IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().addMessages(FooReqV1.class, FooRspV1.class).build();
@@ -58,6 +58,7 @@ public class SchemaBinderTest {
         new SchemaBinder(schema1).bind(schema2, g -> Direction.BOTH);
     }
 
+    @Test
     public void testUpgradeBoundToGroupOk() throws IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().addMessages(FooReqV1.class, FooRspV1.class).build();
         Schema schema2 = new SchemaBuilder().addMessages(FooReqV2.class, FooRspV2.class).build();
@@ -66,14 +67,24 @@ public class SchemaBinderTest {
         new SchemaBinder(schema1).bind(schema2, SchemaBinderTest::getDirAtClient);
     }
 
-    @Ignore
+    @Ignore()
     @Test(expected = IncompatibleSchemaException.class)
     public void testUpgradeBoundToGroupFail() throws IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().addMessages(FooReqV1.class, FooRspV1.class).build();
-        Schema schema2 = new SchemaBuilder().addMessages(FooReqV2.class, FooRspV2.class).build();
+        Schema schema1 = new SchemaBuilder().addMessages(FooRspV1.class).build();
+        Schema schema2 = new SchemaBuilder().addMessages(FooRspV2.class).build();
         schema1 = Group.bind(schema1);
         schema2 = Group.bind(schema2);
-        new SchemaBinder(schema1).bind(schema2, g -> Direction.BOTH);
+        new SchemaBinder(schema1).bind(schema2, g -> Direction.INBOUND);
+    }
+
+    @Ignore()
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testUpgradeBoundToGroupFail2() throws IncompatibleSchemaException {
+        Schema schema1 = new SchemaBuilder().addMessages(FooRspV2.class).build();
+        Schema schema2 = new SchemaBuilder().addMessages(FooRspV1.class).build();
+        schema1 = Group.bind(schema1);
+        schema2 = Group.bind(schema2);
+        new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
