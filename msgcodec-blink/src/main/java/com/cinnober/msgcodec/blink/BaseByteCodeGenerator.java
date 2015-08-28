@@ -27,7 +27,6 @@ package com.cinnober.msgcodec.blink;
 import com.cinnober.msgcodec.Accessor;
 import com.cinnober.msgcodec.ConstructorFactory;
 import com.cinnober.msgcodec.CreateAccessor;
-import com.cinnober.msgcodec.EnumSymbols;
 import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldAccessor;
 import com.cinnober.msgcodec.FieldDef;
@@ -38,7 +37,6 @@ import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinding;
 import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.TypeDef;
-import com.cinnober.msgcodec.TypeDef.Symbol;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
@@ -73,9 +71,13 @@ class BaseByteCodeGenerator {
     protected static final Logger log = Logger.getLogger(BaseByteCodeGenerator.class.getName());
     
 
+    @SuppressWarnings("unused")
     private static final String BYTE_SINK_INAME = Type.getInternalName(ByteSink.class);
+    @SuppressWarnings("unused")
     private static final String BYTE_SOURCE_INAME = Type.getInternalName(ByteSource.class);
+    @SuppressWarnings("unused")
     private static final String SCHEMA_INAME = Type.getInternalName(Schema.class);
+    @SuppressWarnings("unused")
     private static final String SCHEMA_BINDING_INAME = Type.getInternalName(SchemaBinding.class);
 
 
@@ -311,8 +313,12 @@ class BaseByteCodeGenerator {
                 Accessor<?,?> accessor = field.getAccessor();
                 SymbolMapping<?> symbolMapping = field.getBinding().getSymbolMapping();
                 TypeDef type = schema.resolveToType(field.getType(), true);
-                Class<?> componentClass = field.getComponentJavaClass();
-                
+                TypeDef componentType = null;
+
+                if (type.getType() == TypeDef.Type.SEQUENCE) {
+                    componentType = schema.resolveToType(((TypeDef.Sequence) type).getComponentType(), false);
+                }
+
                 if (isPublicFieldAccessor(accessor)) {
                     // no accessor needed
                 } else if (accessor.getClass() == IgnoreAccessor.class) {
@@ -342,7 +348,7 @@ class BaseByteCodeGenerator {
                 
                 // If there is an enum we need a symbol map
                 if ((type != null && type.getType() == TypeDef.Type.ENUM) 
-                        || (componentClass != null && componentClass.isEnum())) {
+                        || (componentType != null && componentType.getType() == TypeDef.Type.ENUM)) {
                     Objects.requireNonNull(symbolMapping);
                     
                     // Create field
@@ -2355,7 +2361,7 @@ class BaseByteCodeGenerator {
         if (factory.getClass() != ConstructorFactory.class) {
             return false;
         }
-        Constructor<?> constructor = ((ConstructorFactory)factory).getConstructor();
+        Constructor<?> constructor = ((ConstructorFactory<?>)factory).getConstructor();
         return Modifier.isPublic(constructor.getModifiers()) &&
                 !Modifier.isAbstract(constructor.getDeclaringClass().getModifiers());
     }
