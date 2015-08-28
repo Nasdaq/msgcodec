@@ -770,6 +770,8 @@ class BaseByteCodeGenerator {
                             field.getComponentJavaClass(), schema, genClassInternalName,
                             group.getName() + "." + field.getName(), javaClassCodec);
                     
+                    mv.visitInsn(POP);
+                    
                     mv.visitLabel(tryEnd);
                     mv.visitJumpInsn(GOTO, tryAfter);
                     mv.visitLabel(tryCatch);
@@ -1566,9 +1568,6 @@ class BaseByteCodeGenerator {
         type = schema.resolveToType(type, false);
         GroupDef refGroup = schema.resolveToGroup(type);
 
-        System.out.println("decode value: " + type.getType() + " " + required);
-
-        
         switch (type.getType()) {
             case INT8:
                 generateDecodeInt8Value(required, mv);
@@ -1653,10 +1652,7 @@ class BaseByteCodeGenerator {
             String genClassInternalName, String debugValueLabel, boolean javaClassCodec) {
         type = schema.resolveToType(type, false);
         
-        
         required = false;
-        System.out.println("read dummy: " + type.getType() + " " + required);
-        
         switch (type.getType()) {
             case ENUM:
                 if (required) {
@@ -1666,7 +1662,6 @@ class BaseByteCodeGenerator {
                     mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readUInt32Null",
                             "(Lcom/cinnober/msgcodec/io/ByteSource;)Ljava/lang/Integer;", false);
                 }
-                mv.visitInsn(POP);
                 break;
             default:
                 generateDecodeValue(mv, byteSourceVar, nextVar, required, type, javaClass, componentJavaClass,

@@ -66,8 +66,6 @@ public class UpdateSchemaTest {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.2f), bout);
 
-        printStream(bout);
-        
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(24, msg.number);
@@ -84,8 +82,6 @@ public class UpdateSchemaTest {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
 
-        printStream(bout);
-        
         MsgCodec codec2 = new BlinkCodecFactory(schema2).createCodec();
         Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(24, msg.number);
@@ -123,13 +119,6 @@ public class UpdateSchemaTest {
         
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
 
-        byte[] data = bout.toByteArray();
-        System.out.println("DATA:");
-        for(int i=0;i<data.length;i++) {
-            System.out.println("    " + data[i]);
-        }
-        System.out.println();
-        
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
         Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(0L, msg.decimal, 1e-8);
