@@ -117,7 +117,13 @@ public abstract class GeneratedNativeCodec extends GeneratedCodec {
     }
 
     private Object readDynamicGroup(int size, ByteSource in) throws IOException {
-        ByteBuf inbuf = (ByteBuf) in;
+        ByteBuf inbuf;
+        if (in instanceof ByteBuf) {
+            inbuf = (ByteBuf) in;
+        } else {
+            inbuf = new PositionByteSource(in);
+        }
+        
         int expectedEndPos = inbuf.position() + size;
         // PENDING: currently msgcodec only supports int32 as group id
         int groupId = (int) NativeBlinkInput.readUInt64(inbuf);

@@ -1738,7 +1738,6 @@ class BaseByteCodeGenerator {
             String genClassInternalName, String debugValueLabel, boolean javaClassCodec) {
         type = schema.resolveToType(type, false);
         
-        required = false;
         switch (type.getType()) {
             case ENUM:
                 if (required) {

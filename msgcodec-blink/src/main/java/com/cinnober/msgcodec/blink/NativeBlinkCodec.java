@@ -128,7 +128,7 @@ public class NativeBlinkCodec implements MsgCodec {
     }
     @Override
     public void encode(Object group, ByteSink out) throws IOException {
-        generatedCodec.writeDynamicGroup((ByteBuf) out, group);
+        generatedCodec.writeDynamicGroup(out, group);
     }
 
     @Override
