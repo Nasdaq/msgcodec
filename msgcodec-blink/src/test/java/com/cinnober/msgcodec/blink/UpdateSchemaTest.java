@@ -24,24 +24,23 @@
 
 package com.cinnober.msgcodec.blink;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import org.junit.Test;
-
 import com.cinnober.msgcodec.IncompatibleSchemaException;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinder;
-import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.SchemaBinder.Direction;
+import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Unsigned;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
 
 public class UpdateSchemaTest {
 
@@ -109,7 +108,7 @@ public class UpdateSchemaTest {
     }
     
     @Test
-    public void testRemovedAndAddedFields2() throws IOException, IncompatibleSchemaException {
+    public void  testRemovedAndAddedFields2() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema3 = new SchemaBuilder().build(Version3.class);
         Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND);
@@ -119,9 +118,8 @@ public class UpdateSchemaTest {
         
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
 
-        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
-        Version1 msg = (Version1) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(0L, msg.decimal, 1e-8);
+        MsgCodec codec2 = new BlinkCodecFactory(schema3).createCodec();
+        Version3 msg = (Version3) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
         assertEquals(24, msg.number);
     }
 
