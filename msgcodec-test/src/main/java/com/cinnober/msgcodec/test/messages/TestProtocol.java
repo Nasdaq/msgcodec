@@ -52,6 +52,7 @@ public class TestProtocol {
                 DynamicMessages.class,
                 DynamicMessages.AbstractMessage.class,
                 DynamicMessages.IntMsg.class,
+                BooleanMessage.class,
             });
     }
 
@@ -75,6 +76,7 @@ public class TestProtocol {
         putAll(messages, "Integers.", IntegersMessage.createMessages());
         putAll(messages, "GenericEmployees.", GenericEmployeeMessage.createMessages());
         putAll(messages, "DynamicMessages", DynamicMessages.createMessages());
+        putAll(messages, "Boolean.", BooleanMessage.createMessages());
 
         return messages;
     }

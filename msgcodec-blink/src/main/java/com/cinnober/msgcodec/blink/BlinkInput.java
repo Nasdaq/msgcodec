@@ -408,7 +408,7 @@ public class BlinkInput {
         if (b == 0xc0) {
             return null;
         } else {
-            return readUnsignedVLC(in) != 0;
+            return readUnsignedVLC(in, b) != 0;
         }
     }
 

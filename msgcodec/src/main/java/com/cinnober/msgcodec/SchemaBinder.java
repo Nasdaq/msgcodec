@@ -116,6 +116,16 @@ public class SchemaBinder {
                     
                     if(srcField == null) {
                         try {
+//                            if(dstField.isRequired() && !allowNewRequired) {
+//                                if (dir != Direction.OUTBOUND) {
+//                                    throw new IncompatibleSchemaException(
+//                                            "Field presence changed req -> opt" + details(dstGroup, dstField, dir));
+//                                }
+//                                if (dir != Direction.INBOUND) {
+//                                    throw new IncompatibleSchemaException(
+//                                            "Field presence changed opt -> req" + details(dstGroup, dstField, dir));
+//                                }
+//                            }
                             newFields.add(new CreateAccessor(dstField).bindField(dstField));
                         } catch (SecurityException e) {
                             // TODO Auto-generated catch block

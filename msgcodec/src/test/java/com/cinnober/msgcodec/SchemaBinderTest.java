@@ -296,6 +296,6 @@ public class SchemaBinderTest {
         @Unsigned
         public long reqId;
 
-        public long newRequiredField;
+        public Long newOptionalField;
     }
 }
