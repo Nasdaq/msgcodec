@@ -75,7 +75,7 @@ public class UpdateSchemaTest {
     public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
+        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND, true);
 
         MsgCodec codec1 = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -91,7 +91,7 @@ public class UpdateSchemaTest {
     public void testRemovedAndAddedFields() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema3 = new SchemaBuilder().build(Version3.class);
-        Schema schema = new SchemaBinder(schema3).bind(schema1, g -> Direction.INBOUND);
+        Schema schema = new SchemaBinder(schema3).bind(schema1, g -> Direction.INBOUND, true);
 
         MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -110,7 +110,7 @@ public class UpdateSchemaTest {
     public void  testRemovedAndAddedFields2() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema3 = new SchemaBuilder().build(Version3.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND);
+        Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND, true);
 
         MsgCodec codec1 = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();

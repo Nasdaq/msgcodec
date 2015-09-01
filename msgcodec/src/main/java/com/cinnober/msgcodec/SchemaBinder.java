@@ -87,6 +87,10 @@ public class SchemaBinder {
      *             if an incompatibility was found between the schemas.
      */
     public Schema bind(Schema dst, Function<GroupDef, Direction> dirFn) throws IncompatibleSchemaException {
+        return bind(dst, dirFn, false);
+    }
+    
+    public Schema bind(Schema dst, Function<GroupDef, Direction> dirFn, boolean allowNewRequired) throws IncompatibleSchemaException {
         Map<String, GroupDef> newGroups = new HashMap<>();
         for (GroupDef dstGroup : dst.getGroups()) {
             Direction dir = dirFn.apply(dstGroup);
@@ -116,16 +120,16 @@ public class SchemaBinder {
                     
                     if(srcField == null) {
                         try {
-//                            if(dstField.isRequired() && !allowNewRequired) {
-//                                if (dir != Direction.OUTBOUND) {
-//                                    throw new IncompatibleSchemaException(
-//                                            "Field presence changed req -> opt" + details(dstGroup, dstField, dir));
-//                                }
-//                                if (dir != Direction.INBOUND) {
-//                                    throw new IncompatibleSchemaException(
-//                                            "Field presence changed opt -> req" + details(dstGroup, dstField, dir));
-//                                }
-//                            }
+                            if(dstField.isRequired() && !allowNewRequired) {
+                                if (dir != Direction.OUTBOUND) {
+                                    throw new IncompatibleSchemaException(
+                                            "Field presence changed req -> unavailable" + details(dstGroup, dstField, dir));
+                                }
+                                if (dir != Direction.INBOUND) {
+                                    throw new IncompatibleSchemaException(
+                                            "Field presence changed unavailable -> req" + details(dstGroup, dstField, dir));
+                                }
+                            }
                             newFields.add(new CreateAccessor(dstField).bindField(dstField));
                         } catch (SecurityException e) {
                             // TODO Auto-generated catch block

@@ -56,7 +56,7 @@ public class XmlUpgradeTest {
     public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
+        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND, true);
 
         MsgCodec codec1 = new XmlCodecFactory(schema1).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -71,13 +71,11 @@ public class XmlUpgradeTest {
     public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
+        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND, true);
 
         MsgCodec codec1 = new XmlCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
-        
-        System.out.println("Encoded stuff: " + bout);
         
         assertEquals(true, bout.toString().contains("number"));
         assertEquals(true, bout.toString().contains("newInt"));
@@ -109,13 +107,11 @@ public class XmlUpgradeTest {
     public void testUpdateOutboundGroupBound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2.unbind(), g -> Direction.OUTBOUND);
+        Schema schema = new SchemaBinder(schema1).bind(schema2.unbind(), g -> Direction.OUTBOUND, true);
 
         MsgCodec codec1 = new XmlCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
-        
-        System.out.println("Encoded stuff: " + bout);
         
         assertEquals(true, bout.toString().contains("number"));
         assertEquals(true, bout.toString().contains("newInt"));

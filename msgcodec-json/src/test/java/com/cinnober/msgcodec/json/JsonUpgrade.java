@@ -52,98 +52,11 @@ import com.cinnober.msgcodec.MsgObject;
 
 public class JsonUpgrade {
 
-    /*
     @Test
     public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
-
-        MsgCodec codec1 = new JsonCodecFactory(schema1).createCodec();
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.2f), bout);
-
-        MsgCodec codec2 = new JsonCodecFactory(schema).createCodec();
-        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(24, msg.number);
-        assertEquals(EnumV2.VALUE1, msg.enumeration);
-    }
-
-    @Test
-    public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
-
-        MsgCodec codec1 = new JsonCodecFactory(schema).createCodec();
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
-
-        MsgCodec codec2 = new JsonCodecFactory(schema2).createCodec();
-        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(24, msg.number);
-        assertEquals(EnumV2.VALUE1, msg.enumeration);
-    }
-
-    
-    public static enum EnumV1 {
-        VALUE3, VALUE1, VALUE2,
-    }
-
-    public static enum EnumV2 {
-        DUMMY_1, VALUE1, VALUE2, VALUE3, ADDITIONAL_VALUE,
-    }
-    
-    @Name("Payload")
-    @Id(1)
-    public static class Version1 extends MsgObject {
-        public float decimal;
-        public EnumV1 enumeration;
-        public int number;
-
-        public Version1() {
-        }
-
-        public Version1(int value, EnumV1 eValue, float d) {
-            number = value;
-            enumeration = eValue;
-            decimal = d;
-        }
-    }
-
-    @Name("Payload")
-    @Id(1)
-    public static class Version2 extends MsgObject {
-        public double decimal;
-        public int dummy_31int;
-        public EnumV2 enumeration;
-        public long number;
-
-        public Version2() {
-        }
-
-        public Version2(long value, EnumV2 eValue, double d) {
-            number = value;
-            enumeration = eValue;
-            decimal = d;
-        }
-    }
-    */
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    @Test
-    public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
+        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND, true);
 
         MsgCodec codec1 = new JsonCodecFactory(schema1).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -158,13 +71,12 @@ public class JsonUpgrade {
     public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
+        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND, true);
 
         MsgCodec codec1 = new JsonCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
         
-        System.out.println("Encoded stuff: " + bout);
         assertEquals(true, bout.toString().contains("number"));
         assertEquals(true, bout.toString().contains("newInt"));
         assertEquals(true, bout.toString().contains("newDouble"));
@@ -195,13 +107,12 @@ public class JsonUpgrade {
     public void testUpdateOutboundGroupBound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2.unbind(), g -> Direction.OUTBOUND);
+        Schema schema = new SchemaBinder(schema1).bind(schema2.unbind(), g -> Direction.OUTBOUND, true);
 
         MsgCodec codec1 = new JsonCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
         
-        System.out.println("Encoded stuff: " + bout);
         assertEquals(true, bout.toString().contains("number"));
         assertEquals(true, bout.toString().contains("newInt"));
         assertEquals(true, bout.toString().contains("newDouble"));

@@ -16,7 +16,7 @@ public class UpgradeAddRemoveFieldMessages {
         Map<String, PairedMessages> messages = new LinkedHashMap<>();
 
         Version1 original = new Version1(24, EnumV1.VALUE1, 1.2f);
-        Version2 upgraded = new Version2(24L, (short) 0, 0.0, null);
+        Version2 upgraded = new Version2(24L, null, null, null);
         messages.put("_test1", new PairedMessages(original, upgraded));
 
         return messages;
@@ -35,7 +35,7 @@ public class UpgradeAddRemoveFieldMessages {
     public static class Version1 extends MsgObject {
         public int number;
         public EnumV1 enumeration;
-        public float decimal;
+        public Float decimal;
 
         public Version1() {
         }
@@ -51,14 +51,14 @@ public class UpgradeAddRemoveFieldMessages {
     @Id(1)
     public static class Version2 extends MsgObject {
         public long number;
-        public short newfield1;
-        public double newfield2;
+        public Short newfield1;
+        public Double newfield2;
         public EnumV2 newEnum;
         
         public Version2() {
         }
         
-        public Version2(long v1, short v2, double v3, EnumV2 v4) {
+        public Version2(long v1, Short v2, Double v3, EnumV2 v4) {
             number = v1;
             newfield1 = v2;
             newfield2 = v3;
