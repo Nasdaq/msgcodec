@@ -30,7 +30,8 @@ package com.cinnober.msgcodec;
  */
 public class SecretMessage extends MsgObject {
 
-    private String field;
+    @SuppressWarnings("unused")
+	private String field;
 
     private SecretMessage() {
     }

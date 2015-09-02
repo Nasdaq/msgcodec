@@ -24,10 +24,10 @@
 
 package com.cinnober.msgcodec.test.messages;
 
-import com.cinnober.msgcodec.anot.Id;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import com.cinnober.msgcodec.anot.Id;
 
 /**
  *

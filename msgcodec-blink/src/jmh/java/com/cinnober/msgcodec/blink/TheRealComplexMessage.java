@@ -21,20 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cinnober.msgcodec.blink;
 
-package com.cinnober.msgcodec;
+public class TheRealComplexMessage extends TheMessage {
 
-/**
- *
- * @author mikael.brannstrom
- */
-public class SecretMessage2 extends MsgObject {
-
-    @SuppressWarnings("unused")
-	private String field;
-
-    private SecretMessage2(String field) {
-        this.field = field;
-    }
-    
+	public Boolean bool;
+	public Integer num;
+	public String astring;
+	public String bstring;
+	
 }

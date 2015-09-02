@@ -4,9 +4,16 @@ apply plugin: 'me.champeau.gradle.jmh'
 apply plugin: 'idea'
 
 jmh {
+  include='BenchmarkDynamic'
   jmhVersion = '1.6.3'
+  fork = 1 
+  iterations = 10 
+  warmupIterations = 10
+  benchmarkMode = 'avgt'
+  timeOnIteration = '1s'
+  resultFormat = 'CSV'
   humanOutputFile=null
-  //jvmArgsAppend "-Xprof"
+  jvmArgsAppend "-Xprof"
 }
 if (project.hasProperty('jmh.include')) {
   jmh.include = project.properties['jmh.include']

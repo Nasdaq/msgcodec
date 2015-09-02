@@ -21,20 +21,28 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+package com.cinnober.msgcodec.blink;
 
-package com.cinnober.msgcodec;
+import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.anot.Dynamic;
 
 /**
+ * For testing  {@link Dynamic} annotation.  
+ *  @author roland.lidstrom, Cinnober Financial Technology North AB
  *
- * @author mikael.brannstrom
  */
-public class SecretMessage2 extends MsgObject {
+public class DynamicMessage extends MsgObject {
 
-    @SuppressWarnings("unused")
-	private String field;
+	/**
+	 * @param msg test msg.
+	 */
+	public DynamicMessage(TheMessage msg) {
+		this.msg = msg;
+	}
 
-    private SecretMessage2(String field) {
-        this.field = field;
-    }
-    
+	public DynamicMessage() {
+	}
+
+	@Dynamic
+	public TheMessage msg;
 }

@@ -23,13 +23,13 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
-import java.math.BigDecimal;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * @author mikael.brannstrom

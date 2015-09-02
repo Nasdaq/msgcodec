@@ -70,14 +70,16 @@ public class ProtocolUpgradeExample {
         example.serverSend(srvRsp1);
 
         // client receives the response, in version 1
-        CreateUserRsp1 cliRsp1 = (CreateUserRsp1) example.clientReceive();
+        @SuppressWarnings("unused")
+		CreateUserRsp1 cliRsp1 = (CreateUserRsp1) example.clientReceive();
 
         // server creates a version 2 response of some request2
         GetUserRsp2 srvRsp2 = new GetUserRsp2(456, 666, new User2("Bob", "bob@example.com", 0));
         example.serverSend(srvRsp2);
 
         // client recieves an unknown response, it is however mapped to the best known super class
-        Response1 cliRsp2 = (Response1) example.clientReceive();
+        @SuppressWarnings("unused")
+		Response1 cliRsp2 = (Response1) example.clientReceive();
     }
 
     /** Codec used for both client and server for encoding/decoding the meta (handshake) protocol. */

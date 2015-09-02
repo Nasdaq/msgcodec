@@ -23,9 +23,9 @@
  */
 package com.cinnober.msgcodec.test.messages;
 
-import com.cinnober.msgcodec.Schema;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import com.cinnober.msgcodec.Schema;
 
 
 /**
