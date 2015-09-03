@@ -14,7 +14,7 @@ buildscript {
 }
 
 allprojects { 
-  ext.nextVersion = 'major'
+  ext.nextVersion = 'patch'
   apply plugin: 'com.cinnober.gradle.semver-git'
   group = 'com.cinnober.msgcodec'
 }
