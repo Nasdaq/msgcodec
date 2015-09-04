@@ -24,24 +24,23 @@
 
 package com.cinnober.msgcodec.blink;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-
-import org.junit.Test;
-
 import com.cinnober.msgcodec.IncompatibleSchemaException;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinder;
-import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.SchemaBinder.Direction;
+import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Unsigned;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
 
 public class NativeBlinkUpdateSchemaTest {
 
@@ -76,7 +75,7 @@ public class NativeBlinkUpdateSchemaTest {
     public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND, true);
+        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
 
         MsgCodec codec1 = new NativeBlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -92,7 +91,7 @@ public class NativeBlinkUpdateSchemaTest {
     public void testRemovedAndAddedFields() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema3 = new SchemaBuilder().build(Version3.class);
-        Schema schema = new SchemaBinder(schema3).bind(schema1, g -> Direction.INBOUND, true);
+        Schema schema = new SchemaBinder(schema3).bind(schema1, g -> Direction.INBOUND);
 
         MsgCodec codec1 = new NativeBlinkCodecFactory(schema1).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -111,7 +110,7 @@ public class NativeBlinkUpdateSchemaTest {
     public void testRemovedAndAddedFields2() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema3 = new SchemaBuilder().build(Version3.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND, true);
+        Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND);
 
         MsgCodec codec1 = new NativeBlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();

@@ -72,10 +72,39 @@ public class SchemaBinder {
         this.src = src;
     }
 
+    private void checkRequiredFields(GroupDef src, GroupDef dst, Direction dir) throws IncompatibleSchemaException {
+        if (!dir.equals(Direction.OUTBOUND)) {
+            for (FieldDef f : src.getFields()) {
+                FieldDef dstField = dst.getField(f.getName());
+                if (f.isRequired() && dstField == null) {
+                    throw new IncompatibleSchemaException(
+                            "Field presence changed req -> unavailable" + details(src, f, dir));
+                }
+                if (f.isRequired() && (!dstField.isRequired())) {
+                    throw new IncompatibleSchemaException(
+                            "Field presence changed req -> opt" + details(dst, f, dir));
+                }
+            }
+        }
+        if (!dir.equals(Direction.INBOUND)) {
+            for (FieldDef f : dst.getFields()) {
+                FieldDef srcField = src.getField(f.getName());
+                if (f.isRequired() && srcField == null) {
+                    throw new IncompatibleSchemaException(
+                            "Field presence changed unavailable -> req" + details(dst, f, dir));
+                }
+                if (f.isRequired() && (!srcField.isRequired())) {
+                    throw new IncompatibleSchemaException(
+                            "Field presence changed opt -> req" + details(dst, f, dir));
+                }
+            }
+        }
+    }
+
     /**
      * Bind the specified destination schema using the bindings of the source
      * schema.
-     * 
+     *
      * @param dst
      *            the schema that should be bound, not null.
      * @param dirFn
@@ -87,10 +116,6 @@ public class SchemaBinder {
      *             if an incompatibility was found between the schemas.
      */
     public Schema bind(Schema dst, Function<GroupDef, Direction> dirFn) throws IncompatibleSchemaException {
-        return bind(dst, dirFn, false);
-    }
-    
-    public Schema bind(Schema dst, Function<GroupDef, Direction> dirFn, boolean allowNewRequired) throws IncompatibleSchemaException {
         Map<String, GroupDef> newGroups = new HashMap<>();
         for (GroupDef dstGroup : dst.getGroups()) {
             Direction dir = dirFn.apply(dstGroup);
@@ -115,21 +140,13 @@ public class SchemaBinder {
                     throw new IncompatibleSchemaException("Different group inheritance" + details(dstGroup, dir));
                 }
                 groupBinding = srcGroup.getBinding();
+                checkRequiredFields(srcGroup, dstGroup, dir);
+
                 for (FieldDef dstField : dstGroup.getFields()) {
                     FieldDef srcField = srcGroup.getField(dstField.getName());
                     
                     if(srcField == null) {
                         try {
-                            if(dstField.isRequired() && !allowNewRequired) {
-                                if (dir != Direction.OUTBOUND) {
-                                    throw new IncompatibleSchemaException(
-                                            "Field presence changed req -> unavailable" + details(dstGroup, dstField, dir));
-                                }
-                                if (dir != Direction.INBOUND) {
-                                    throw new IncompatibleSchemaException(
-                                            "Field presence changed unavailable -> req" + details(dstGroup, dstField, dir));
-                                }
-                            }
                             newFields.add(new CreateAccessor(dstField).bindField(dstField));
                         } catch (SecurityException e) {
                             // TODO Auto-generated catch block
@@ -184,14 +201,7 @@ public class SchemaBinder {
             }
             return IgnoreAccessor.bindField(dstField);
         } else {
-            if (srcField.isRequired() && !dstField.isRequired() && dir != Direction.OUTBOUND) {
-                throw new IncompatibleSchemaException(
-                        "Field presence changed req -> opt" + details(dstGroup, dstField, dir));
-            }
-            if (!srcField.isRequired() && dstField.isRequired() && dir != Direction.INBOUND) {
-                throw new IncompatibleSchemaException(
-                        "Field presence changed opt -> req" + details(dstGroup, dstField, dir));
-            }
+
             TypeDef srcType = src.resolveToType(srcField.getType(), true);
             TypeDef dstType = dst.resolveToType(dstField.getType(), true);
             if (srcType.equals(dstType)) {

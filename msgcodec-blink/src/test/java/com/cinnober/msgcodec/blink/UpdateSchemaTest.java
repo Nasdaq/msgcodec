@@ -33,7 +33,6 @@ import com.cinnober.msgcodec.SchemaBinder.Direction;
 import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
-import com.cinnober.msgcodec.anot.Unsigned;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -41,195 +40,297 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class UpdateSchemaTest {
+    private void testWideningAndNarrowingSchemaBuild(Class<?>... classes) throws IncompatibleSchemaException {
+        for (int i=0;i<classes.length-1;i++) {
+            for (int j=i+1;j<classes.length;j++) {
+                Schema schemaNarrow = new SchemaBuilder().build(classes[i]);
+                Schema schemaWide = new SchemaBuilder().build(classes[j]);
 
-    public void printStream(ByteArrayOutputStream stream) {
-        byte[] arr = stream.toByteArray();
+                boolean exceptionThrown = false;
+                try {
+                    new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+                } catch (IncompatibleSchemaException e) {
+                    exceptionThrown = true;
+                }
+                assertTrue("No IncompatibleSchemaException thrown for "+classes[j]+"->"+classes[i]+"!",exceptionThrown);
 
-        for (int i = 0; i < arr.length; i++) {
-            System.out.print(arr[i] & 0xFF);
-            System.out.print(" ");
+                new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+
+                exceptionThrown = false;
+                try {
+                    new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.INBOUND);
+                } catch (IncompatibleSchemaException e) {
+                    exceptionThrown = true;
+                }
+                assertTrue("No IncompatibleSchemaException thrown for "+classes[i]+"<-"+classes[j]+"!",exceptionThrown);
+
+                new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.OUTBOUND);
+
+                exceptionThrown = false;
+                try {
+                    new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.BOTH);
+                } catch (IncompatibleSchemaException e) {
+                    exceptionThrown = true;
+                }
+                assertTrue("No IncompatibleSchemaException thrown for "+classes[i]+"<->"+classes[j]+"!",exceptionThrown);
+            }
         }
-        System.out.println("");
+    }
+
+    @Test
+    public void testWideningAndNarrowing() throws IOException, IncompatibleSchemaException {
+        // wider direction --->
+        testWideningAndNarrowingSchemaBuild(DecimalNarrow.class, DecimalWide.class);
+        testWideningAndNarrowingSchemaBuild(ByteNum.class, OptByteNum.class);
+        testWideningAndNarrowingSchemaBuild(ByteNum.class, ShortNum.class, IntNum.class, LongNum.class);
+        testWideningAndNarrowingSchemaBuild(EnumEntNarrow.class, EnumEntWide.class);
+        testWideningAndNarrowingSchemaBuild(CarWithRequiredYear.class, Car.class);
     }
 
 
     @Test
-    public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
+    public void testWidenDecimalFieldOutbound() throws IOException, IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(DecimalNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(DecimalWide.class);
 
-        MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.2f), bout);
-
-        MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
-        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(24, msg.number);
-        assertEquals(EnumV2.VALUE1, msg.enumeration);
-    }
-
-    @Test
-    public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND, true);
+        Schema schema = new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.OUTBOUND);
 
         MsgCodec codec1 = new BlinkCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
+        codec1.encode(new DecimalNarrow(12.0f), bout);
 
-        MsgCodec codec2 = new BlinkCodecFactory(schema2).createCodec();
-        Version2 msg = (Version2) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(24, msg.number);
+        MsgCodec codec2 = new BlinkCodecFactory(schemaWide).createCodec();
+        DecimalWide msg = (DecimalWide) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(12.0, msg.decimal, 0.00001);
     }
 
-    
     @Test
-    public void testRemovedAndAddedFields() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema3 = new SchemaBuilder().build(Version3.class);
-        Schema schema = new SchemaBinder(schema3).bind(schema1, g -> Direction.INBOUND, true);
+    public void testWidenDecimalFieldInbound() throws IOException, IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(DecimalNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(DecimalWide.class);
 
-        MsgCodec codec1 = new BlinkCodecFactory(schema1).createCodec();
+        Schema schema = new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+
+        MsgCodec codec1 = new BlinkCodecFactory(schemaNarrow).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        
-        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
+        codec1.encode(new DecimalNarrow(12.0f), bout);
 
         MsgCodec codec2 = new BlinkCodecFactory(schema).createCodec();
-        Version3 msg = (Version3) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(0L, msg.newfield1);
-        assertEquals(0.0f, msg.newfield2, 1e-8);
-        assertEquals(null, msg.newEnum);
-        assertEquals(24L, msg.number);
+        DecimalWide msg = (DecimalWide) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
+        assertEquals(12.0, msg.decimal, 0.00001);
     }
-    
-    @Test
-    public void  testRemovedAndAddedFields2() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema3 = new SchemaBuilder().build(Version3.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema3, g -> Direction.OUTBOUND, true);
 
-        MsgCodec codec1 = new BlinkCodecFactory(schema).createCodec();
+
+    private void reqFieldTest(boolean reqOnSrc, boolean reqOnDst, Direction direction) throws IncompatibleSchemaException, IOException {
+        Schema source = new SchemaBuilder().build(reqOnSrc ? CarWithRequiredYear.class : Car.class);
+        Schema dest = new SchemaBuilder().build(reqOnDst ? CarWithRequiredYear.class : Car.class);
+
+        Schema sendSchema = new SchemaBinder(source).bind(dest, g -> direction);
+        MsgCodec codec = new BlinkCodecFactory(sendSchema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        
-        codec1.encode(new Version1(24, EnumV1.VALUE1, 1.0f), bout);
 
-        MsgCodec codec2 = new BlinkCodecFactory(schema3).createCodec();
-        Version3 msg = (Version3) codec2.decode(new ByteArrayInputStream(bout.toByteArray()));
-        assertEquals(24, msg.number);
+        if (direction.equals(Direction.OUTBOUND)) {
+            Object entity = reqOnSrc ? new CarWithRequiredYear() : new Car();
+            codec.encode(entity, bout);
+            MsgCodec codecDest = new BlinkCodecFactory(dest).createCodec();
+            Object decoded = codecDest.decode(new ByteArrayInputStream(bout.toByteArray()));
+            assertEquals(reqOnDst ? CarWithRequiredYear.class : Car.class, decoded.getClass());
+        } else {
+            Object entity = reqOnDst ? new CarWithRequiredYear() : new Car();
+            MsgCodec codecDest = new BlinkCodecFactory(dest).createCodec();
+            codecDest.encode(entity, bout);
+            Object decoded = codec.decode(new ByteArrayInputStream(bout.toByteArray()));
+            assertEquals(reqOnSrc ? CarWithRequiredYear.class : Car.class, decoded.getClass());
+        }
     }
 
-    @Test (expected = IncompatibleSchemaException.class)
-    public void testRemovedAndAddedFieldsNarrow() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema3 = new SchemaBuilder().build(Version3.class);
-        new SchemaBinder(schema1).bind(schema3, g -> Direction.INBOUND);
+    @Test
+    public void testReqOnlyOnSourceOutbound() throws IncompatibleSchemaException, IOException {
+        reqFieldTest(true, false, Direction.OUTBOUND);
     }
 
-    @Test (expected = IncompatibleSchemaException.class)
-    public void testRemovedAndAddedFieldsNarrow2() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema3 = new SchemaBuilder().build(Version3.class);
-        new SchemaBinder(schema3).bind(schema1, g -> Direction.OUTBOUND);
-    }
-    
-    @Test (expected = IncompatibleSchemaException.class)
-    public void testRemovedAndAddedFieldsNarrow3() throws IOException, IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().build(Version1.class);
-        Schema schema3 = new SchemaBuilder().build(Version3.class);
-        new SchemaBinder(schema1).bind(schema3, g -> Direction.BOTH);
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testReqOnlyOnSourceInbound() throws IncompatibleSchemaException, IOException {
+        reqFieldTest(true, false, Direction.INBOUND);
     }
 
-    public static enum EnumV1 {
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testReqOnlyOnDstOutbound() throws IncompatibleSchemaException, IOException {
+        reqFieldTest(false, true, Direction.OUTBOUND);
+    }
+
+    @Test
+    public void testReqOnlyOnDstInbound() throws IncompatibleSchemaException, IOException {
+        reqFieldTest(false, true, Direction.INBOUND);
+    }
+
+    @Test
+    public void testSourceWithOptionalFieldInbound() throws IOException, IncompatibleSchemaException {
+        Schema schemaWithField = new SchemaBuilder().build(DogWithOptionalSize.class);
+        Schema schemaWithoutField = new SchemaBuilder().build(Dog.class);
+        new SchemaBinder(schemaWithField).bind(schemaWithoutField, g -> Direction.INBOUND);
+    }
+
+    @Test
+    public void testDestWithOptionalFieldInbound() throws IOException, IncompatibleSchemaException {
+        Schema schemaWithField = new SchemaBuilder().build(DogWithOptionalSize.class);
+        Schema schemaWithoutField = new SchemaBuilder().build(Dog.class);
+        new SchemaBinder(schemaWithoutField).bind(schemaWithField, g -> Direction.INBOUND);
+    }
+
+    @Test
+    public void testSourceWithOptionalFieldOutbound() throws IOException, IncompatibleSchemaException {
+        Schema schemaWithField = new SchemaBuilder().build(DogWithOptionalSize.class);
+        Schema schemaWithoutField = new SchemaBuilder().build(Dog.class);
+        new SchemaBinder(schemaWithField).bind(schemaWithoutField, g -> Direction.OUTBOUND);
+    }
+
+    @Test
+    public void testDestWithOptionalFieldOutbound() throws IOException, IncompatibleSchemaException {
+        Schema schemaWithField = new SchemaBuilder().build(DogWithOptionalSize.class);
+        Schema schemaWithoutField = new SchemaBuilder().build(Dog.class);
+        new SchemaBinder(schemaWithoutField).bind(schemaWithField, g -> Direction.OUTBOUND);
+    }
+
+    public enum EnumNarrow {
         VALUE3, VALUE1, VALUE2,
     }
 
-    public static enum EnumV2 {
+    public enum EnumWide {
         DUMMY_1, VALUE1, VALUE2, VALUE3, ADDITIONAL_VALUE,
     }
 
-    @Name("Payload")
+    @Name("EnumEnt")
     @Id(1)
-    public static class Version1 extends MsgObject {
+    public static class EnumEntNarrow extends MsgObject {
+        public EnumNarrow enumeration;
+
+        public EnumEntNarrow() {
+        }
+
+        public EnumEntNarrow(EnumNarrow eValue) {
+            enumeration = eValue;
+        }
+    }
+
+    @Name("EnumEnt")
+    @Id(1)
+    public static class EnumEntWide extends MsgObject {
+        public EnumWide enumeration;
+
+        public EnumEntWide() {
+        }
+
+        public EnumEntWide(EnumWide eValue) {
+            enumeration = eValue;
+        }
+    }
+
+    @Name("Decimal")
+    @Id(2)
+    public static class DecimalNarrow extends MsgObject {
         public float decimal;
-        public EnumV1 enumeration;
-        public int number;
 
-        public Version1() {
+        public DecimalNarrow() {
         }
 
-        public Version1(int value, EnumV1 eValue, float d) {
-            number = value;
-            enumeration = eValue;
-            decimal = d;
+        public DecimalNarrow(float decimal) {
+            this.decimal=decimal;
         }
     }
 
-    @Name("Payload")
-    @Id(1)
-    public static class Version2 extends MsgObject {
+    @Name("Decimal")
+    @Id(2)
+    public static class DecimalWide extends MsgObject {
         public double decimal;
-        
-        public byte dummy_11byte;
-        @Unsigned
-        public byte dummy_12byte;
-        public Byte dummy_13byte;
-        @Unsigned
-        public Byte dummy_14byte;
-        
-        public short dummy_21short;
-        @Unsigned
-        public short dummy_22short;
-        public Short dummy_23short;
-        @Unsigned
-        public Short dummy_24short;
-        
-        public int dummy_31int;
-        @Unsigned
-        public int dummy_32int;
-        public Integer dummy_33int;
-        @Unsigned
-        public Integer dummy_34int;
 
-        public float dummy_41float;
-        public Float dummy_42float;
-        
-        
-        public EnumV2 enumeration;
-        public long number;
-
-        public Version2() {
+        public DecimalWide() {
         }
 
-        public Version2(long value, EnumV2 eValue, double d) {
-            number = value;
-            enumeration = eValue;
-            decimal = d;
+        public DecimalWide(double decimal) {
+            this.decimal=decimal;
         }
     }
 
-    @Name("Payload")
-    @Id(1)
-    public static class Version3 extends MsgObject {
-        public long number;
-        public short newfield1;
-        public double newfield2;
-        public EnumV2 newEnum;
-        
-        public Version3() {
-        }
-        
-        public Version3(long v1, short v2, double v3, EnumV2 v4) {
-            number = v1;
-            newfield1 = v2;
-            newfield2 = v3;
-            newEnum = v4;
-        }
 
+    @Name("Number")
+    @Id(3)
+    public static class OptByteNum extends MsgObject {
+        public Byte n;
     }
-    
+
+    @Name("Number")
+    @Id(3)
+    public static class ByteNum extends MsgObject {
+        public byte n;
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class ShortNum extends MsgObject {
+        public short n;
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class IntNum extends MsgObject {
+        public int n;
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class LongNum extends MsgObject {
+        public long n;
+    }
+
+
+    @Name("Car")
+    @Id(10)
+    public static class Car extends MsgObject {
+        public String number;
+
+        public Car() {
+            number = "CAR " + System.nanoTime();
+        }
+    }
+
+    @Name("Car")
+    @Id(10)
+    public static class CarWithRequiredYear extends MsgObject {
+        public String number;
+        public int year;
+
+        public CarWithRequiredYear() {
+            number = "CAR " + System.nanoTime();
+            year = (int)(System.nanoTime()%3000);
+        }
+    }
+
+    @Name("Dog")
+    @Id(11)
+    public static class Dog extends MsgObject {
+        public String number;
+
+        public Dog() {
+            number = "Dog " + System.nanoTime();
+        }
+    }
+
+    @Name("Dog")
+    @Id(11)
+    public static class DogWithOptionalSize extends MsgObject {
+        public String number;
+        public Integer size;
+
+        public DogWithOptionalSize() {
+            number = "Dog " + System.nanoTime();
+            size = (int)(System.nanoTime()%3000);
+        }
+    }
+
+
 
 }
