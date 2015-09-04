@@ -10,11 +10,11 @@ import com.cinnober.msgcodec.EncodeBufferOverflowException;
  * A bytebuf implementation that will reallocate the underlying bytebuffer when required.
  */
 public class ReallocatingByteBuf implements ByteBuf {
-    ByteBuffer buffer;
-    final Function<Integer, ByteBuffer> bufferAllocator;
-    final int maximumSize;
-    int currentSize;
-    int limit;
+    private ByteBuffer buffer;
+    private final Function<Integer, ByteBuffer> bufferAllocator;
+    private final int maximumSize;
+    private int currentSize;
+    private int limit;
 
     public ReallocatingByteBuf(int initialSize, int maximumSize, Function<Integer, ByteBuffer> bufferAllocator) {
         buffer = bufferAllocator.apply(Math.min(initialSize, maximumSize));
@@ -149,5 +149,10 @@ public class ReallocatingByteBuf implements ByteBuf {
     @Override
     public String toString() {
         return this.getClass().getSimpleName()+"[pos="+position()+" lim="+limit+" cap="+capacity()+"]";
+    }
+    
+    
+    public ByteBuffer getBuffer() {
+        return buffer;
     }
 }
