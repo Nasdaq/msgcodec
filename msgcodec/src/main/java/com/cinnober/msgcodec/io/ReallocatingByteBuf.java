@@ -1,10 +1,14 @@
 package com.cinnober.msgcodec.io;
 
+import java.io.IOException;
+import java.nio.BufferOverflowException;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.function.Function;
 
 import com.cinnober.msgcodec.EncodeBufferOverflowException;
+import com.cinnober.msgcodec.EncodeBufferUnderflowException;
 
 /**
  * A bytebuf implementation that will reallocate the underlying bytebuffer when required.
@@ -13,14 +17,17 @@ public class ReallocatingByteBuf implements ByteBuf {
     private ByteBuffer buffer;
     private final Function<Integer, ByteBuffer> bufferAllocator;
     private final int maximumSize;
-    private int currentSize;
+    private int size;
     private int limit;
+    private final char[] chars = new char[128];
 
     public ReallocatingByteBuf(int initialSize, int maximumSize, Function<Integer, ByteBuffer> bufferAllocator) {
-        buffer = bufferAllocator.apply(Math.min(initialSize, maximumSize));
+        int newSize = Math.min(initialSize, maximumSize);
+        buffer = bufferAllocator.apply(newSize);
         this.bufferAllocator = bufferAllocator;
         this.maximumSize = maximumSize;
         limit = maximumSize;
+        size = newSize;
     }
 
 
@@ -51,20 +58,35 @@ public class ReallocatingByteBuf implements ByteBuf {
         return n>0 && n>=requested && n<maximum ? n : maximum;
     }
 
-    private void ensureCapacity(int size) {
-        if (buffer.capacity() < size) {
-            if (size>maximumSize) {
-                throw new EncodeBufferOverflowException("Required buffer capacity "+size+" bytes exceeds maximum allowed - "+maximumSize+" bytes!");
+    private void ensureCapacity(int askSize) {
+        if (askSize > size) {
+            if (askSize > maximumSize) {
+                throw new EncodeBufferOverflowException("Required buffer capacity: "+askSize+" bytes exceeds maximum: "+maximumSize+" bytes!");
             }
-            int newSize = Math.max(buffer.capacity()*2, size);
+            if (askSize > limit) {
+                throw new EncodeBufferOverflowException("Required buffer capacity: "+askSize+" bytes exceeds limit: "+limit+" bytes!");
+            }
+            int newSize = Math.max(buffer.capacity()*2, askSize);
             ByteBuffer newBuffer = bufferAllocator.apply(calculateNewCapacity(buffer.capacity(), newSize, maximumSize));
             int position = buffer.position();
             ByteBuffers.copy(buffer, 0, newBuffer, 0, buffer.capacity());
             newBuffer.position(position).limit(Math.min(limit, newBuffer.capacity()));
             buffer = newBuffer;
+            size = newSize;
         }
     }
 
+    private void ensureReadCapacity(int askSize) {
+        if (askSize > maximumSize) {
+            throw new EncodeBufferUnderflowException("Required buffer capacity: "+askSize+" bytes exceeds maximum: "+maximumSize+" bytes!");
+        }
+        if (askSize > limit) {
+            throw new EncodeBufferUnderflowException("Required buffer capacity: "+askSize+" bytes exceeds limit: "+limit+" bytes!");
+        }
+        throw new RuntimeException("Reading out of bounds: " + askSize);
+    }
+    
+    
     @Override
     public int position() {
         return buffer.position();
@@ -72,7 +94,9 @@ public class ReallocatingByteBuf implements ByteBuf {
 
     @Override
     public ByteBuf position(int position) {
-        ensureCapacity(position);
+        if(position > size) {
+            ensureCapacity(position);
+        }
         buffer.position(position);
         return this;
     }
@@ -85,6 +109,9 @@ public class ReallocatingByteBuf implements ByteBuf {
     @Override
     public ByteBuf limit(int limit) {
         this.limit = limit;
+        if(limit < size) {
+            size = limit;
+        }
         return this;
     }
 
@@ -99,7 +126,6 @@ public class ReallocatingByteBuf implements ByteBuf {
     @Override
     public ByteBuf flip() {
         int p = buffer.position();
-        buffer.limit(p);
         limit = p;
         buffer.position(0);
         return this;
@@ -123,25 +149,16 @@ public class ReallocatingByteBuf implements ByteBuf {
 
     @Override
     public void write(int b) {
-        final int i = buffer.position()+1;
-        if (i>=limit) {
-            if (i >= maximumSize) {
-                throw new EncodeBufferOverflowException("Entity encoding buffer is too small ("+maximumSize+" bytes)!");
-            } else {
-                throw new EncodeBufferOverflowException("Buffer limit (not capacity) reached - cannot write byte "+i+"!");
-            }
-
+        if(buffer.position() >= size) {
+            ensureCapacity(buffer.position() + 1);
         }
-        ensureCapacity(i);
         buffer.put((byte)b);
     }
 
     @Override
     public int read() {
-        final int i = buffer.position()+1;
-        ensureCapacity(i);
-        if (i>limit) {
-            throw new BufferUnderflowException();
+        if (buffer.position() >= size) {
+            ensureReadCapacity(buffer.position()+1);
         }
         return buffer.get();
     }
@@ -155,4 +172,84 @@ public class ReallocatingByteBuf implements ByteBuf {
     public ByteBuffer getBuffer() {
         return buffer;
     }
+    
+    
+    @Override
+    public void skip(int len) throws IOException {
+        if (buffer.position() + len > limit()) {
+            throw new BufferUnderflowException();
+        }
+        buffer.position(buffer.position()+len);
+    }
+    
+    @Override
+    public String readStringUtf8(int len) throws IOException {
+        if (position() + len > limit()) {
+            throw new BufferUnderflowException();
+        }
+        if (len < 128) {
+            boolean ascii = true;
+            for (int i=0; i<len; i++) {
+                chars[i] = (char) buffer.get();
+                if(chars[i] < 0) {
+                    ascii = false;
+                    break;
+                }
+            }
+            if (ascii) {
+                return new String(chars, 0, len);
+            }
+            else {
+                buffer.position(buffer.position() - len);
+            }
+        }
+        return ByteBuf.super.readStringUtf8(len);
+    }
+
+    @Override
+    public void writeIntLE(int v) throws IOException {
+        if (buffer.position() + 4 > size) {
+            ensureCapacity(buffer.position()+4);
+        }
+        buffer.putInt(buffer.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v));
+    }
+
+    @Override
+    public void writeLongLE(long v) throws IOException {
+        if (buffer.position() + 8 > size) {
+            ensureCapacity(position()+8);
+        }
+        buffer.putLong(buffer.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v));
+    }
+
+    @Override
+    public int readIntLE() throws IOException {
+        try {
+            int v = buffer.getInt();
+            return buffer.order() == ByteOrder.LITTLE_ENDIAN ? v : Integer.reverseBytes(v);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
+    public long readLongLE() throws IOException {
+        try {
+            long v = buffer.getLong();
+            return buffer.order() == ByteOrder.LITTLE_ENDIAN ? v : Long.reverseBytes(v);
+        } catch (BufferUnderflowException e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
+    public void pad(int n) throws IOException {
+        if (buffer.position() + n > size) {
+            ensureCapacity(position()+n);
+        }
+        for (int i=0; i<n; i++) {
+            write(0);
+        }
+    }
+    
 }

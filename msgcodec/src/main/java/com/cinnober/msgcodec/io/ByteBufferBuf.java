@@ -77,6 +77,10 @@ public class ByteBufferBuf implements ByteBuf {
     public int capacity() {
         return buf.capacity();
     }
+    
+    public int allocation() {
+        return buf.capacity();
+    }
 
     @Override
     public ByteBuf limit(int limit) {

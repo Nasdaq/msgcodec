@@ -30,21 +30,21 @@ package com.cinnober.msgcodec;
  *
  * @author mikael.brannstrom
  */
-public class EncodeBufferOverflowException extends RuntimeException {
+public class EncodeBufferUnderflowException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
-    public EncodeBufferOverflowException() {
+    public EncodeBufferUnderflowException() {
     }
 
-    public EncodeBufferOverflowException(String message) {
+    public EncodeBufferUnderflowException(String message) {
         super(message);
     }
 
-    public EncodeBufferOverflowException(String message, Throwable cause) {
+    public EncodeBufferUnderflowException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public EncodeBufferOverflowException(Throwable cause) {
+    public EncodeBufferUnderflowException(Throwable cause) {
         super(cause);
     }
 }

@@ -25,10 +25,14 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
+import com.cinnober.msgcodec.EncodeBufferOverflowException;
+import com.cinnober.msgcodec.EncodeBufferUnderflowException;
 import com.cinnober.msgcodec.anot.Id;
 
 /**
@@ -53,9 +57,9 @@ public class ReallocatingByteBufTest {
         return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
     }
     
-    @Test
-    public void testReallocatedByteBufGrowing() throws IOException {
-        ReallocatingByteBuf buf = new ReallocatingByteBuf(8, 22, ByteBuffer::allocate);
+    
+    // expects a buffer with initial size 8 and max size 22
+    public void testByteBufGrowing(ByteBuf buf) throws IOException {
         assertEquals(8 , buf.allocation());
         writeInt32BE(buf, 1);
         writeInt32BE(buf, 2);
@@ -75,6 +79,42 @@ public class ReallocatingByteBufTest {
         assertEquals(5, readInt32BE(buf));
     }
 
+    // expects a buffer with initial size 8 and max size 16
+    public void testByteBufLimitOverflow(ByteBuf buf) throws IOException {
+        
+        buf.limit(8);
+        assertEquals(8 , buf.allocation());
+        writeInt32BE(buf, 1);
+        writeInt32BE(buf, 2);
+        writeInt32BE(buf, 3);
+    }
+
+    // expects a buffer with initial size 8 and max size 8
+    public void testByteBufOverflow(ByteBuf buf) throws IOException {
+        
+        assertEquals(8 , buf.allocation());
+        writeInt32BE(buf, 1);
+        writeInt32BE(buf, 2);
+        writeInt32BE(buf, 3);
+    }
+    
+    
+    // expects a buffer with initial size 8 and max size 8
+    public void testByteBufLimitUnderflow(ByteBuf buf) throws IOException {
+        
+        assertEquals(8 , buf.allocation());
+        writeInt32BE(buf, 1);
+        writeInt32BE(buf, 2);
+        assertEquals(8 , buf.allocation());
+
+        buf.flip();
+
+        assertEquals(1, readInt32BE(buf));
+        assertEquals(2, readInt32BE(buf));
+        assertEquals(3, readInt32BE(buf));
+    }
+    
+    
     @Id(1)
     public static class InternalMessageObject {
         public int id;
@@ -85,4 +125,68 @@ public class ReallocatingByteBufTest {
 
         public InternalMessageObject(int id, String text, boolean flag) {}
     }
+    
+    
+    @Test
+    public void testReallocatingBuffer() throws IOException {
+        testByteBufGrowing(new ReallocatingByteBuf(8, 22, ByteBuffer::allocate));
+    }
+
+    @Test
+    public void testReallocatingDirectBuffer() throws IOException {
+        testByteBufGrowing(new ReallocatingByteBuf(8, 22, ByteBuffer::allocateDirect));
+    }
+    
+    @Test
+    public void testReallocatingArray() throws IOException {
+        testByteBufGrowing(new ReallocatingArray(8, 22));
+    }
+    
+    @Test(expected = EncodeBufferOverflowException.class)
+    public void testReallocatingBufferLimitOverflow() throws IOException {
+        testByteBufLimitOverflow(new ReallocatingByteBuf(8, 16, ByteBuffer::allocate));
+    }
+    
+    @Test(expected = EncodeBufferOverflowException.class)
+    public void testReallocatingDirectBufferLimitOverflow() throws IOException {
+        testByteBufLimitOverflow(new ReallocatingByteBuf(8, 16, ByteBuffer::allocateDirect));
+    }
+    
+    @Test(expected = EncodeBufferOverflowException.class)
+    public void testReallocatingArrayrLimitOverflow() throws IOException {
+        testByteBufLimitOverflow(new ReallocatingArray(8, 16));
+    }
+    
+    
+    @Test(expected = EncodeBufferOverflowException.class)
+    public void testReallocatingBufferOverflow() throws IOException {
+        testByteBufOverflow(new ReallocatingByteBuf(8, 8, ByteBuffer::allocate));
+    }
+    
+    @Test(expected = EncodeBufferOverflowException.class)
+    public void testReallocatingDirectBufferOverflow() throws IOException {
+        testByteBufOverflow(new ReallocatingByteBuf(8, 8, ByteBuffer::allocateDirect));
+    }
+    
+    @Test(expected = EncodeBufferOverflowException.class)
+    public void testReallocatingArrayrOverflow() throws IOException {
+        testByteBufOverflow(new ReallocatingArray(8, 8));
+    }
+    
+    
+    @Test(expected = EncodeBufferUnderflowException.class)
+    public void testReallocatingBufferUnderflow() throws IOException {
+        testByteBufLimitUnderflow(new ReallocatingByteBuf(8, 8, ByteBuffer::allocate));
+    }
+    
+    @Test(expected = EncodeBufferUnderflowException.class)
+    public void testReallocatingDirectBufferUnderflow() throws IOException {
+        testByteBufLimitUnderflow(new ReallocatingByteBuf(8, 8, ByteBuffer::allocateDirect));
+    }
+    
+    @Test(expected = EncodeBufferUnderflowException.class)
+    public void testReallocatingArrayrUnderflow() throws IOException {
+        testByteBufLimitUnderflow(new ReallocatingArray(8, 8));
+    }
+    
 }

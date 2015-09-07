@@ -99,4 +99,10 @@ public interface ByteBuf extends ByteSource, ByteSink {
     default boolean hasRemaining() {
         return remaining() != 0;
     }
+    
+    /**
+     * Returns the currently allocated size (valid for resizing buffer types, should otherwise be the capacity)
+     * @return
+     */
+    int allocation();
 }

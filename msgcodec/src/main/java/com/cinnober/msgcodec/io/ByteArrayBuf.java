@@ -76,6 +76,10 @@ public class ByteArrayBuf implements ByteBuf {
         return data.length;
     }
 
+    public int allocation() {
+        return data.length;
+    }
+    
     @Override
     public int position() {
         return pos;

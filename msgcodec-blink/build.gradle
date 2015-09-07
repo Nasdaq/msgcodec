@@ -4,7 +4,7 @@ apply plugin: 'me.champeau.gradle.jmh'
 apply plugin: 'idea'
 
 jmh {
-  include='BenchmarkDynamic'
+  include='BenchmarkOuch42EnterOrder'
   jmhVersion = '1.6.3'
   fork = 1 
   iterations = 10 
