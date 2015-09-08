@@ -56,7 +56,7 @@ public class XmlUpgradeTest {
     public void testUpdateInbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND, true);
+        Schema schema = new SchemaBinder(schema2).bind(schema1, g -> Direction.INBOUND);
 
         MsgCodec codec1 = new XmlCodecFactory(schema1).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -71,7 +71,7 @@ public class XmlUpgradeTest {
     public void testUpdateOutbound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND, true);
+        Schema schema = new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
 
         MsgCodec codec1 = new XmlCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -107,7 +107,7 @@ public class XmlUpgradeTest {
     public void testUpdateOutboundGroupBound() throws IOException, IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().build(Version1.class);
         Schema schema2 = new SchemaBuilder().build(Version2.class);
-        Schema schema = new SchemaBinder(schema1).bind(schema2.unbind(), g -> Direction.OUTBOUND, true);
+        Schema schema = new SchemaBinder(schema1).bind(schema2.unbind(), g -> Direction.OUTBOUND);
 
         MsgCodec codec1 = new XmlCodecFactory(schema).createCodec();
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
