@@ -30,6 +30,9 @@ import com.cinnober.msgcodec.io.ByteArrayBuf;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
 import com.cinnober.msgcodec.io.ByteBuffers;
+import com.cinnober.msgcodec.io.ReallocatingByteBuf;
+import com.cinnober.msgcodec.io.ReallocatingArray;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.*;
@@ -48,9 +51,12 @@ public class BenchmarkOuch42EnterOrder {
         ARRAY,
         BUFFER,
         DIRECT_BUFFER,
+        REALLOCATING_BUFFER,
+        REALLOCATING_DIRECT_BUFFER,
+        REALLOCATING_ARRAY,
     }
 
-    @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER"})
+    @Param({"ARRAY", "BUFFER", "DIRECT_BUFFER", "REALLOCATING_ARRAY", "REALLOCATING_BUFFER", "REALLOCATING_DIRECT_BUFFER"})
     public BufferType bufType;
 
     private Ouch42EnterOrder msg;
@@ -78,6 +84,15 @@ public class BenchmarkOuch42EnterOrder {
             case DIRECT_BUFFER:
                 buf = new ByteBufferBuf(ByteBuffer.allocateDirect(bufferSize));
                 break;
+            case REALLOCATING_BUFFER:
+                buf = new ReallocatingByteBuf(bufferSize, bufferSize, ByteBuffer::allocate);
+                break;
+            case REALLOCATING_DIRECT_BUFFER:
+                buf = new ReallocatingByteBuf(bufferSize, bufferSize, ByteBuffer::allocateDirect);
+                break;
+            case REALLOCATING_ARRAY:
+                buf = new ReallocatingArray(bufferSize, bufferSize);
+                break;
             default:
                 throw new RuntimeException("Unhandled case: " + bufType);
         }
@@ -86,10 +101,20 @@ public class BenchmarkOuch42EnterOrder {
 
         encodedSize = benchmarkEncode();
         System.out.println("Encoded size: " + encodedSize);
-        if (bufType == BufferType.ARRAY) {
-            System.out.println("Encoded hex: " + ByteArrays.toHex(((ByteArrayBuf)buf).array(), 0, encodedSize, 1, 100, 100));
-        } else {
-            System.out.println("Encoded hex: " + ByteBuffers.toHex(((ByteBufferBuf)buf).buffer(), 0, encodedSize, 1, 100, 100));
+        switch(bufType) {
+            case ARRAY:
+                System.out.println("Encoded hex: " + ByteArrays.toHex(((ByteArrayBuf)buf).array(), 0, encodedSize, 1, 100, 100));
+                break;
+            case BUFFER:
+            case DIRECT_BUFFER:
+                System.out.println("Encoded hex: " + ByteBuffers.toHex(((ByteBufferBuf)buf).buffer(), 0, encodedSize, 1, 100, 100));
+                break;
+            case REALLOCATING_BUFFER:
+                System.out.println("Encoded hex: " + ByteBuffers.toHex(((ReallocatingByteBuf)buf).getBuffer(), 0, encodedSize, 1, 100, 100));
+                break;
+            case REALLOCATING_ARRAY:
+//                System.out.println("Encoded hex: " + ByteBuffers.toHex(((ReallocatingByteBuf2)buf).getBuffer(), 0, encodedSize, 1, 100, 100));
+                break;
         }
     }
 

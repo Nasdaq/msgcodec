@@ -39,6 +39,7 @@ import java.nio.ByteOrder;
 public class ByteBufferBuf implements ByteBuf {
 
     private final ByteBuffer buf;
+    private final char[] chars = new char[128];
 
     /**
      * Create a new byte buffer buf.
@@ -74,6 +75,10 @@ public class ByteBufferBuf implements ByteBuf {
 
     @Override
     public int capacity() {
+        return buf.capacity();
+    }
+    
+    public int allocation() {
         return buf.capacity();
     }
 
@@ -162,12 +167,11 @@ public class ByteBufferBuf implements ByteBuf {
                     }
                 }
                 if (ascii) {
-                    char[] chars = new char[len];
                     for (int i=0; i<len; i++) {
                         chars[i] = (char) data[pos+i];
                     }
                     buf.position(buf.position()+len);
-                    return new String(chars);
+                    return new String(chars, 0 , len);
                 }
             }
             String s = new String(data, pos, len, UTF8);
@@ -176,22 +180,19 @@ public class ByteBufferBuf implements ByteBuf {
         } else {
             if (len < 128) {
                 boolean ascii = true;
-                final int pos = buf.position();
-                int end = pos+len;
-                for (int i=pos; i<end; i++) {
-                    if(buf.get(i) < 0) {
+                for (int i=0; i<len; i++) {
+                    chars[i] = (char) buf.get();
+                    if(chars[i] < 0) {
                         ascii = false;
                         break;
                     }
                 }
                 if (ascii) {
-                    char[] chars = new char[len];
-                    for (int i=0; i<len; i++) {
-                        chars[i] = (char) buf.get();
-                    }
-                    return new String(chars);
+                    return new String(chars, 0, len);
                 }
-                
+                else {
+                    buf.position(buf.position() - len);
+                }
             }
             return ByteBuf.super.readStringUtf8(len);
         }

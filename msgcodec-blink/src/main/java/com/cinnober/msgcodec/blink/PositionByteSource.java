@@ -108,6 +108,10 @@ class PositionByteSource implements ByteBuf {
         throw new UnsupportedOperationException("Not supported.");
     }
 
+    public int allocation() {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+    
     @Override
     public ByteBuf clear() {
         throw new UnsupportedOperationException("Not supported.");
