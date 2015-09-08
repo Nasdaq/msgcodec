@@ -53,7 +53,7 @@ public interface ByteSource {
      * @throws IOException if data could not be read.
      */
     default void read(byte[] b, int off, int len) throws IOException {
-        for (int i=off; i<len; i++) {
+        for (int i=off; i<off + len; i++) {
             b[i] = (byte) read();
         }
     }
@@ -105,10 +105,10 @@ public interface ByteSource {
      */
     default long readLongLE() throws IOException {
         return
-                read() |
-                read() << 8 |
-                read() << 16 |
-                read() << 24 |
+                (long)read() |
+                (long)read() << 8 |
+                (long)read() << 16 |
+                (long)read() << 24 |
                 (long)read() << 32 |
                 (long)read() << 40 |
                 (long)read() << 48 |

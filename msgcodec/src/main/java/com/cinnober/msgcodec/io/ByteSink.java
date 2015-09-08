@@ -47,7 +47,7 @@ public interface ByteSink {
      * @throws IOException if data could not be written.
      */
     default void write(byte[] b, int off, int len) throws IOException {
-        for (int i=off; i<len; i++) {
+        for (int i=off; i<off + len; i++) {
             write(b[i]);
         }
     }
