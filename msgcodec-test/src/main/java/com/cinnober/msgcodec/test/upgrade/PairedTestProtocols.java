@@ -38,9 +38,11 @@ public class PairedTestProtocols {
     public static Schema getOriginalSchema() {
         return new SchemaBuilder().build(
             new Class<?>[] {
+                UpgradeAddRemoveFieldMessages.AddAndRemoveOptionalV1.class,
+                UpgradeAddRemoveFieldMessages.ChangeRequiredToOptionalV1.class,
+                UpgradeAddRemoveFieldMessages.RemoveRequiredV1.class,
                 UpgradeEnumArrayMessages.Original.class,
                 UpgradeEnumsMessages.Original.class,
-                UpgradeAddRemoveFieldMessages.Version1.class,
                 UpgradeEnumSequenceMessages.Original.class,
                 UpgradeIntegerEnumsMessages.Original.class,
             });
@@ -49,9 +51,11 @@ public class PairedTestProtocols {
     public static Schema getUpgradedSchema() {
         return new SchemaBuilder().build(
             new Class<?>[] {
+                UpgradeAddRemoveFieldMessages.AddAndRemoveOptionalV2.class,
+                UpgradeAddRemoveFieldMessages.ChangeRequiredToOptionalV2.class,
+                UpgradeAddRemoveFieldMessages.RemoveRequiredV2.class,
                 UpgradeEnumArrayMessages.Upgraded.class,
                 UpgradeEnumsMessages.Upgraded.class,
-                UpgradeAddRemoveFieldMessages.Version2.class,
                 UpgradeEnumSequenceMessages.Upgraded.class,
                 UpgradeIntegerEnumsMessages.Upgraded.class,
             });
