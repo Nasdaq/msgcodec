@@ -29,6 +29,7 @@ public class ReallocatingArray implements ByteBuf {
     @Override
     public ByteBuf clear() {
         limit = maximumSize;
+        size = buffer.length;
         position = 0;
         return this;
     }
@@ -42,7 +43,7 @@ public class ReallocatingArray implements ByteBuf {
     }
 
     private void ensureCapacity(int askedSize) {
-        if (size < askedSize) {
+        if (askedSize > size ) {
             if (askedSize >= limit) {
                 throw new EncodeBufferOverflowException("Required buffer capacity: "+askedSize+" bytes exceeds limit: "+limit+" bytes!");
             }
@@ -74,6 +75,9 @@ public class ReallocatingArray implements ByteBuf {
 
     @Override
     public ByteBuf position(int position) {
+        if (position > limit) {
+            throw new IllegalArgumentException("Cannot set position beyond limit");
+        }
         this.position = position;
         ensureCapacity(position);
         return this;
@@ -103,7 +107,7 @@ public class ReallocatingArray implements ByteBuf {
 
     @Override
     public ByteBuf flip() {
-        limit = position;
+        limit(position);
         position = 0;
         return this;
     }
@@ -118,21 +122,30 @@ public class ReallocatingArray implements ByteBuf {
     public void shift(int position, int length, int distance) {
         if (distance > 0) {
             ensureCapacity(position+length+distance);
-            for (int i = position + length-1; i >= position; i++) {
+            for (int i = position + length-1; i >= position; i--) {
                 buffer[i + distance] = buffer[i];
             }
         }
         else if (distance < 0) {
-            for (int i = position; i < length; i++) {
-                buffer[i + distance] = buffer[i];
+            for (int i = position; i < position + length; i++) {
+                buffer[i+distance] = buffer[i];
             }
         }
     }
 
     @Override
-    public void read(byte[] b, int off, int len) throws IOException {
-        if (position+len > limit) {
+    public void read(byte[] b) throws IOException {
+        if (position+b.length > size) {
             throw new IOException("Buffer underflow");
+        }
+        System.arraycopy(buffer, position, b, 0, b.length);
+        position += b.length;
+    }
+    
+    @Override
+    public void read(byte[] b, int off, int len) throws IOException {
+        if (position+len > size) {
+            throw new IOException("Buffer underflow, trying to read: " + len + " size: " + size);
         }
         System.arraycopy(buffer, position, b, off, len);
         position += len;
@@ -178,7 +191,7 @@ public class ReallocatingArray implements ByteBuf {
     }
     
     public int get(int i) {
-        return buffer[i];
+        return buffer[i] & 0xFF;
     }
 
     @Override
@@ -188,15 +201,25 @@ public class ReallocatingArray implements ByteBuf {
         }
         buffer[position++] = (byte) b;
     }
+    
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        if(position + len > size) {
+            ensureCapacity(position+len);
+        }
+        for(int i=off; i< off+len;i++) {
+            buffer[position++] = b[i];
+        }
+    }
 
     @Override
     public int read() {
         if (position >= size) {
             ensureReadCapacity(position+1);
         }
-        return buffer[position++];
+        return buffer[position++] & 0xFF;
     }
-
+    
     @Override
     public String toString() {
         return this.getClass().getSimpleName()+"[pos="+position()+" lim="+limit+" cap="+capacity()+"]";
@@ -232,6 +255,6 @@ public class ReallocatingArray implements ByteBuf {
     
     
     public ByteBuffer getBuffer() {
-        return null;
+        return ByteBuffer.wrap(buffer);
     }
 }

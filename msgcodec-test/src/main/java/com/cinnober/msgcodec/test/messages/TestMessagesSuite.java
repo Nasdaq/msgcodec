@@ -40,8 +40,13 @@ import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 
 import com.cinnober.msgcodec.MsgCodec;
+import com.cinnober.msgcodec.io.ByteArrayBuf;
+import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
+import com.cinnober.msgcodec.io.ByteSink;
+import com.cinnober.msgcodec.io.ReallocatingArray;
+import com.cinnober.msgcodec.io.ReallocatingByteBuf;
 
 import org.junit.Assert;
 
@@ -106,12 +111,32 @@ public abstract class TestMessagesSuite extends Suite {
             return description;
         }
 
+        
+        public void runByteBuf(RunNotifier notifier, Object message, ByteBuf buffer) {
+            try {
+                codec.encode(message, buffer);
+
+                buffer.clear();
+                Object object = codec.decode(buffer);
+                if (object == null) {
+                    fail("Decoded message is null");
+                } else if (!object.getClass().equals(message.getClass())) {
+                    fail("Decoded message is not same type as encoded message");
+                }
+                Assert.assertEquals(message, object);
+            } catch (Throwable e) {
+                notifier.fireTestFailure(new Failure(description, e));
+            }
+
+        }
+        
+
         @Override
         public void run(RunNotifier notifier) {
             notifier.fireTestStarted(description);
 
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
                 codec.encode(message, out);
 
                 ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
@@ -127,16 +152,35 @@ public abstract class TestMessagesSuite extends Suite {
                 notifier.fireTestFailure(new Failure(description, e));
             }
             
-            // Ugly ignore hack, since xml parser is not compatible with buffer read that requires exact read sizes
+            
             if (!rootClass.getName().contains("XmlTestMessagesSuite")) {
+
+                // array implementations
+                try {
+                    ByteArrayBuf arr = new ByteArrayBuf(4096);
+                    codec.encode(message, arr);
+
+//                    System.out.println("******Encoded hex: " + ByteArrays.toHex(((ByteArrayBuf)arr).array(), 0, arr.position(), 1, 100, 100));
+                    arr.clear();
+                    Object object = codec.decode(arr);
+                    
+                    if (object == null) {
+                        fail("Decoded message is null");
+                    } else if (!object.getClass().equals(message.getClass())) {
+                        fail("Decoded message is not same type as encoded message");
+                    }
+                    Assert.assertEquals(message, object);
+                } catch (Throwable e) {
+                    notifier.fireTestFailure(new Failure(description, e));
+                }
                 
-                byte[] byteData = new byte[4096]; // extra large buffer since ByteBufferBuf.read does not follow specs
-                ByteBuf buffer = new ByteBufferBuf(ByteBuffer.wrap(byteData));
                 try {
-                    codec.encode(message, buffer);
+                    ReallocatingArray arr = new ReallocatingArray(4096, 4096);
+                    codec.encode(message, arr);
+                    //                System.out.println("******Encoded hex: " + ByteArrays.toHex(((ReallocatingArray)arr).getBuffer().array(), 0, arr.position(), 1, 100, 100));
+                    arr.clear();
+                    Object object = codec.decode(arr);
 
-                    buffer.clear();
-                    Object object = codec.decode(buffer);
                     if (object == null) {
                         fail("Decoded message is null");
                     } else if (!object.getClass().equals(message.getClass())) {
@@ -146,22 +190,13 @@ public abstract class TestMessagesSuite extends Suite {
                 } catch (Throwable e) {
                     notifier.fireTestFailure(new Failure(description, e));
                 }
-
-                buffer = new ByteBufferBuf(ByteBuffer.allocateDirect(65536));
-                try {
-                    codec.encode(message, buffer);
-
-                    buffer.clear();
-                    Object object = codec.decode(buffer);
-                    if (object == null) {
-                        fail("Decoded message is null");
-                    } else if (!object.getClass().equals(message.getClass())) {
-                        fail("Decoded message is not same type as encoded message");
-                    }
-                    Assert.assertEquals(message, object);
-                } catch (Throwable e) {
-                    notifier.fireTestFailure(new Failure(description, e));
-                }
+            
+            // Ugly ignore hack, since xml parser is not compatible with buffer read that requires exact read sizes
+                runByteBuf(notifier, message, new ByteBufferBuf(ByteBuffer.wrap(new byte[4096])));
+                runByteBuf(notifier, message, new ByteBufferBuf(ByteBuffer.allocateDirect(65536)));
+                
+                runByteBuf(notifier, message, new ReallocatingByteBuf(4096, 4096, ByteBuffer::allocate));
+                runByteBuf(notifier, message, new ReallocatingByteBuf(4096, 4096, ByteBuffer::allocateDirect));
             }
             
             notifier.fireTestFinished(description);

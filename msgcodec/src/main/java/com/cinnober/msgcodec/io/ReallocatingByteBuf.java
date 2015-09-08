@@ -38,18 +38,6 @@ public class ReallocatingByteBuf implements ByteBuf {
         return this;
     }
 
-    public void copyTo(int srcIndex, ReallocatingByteBuf byteBuf, int dstIndex, int length) {
-        ByteBuffers.copy(buffer.duplicate(), srcIndex, byteBuf.buffer.duplicate(), dstIndex, length);
-    }
-
-    public void copyTo(int srcIndex, ByteBuffer dst, int dstIndex, int length) {
-        ByteBuffers.copy(buffer.duplicate(), srcIndex, dst.duplicate(), dstIndex, length);
-    }
-
-    public void copyTo(int srcIndex, byte[] dst, int dstIndex, int length) {
-        ByteBuffers.copy(buffer.duplicate(), srcIndex, dst, dstIndex, length);
-    }
-
     private static int calculateNewCapacity(int current, int requested, int maximum) {
         int n = current<<1;
         while (n<requested && n>0) {
@@ -126,7 +114,7 @@ public class ReallocatingByteBuf implements ByteBuf {
     @Override
     public ByteBuf flip() {
         int p = buffer.position();
-        limit = p;
+        limit(p);
         buffer.position(0);
         return this;
     }
@@ -160,7 +148,7 @@ public class ReallocatingByteBuf implements ByteBuf {
         if (buffer.position() >= size) {
             ensureReadCapacity(buffer.position()+1);
         }
-        return buffer.get();
+        return buffer.get() & 0xff;
     }
 
     @Override
@@ -176,8 +164,8 @@ public class ReallocatingByteBuf implements ByteBuf {
     
     @Override
     public void skip(int len) throws IOException {
-        if (buffer.position() + len > limit()) {
-            throw new BufferUnderflowException();
+        if (buffer.position() + len > size) {
+            ensureCapacity(buffer.position() + len);
         }
         buffer.position(buffer.position()+len);
     }

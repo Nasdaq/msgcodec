@@ -25,8 +25,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.BufferOverflowException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 import org.junit.Test;
@@ -56,7 +54,6 @@ public class ReallocatingByteBufTest {
             throw new EOFException();
         return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4 << 0));
     }
-    
     
     // expects a buffer with initial size 8 and max size 22
     public void testByteBufGrowing(ByteBuf buf) throws IOException {
