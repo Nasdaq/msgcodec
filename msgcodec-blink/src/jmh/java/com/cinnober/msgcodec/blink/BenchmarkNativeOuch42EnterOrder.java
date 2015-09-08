@@ -101,7 +101,7 @@ public class BenchmarkNativeOuch42EnterOrder {
 
         encodedSize = benchmarkEncode();
         System.out.println("Encoded size: " + encodedSize);
-        System.out.println("Encoded hex: " + ByteArrays.toHex(buf.getByteBuffer().array(), 0, encodedSize, 1, 100, 100));
+        System.out.println("Encoded hex: " + ByteBuffers.toHex(buf.getByteBuffer(), 0, encodedSize, 1, 100, 100));
     }
 
     public static Ouch42EnterOrder createOuch42EnterOrder() {
