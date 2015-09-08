@@ -105,11 +105,7 @@ public class BenchmarkRtcEnterDeal {
 
         encodedSize = benchmarkEncode();
         System.out.println("Encoded size: " + encodedSize);
-        if (bufType == BufferType.ARRAY) {
-            System.out.println("Encoded hex: " + ByteArrays.toHex(((ByteArrayBuf)buf).array(), 0, encodedSize, 1, 100, 100));
-        } else {
-            System.out.println("Encoded hex: " + ByteBuffers.toHex(((ByteBufferBuf)buf).buffer(), 0, encodedSize, 1, 100, 100));
-        }
+        System.out.println("Encoded hex: " + ByteArrays.toHex(buf.getByteBuffer().array(), 0, encodedSize, 1, 100, 100));
     }
 
     public static EnterDeal createRtcEnterDeal() {
