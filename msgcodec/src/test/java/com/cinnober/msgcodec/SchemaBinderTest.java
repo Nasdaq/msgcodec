@@ -26,12 +26,16 @@ package com.cinnober.msgcodec;
 import com.cinnober.msgcodec.SchemaBinder.Direction;
 import com.cinnober.msgcodec.anot.Annotate;
 import com.cinnober.msgcodec.anot.Enumeration;
+import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Unsigned;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.IOException;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  *
@@ -188,7 +192,256 @@ public class SchemaBinderTest {
         assertEquals("VALUE2", mapping.getName(Version1.VALUE2.ordinal()));
         assertEquals("VALUE3", mapping.getName(Version1.VALUE3.ordinal()));
     }
-    
+
+    private void testWideningAndNarrowingSchemaBuild(Class<?>... classes) throws IncompatibleSchemaException {
+        for (int i=0;i<classes.length-1;i++) {
+            for (int j=i+1;j<classes.length;j++) {
+                Schema schemaNarrow = new SchemaBuilder().build(classes[i]);
+                Schema schemaWide = new SchemaBuilder().build(classes[j]);
+
+                boolean exceptionThrown = false;
+                try {
+                    new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+                } catch (IncompatibleSchemaException e) {
+                    exceptionThrown = true;
+                }
+                assertTrue("No IncompatibleSchemaException thrown for "+classes[j]+"->"+classes[i]+"!",exceptionThrown);
+
+                new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+
+                exceptionThrown = false;
+                try {
+                    new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.INBOUND);
+                } catch (IncompatibleSchemaException e) {
+                    exceptionThrown = true;
+                }
+                assertTrue("No IncompatibleSchemaException thrown for "+classes[i]+"<-"+classes[j]+"!",exceptionThrown);
+
+                new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.OUTBOUND);
+
+                exceptionThrown = false;
+                try {
+                    new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.BOTH);
+                } catch (IncompatibleSchemaException e) {
+                    exceptionThrown = true;
+                }
+                assertTrue("No IncompatibleSchemaException thrown for "+classes[i]+"<->"+classes[j]+"!",exceptionThrown);
+            }
+        }
+    }
+
+    @Test
+    public void testWideningAndNarrowing() throws IOException, IncompatibleSchemaException {
+        // wider direction --->
+        testWideningAndNarrowingSchemaBuild(DecimalNarrow.class, DecimalWide.class);
+        testWideningAndNarrowingSchemaBuild(ByteNum.class, OptByteNum.class);
+        testWideningAndNarrowingSchemaBuild(ByteNum.class, ShortNum.class,
+                IntNum.class,LongNum.class);
+        testWideningAndNarrowingSchemaBuild(EnumEntNarrow.class, EnumEntWide.class);
+        testWideningAndNarrowingSchemaBuild(ReqTestEntityWithRequiredYear.class, ReqTestEntity.class);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testSameNameDifferentIdOutbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SameNameDifferentId1.class);
+        Schema schemaWide = new SchemaBuilder().build(SameNameDifferentId2.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testSameNameDifferentIdInbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SameNameDifferentId1.class);
+        Schema schemaWide = new SchemaBuilder().build(SameNameDifferentId2.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testDifferentNameSameIdInbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(DifferentNameSameId1.class);
+        Schema schemaWide = new SchemaBuilder().build(DifferentNameSameId2.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testDifferentNameSameIdOutbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(DifferentNameSameId1.class);
+        Schema schemaWide = new SchemaBuilder().build(DifferentNameSameId2.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+    }
+
+
+    @Name("SameNameDifferentId")
+    @Id(1000)
+    public static class SameNameDifferentId1 extends MsgObject {
+        public String data;
+        public SameNameDifferentId1() {
+        }
+    }
+
+    @Name("SameNameDifferentId")
+    @Id(1001)
+    public static class SameNameDifferentId2 extends MsgObject {
+        public String data;
+        public SameNameDifferentId2() {
+        }
+    }
+
+    @Name("DifferentNameSameId")
+    @Id(1002)
+    public static class DifferentNameSameId1 extends MsgObject {
+        public String data;
+        public DifferentNameSameId1() {
+        }
+    }
+
+    @Name("DifferentNameSameIdDiff")
+    @Id(1002)
+    public static class DifferentNameSameId2 extends MsgObject {
+        public String data;
+        public DifferentNameSameId2() {
+        }
+    }
+
+
+    @Name("Decimal")
+    @Id(2)
+    public static class DecimalNarrow extends MsgObject {
+        public float decimal;
+
+        public DecimalNarrow() {
+        }
+
+        public DecimalNarrow(float decimal) {
+            this.decimal=decimal;
+        }
+    }
+
+    @Name("Decimal")
+    @Id(2)
+    public static class DecimalWide extends MsgObject {
+        public double decimal;
+
+        public DecimalWide() {
+        }
+
+        public DecimalWide(double decimal) {
+            this.decimal=decimal;
+        }
+
+        public boolean equals(Object o) {
+            return (o instanceof DecimalWide) && Math.abs(((DecimalWide) o).decimal-decimal)<0.0001;
+        }
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class OptByteNum extends MsgObject {
+        public Byte n;
+
+        public OptByteNum() {}
+
+        public OptByteNum(Byte n) { this.n = n; }
+
+
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class ByteNum extends MsgObject {
+        public byte n;
+
+        public ByteNum() {}
+
+        public ByteNum(byte n) { this.n = n; }
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class ShortNum extends MsgObject {
+        public short n;
+
+        public ShortNum() {}
+        public ShortNum(short n) { this.n = n; }
+
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class IntNum extends MsgObject {
+        public int n;
+
+        public IntNum() {}
+        public IntNum(int n) { this.n = n; }
+    }
+
+    @Name("Number")
+    @Id(3)
+    public static class LongNum extends MsgObject {
+        public long n;
+
+
+        public LongNum() {}
+        public LongNum(long n) { this.n = n; }
+    }
+
+    public enum EnumNarrow {
+        VALUE3, VALUE1, VALUE2,
+    }
+
+    public enum EnumWide {
+        DUMMY_1, VALUE1, VALUE2, VALUE3, ADDITIONAL_VALUE,
+    }
+
+    @Name("EnumEnt")
+    @Id(1)
+    public static class EnumEntNarrow extends MsgObject {
+        public EnumNarrow enumeration;
+
+        public EnumEntNarrow() {
+        }
+
+        public EnumEntNarrow(EnumNarrow eValue) {
+            enumeration = eValue;
+        }
+    }
+
+    @Name("EnumEnt")
+    @Id(1)
+    public static class EnumEntWide extends MsgObject {
+        public EnumWide enumeration;
+
+        public EnumEntWide() {
+        }
+
+        public EnumEntWide(EnumWide eValue) {
+            enumeration = eValue;
+        }
+    }
+
+    @Name("ReqTestEntity")
+    @Id(10)
+    public static class ReqTestEntity extends MsgObject {
+        public String number;
+
+        public ReqTestEntity() {
+            number = "ReqTestEntity " + System.nanoTime();
+        }
+    }
+
+    @Name("ReqTestEntity")
+    @Id(10)
+    public static class ReqTestEntityWithRequiredYear extends MsgObject {
+        public String number;
+        public int year;
+
+        public ReqTestEntityWithRequiredYear() {
+            number = "ReqTestEntity " + System.nanoTime();
+            year = (int)(System.nanoTime()%3000);
+        }
+    }
+
+
+
     enum Version1 {
         VALUE1,
         VALUE2,

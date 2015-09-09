@@ -124,6 +124,9 @@ public class SchemaBinder {
             GroupBinding groupBinding;
             ArrayList<FieldDef> newFields = new ArrayList<>(dstGroup.getFields().size());
             if (srcGroup == null) {
+                if (src.getGroup(dstGroup.getId()) != null) {
+                    throw new IncompatibleSchemaException("Group name mismatch on groups with id "+dstGroup.getId()+"!");
+                }
                 if (dstGroup.getSuperGroup() != null) {
                     // flatten into super group
                     GroupBinding superBinding = newGroups.get(dstGroup.getSuperGroup()).getBinding();
@@ -136,6 +139,9 @@ public class SchemaBinder {
                     newFields.add(IgnoreAccessor.bindField(dstField));
                 }
             } else {
+                if (srcGroup.getId() != dstGroup.getId()) {
+                    throw new IncompatibleSchemaException("Source and destination groups have different ids" + details(dstGroup, dir));
+                }
                 if (!Objects.equals(srcGroup.getSuperGroup(), dstGroup.getSuperGroup())) {
                     throw new IncompatibleSchemaException("Different group inheritance" + details(dstGroup, dir));
                 }

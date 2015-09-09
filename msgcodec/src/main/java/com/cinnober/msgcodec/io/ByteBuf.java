@@ -102,7 +102,7 @@ public interface ByteBuf extends ByteSource, ByteSink {
     
     /**
      * Returns the currently allocated size (valid for resizing buffer types, should otherwise be the capacity)
-     * @return
+     * @return number of bytes
      */
     int allocation();
 }

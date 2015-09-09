@@ -23,42 +23,50 @@
  */
 package com.cinnober.msgcodec.test.upgrade;
 
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
-
-import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.SchemaBuilder;
 
 /**
  * @author Tommy Norling
  * 
  */
 public class PairedTestProtocols {
+    private static final Class<?>[] originalSchemaClasses = {
+            UpgradeAddRemoveFieldMessages.AddAndRemoveOptionalV1.class,
+            UpgradeAddRemoveFieldMessages.ChangeRequiredToOptionalV1.class,
+            UpgradeAddRemoveFieldMessages.RemoveRequiredV1.class,
+            UpgradeEnumArrayMessages.Original.class,
+            UpgradeEnumsMessages.Original.class,
+            UpgradeEnumSequenceMessages.Original.class,
+            UpgradeIntegerEnumsMessages.Original.class};
+
+    private static final Class<?>[] upgradedSchemaClasses = {
+            UpgradeAddRemoveFieldMessages.AddAndRemoveOptionalV2.class,
+            UpgradeAddRemoveFieldMessages.ChangeRequiredToOptionalV2.class,
+            UpgradeAddRemoveFieldMessages.RemoveRequiredV2.class,
+            UpgradeEnumArrayMessages.Upgraded.class,
+            UpgradeEnumsMessages.Upgraded.class,
+            UpgradeEnumSequenceMessages.Upgraded.class,
+            UpgradeIntegerEnumsMessages.Upgraded.class,
+    };
+
+
     public static Schema getOriginalSchema() {
-        return new SchemaBuilder().build(
-            new Class<?>[] {
-                UpgradeAddRemoveFieldMessages.AddAndRemoveOptionalV1.class,
-                UpgradeAddRemoveFieldMessages.ChangeRequiredToOptionalV1.class,
-                UpgradeAddRemoveFieldMessages.RemoveRequiredV1.class,
-                UpgradeEnumArrayMessages.Original.class,
-                UpgradeEnumsMessages.Original.class,
-                UpgradeEnumSequenceMessages.Original.class,
-                UpgradeIntegerEnumsMessages.Original.class,
-            });
+        ArrayList<Class<?>> classes = new ArrayList<>(Arrays.asList(originalSchemaClasses));
+        classes.addAll(UpgradeBasicMessages.getOriginalSchemaClasses());
+        return new SchemaBuilder().build(classes.toArray(new Class<?>[classes.size()]));
     }
     
     public static Schema getUpgradedSchema() {
-        return new SchemaBuilder().build(
-            new Class<?>[] {
-                UpgradeAddRemoveFieldMessages.AddAndRemoveOptionalV2.class,
-                UpgradeAddRemoveFieldMessages.ChangeRequiredToOptionalV2.class,
-                UpgradeAddRemoveFieldMessages.RemoveRequiredV2.class,
-                UpgradeEnumArrayMessages.Upgraded.class,
-                UpgradeEnumsMessages.Upgraded.class,
-                UpgradeEnumSequenceMessages.Upgraded.class,
-                UpgradeIntegerEnumsMessages.Upgraded.class,
-            });
+        ArrayList<Class<?>> classes = new ArrayList<>(Arrays.asList(upgradedSchemaClasses));
+        classes.addAll(UpgradeBasicMessages.getUpgradedSchemaClasses());
+        return new SchemaBuilder().build(classes.toArray(new Class<?>[classes.size()]));
     }
 
     /**
@@ -78,6 +86,7 @@ public class PairedTestProtocols {
         putAll(messages, "AddRemoveFields", UpgradeAddRemoveFieldMessages.createMessages());
         putAll(messages, "EnumSequence.", UpgradeEnumSequenceMessages.createMessages());
         putAll(messages, "IntegerEnums.", UpgradeIntegerEnumsMessages.createMessages());
+        putAll(messages, "BasicMessages.", UpgradeBasicMessages.createMessages());
 
         return messages;
     }
