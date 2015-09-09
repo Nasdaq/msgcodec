@@ -133,10 +133,9 @@ public class SchemaBinder {
                     groupBinding = new GroupBinding(superBinding.getFactory(), null);
                 } else {
                     groupBinding = dstGroup.getBinding();
-
                 }
                 for (FieldDef dstField : dstGroup.getFields()) {
-                    newFields.add(IgnoreAccessor.bindField(dstField));
+                    newFields.add(new CreateAccessor<>(dstField).bindField(dstField));
                 }
             } else {
                 if (srcGroup.getId() != dstGroup.getId()) {
@@ -153,7 +152,7 @@ public class SchemaBinder {
                     
                     if(srcField == null) {
                         try {
-                            newFields.add(new CreateAccessor(dstField).bindField(dstField));
+                            newFields.add(new CreateAccessor<>(dstField).bindField(dstField));
                         } catch (SecurityException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
@@ -200,91 +199,82 @@ public class SchemaBinder {
 
     private FieldDef bindField(FieldDef srcField, FieldDef dstField, GroupDef dstGroup, Schema dst, Direction dir)
             throws IncompatibleSchemaException {
+        TypeDef srcType = src.resolveToType(srcField.getType(), true);
+        TypeDef dstType = dst.resolveToType(dstField.getType(), true);
+        if (srcType.equals(dstType)) {
+            return dstField.bind(srcField.getBinding());
+        }
 
-        if (srcField == null) {
-            if (dstField.isRequired() && dir != Direction.INBOUND) {
-                throw new IncompatibleSchemaException("Required field not found" + details(dstGroup, dstField, dir));
+        Class<?> javaType = dstType.getDefaultJavaType();
+        Class<?> javaComponentType = dstType.getDefaultJavaComponentType();
+
+        switch (dir) {
+        case BOTH:
+            throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
+        case INBOUND:
+            Accessor<?, ?> narrowAccessor = inboundAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
+            if (narrowAccessor == null) {
+                throw new IncompatibleSchemaException(
+                        "Source type not eq or wider" + details(dstGroup, dstField, dir));
             }
-            return IgnoreAccessor.bindField(dstField);
-        } else {
+            SymbolMapping<?> inboundMapping = srcField.getBinding().getSymbolMapping();
 
-            TypeDef srcType = src.resolveToType(srcField.getType(), true);
-            TypeDef dstType = dst.resolveToType(dstField.getType(), true);
-            if (srcType.equals(dstType)) {
-                return dstField.bind(srcField.getBinding());
-            }
-            
-            Class<?> javaType = dstType.getDefaultJavaType();
-            Class<?> javaComponentType = dstType.getDefaultJavaComponentType();
-
-            switch (dir) {
-            case BOTH:
-                throw new IncompatibleSchemaException("Different types" + details(dstGroup, dstField, dir));
-            case INBOUND:
-                Accessor<?, ?> narrowAccessor = inboundAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
-                if (narrowAccessor == null) {
-                    throw new IncompatibleSchemaException(
-                            "Source type not eq or wider" + details(dstGroup, dstField, dir));
-                }
-                SymbolMapping<?> inboundMapping = srcField.getBinding().getSymbolMapping();
-                
-                if (inboundMapping != null) {
-                    switch (dstType.getType()) {
-                    case ENUM:
-                        inboundMapping = new ConverterSymbolMapping<>(
-                                inboundMapping, ((TypeDef.Enum) dstType).getSymbols());
-                        javaType = srcField.getJavaClass();
-                        break;
-                    case SEQUENCE:
-                        TypeDef componentType = dst.resolveToType(
-                                ((TypeDef.Sequence) dstType).getComponentType(), true);
-                        if (componentType != null && componentType.getType() == Type.ENUM) {
-                            inboundMapping = new ConverterSymbolMapping<>(
-                                    inboundMapping, ((TypeDef.Enum) componentType).getSymbols());
-                            javaType = srcField.getJavaClass();
-                            javaComponentType = srcField.getComponentJavaClass();
-                            break;
-                        }
-                    default:
-                        throw new IncompatibleSchemaException("Symbol mapping but no enum");
-                    }
-                }
-                
-                return dstField.bind(new FieldBinding(narrowAccessor, javaType, javaComponentType, inboundMapping));
-            case OUTBOUND:
-                Accessor<?, ?> widenAccessor = outboundAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
-                if (widenAccessor == null) {
-                    throw new IncompatibleSchemaException(
-                            "Source type not eq or narrower " + details(dstGroup, dstField, dir));
-                }
-                SymbolMapping<?> outboundMapping = srcField.getBinding().getSymbolMapping();
-                
-                if (outboundMapping != null) {
-                    switch (dstType.getType()) {
-                    case ENUM:
-                        outboundMapping = new ConverterSymbolMapping<>(
-                                outboundMapping, ((TypeDef.Enum) dstType).getSymbols());
-                        javaType = srcField.getJavaClass();
+            if (inboundMapping != null) {
+                switch (dstType.getType()) {
+                case ENUM:
+                    inboundMapping = new ConverterSymbolMapping<>(
+                            inboundMapping, ((TypeDef.Enum) dstType).getSymbols());
+                    javaType = srcField.getJavaClass();
                     break;
-                    case SEQUENCE:
-                        TypeDef componentType = dst.resolveToType(
-                                ((TypeDef.Sequence) dstType).getComponentType(), true);
-                        if (componentType != null && componentType.getType() == Type.ENUM) {
-                            outboundMapping = new ConverterSymbolMapping<>(
-                                    outboundMapping, ((TypeDef.Enum) componentType).getSymbols());
-                            javaType = srcField.getJavaClass();
-                            javaComponentType = srcField.getComponentJavaClass();
-                            break;
-                        }
-                    default:
-                        throw new IncompatibleSchemaException("Symbol mapping but no enum");
+                case SEQUENCE:
+                    TypeDef componentType = dst.resolveToType(
+                            ((TypeDef.Sequence) dstType).getComponentType(), true);
+                    if (componentType != null && componentType.getType() == Type.ENUM) {
+                        inboundMapping = new ConverterSymbolMapping<>(
+                                inboundMapping, ((TypeDef.Enum) componentType).getSymbols());
+                        javaType = srcField.getJavaClass();
+                        javaComponentType = srcField.getComponentJavaClass();
+                        break;
                     }
+                default:
+                    throw new IncompatibleSchemaException("Symbol mapping but no enum");
                 }
-                
-                return dstField.bind(new FieldBinding(widenAccessor, javaType, javaComponentType, outboundMapping));
-            default:
-                throw new RuntimeException("Unhandled case: " + dir);
             }
+
+            return dstField.bind(new FieldBinding(narrowAccessor, javaType, javaComponentType, inboundMapping));
+        case OUTBOUND:
+            Accessor<?, ?> widenAccessor = outboundAccessor(srcField.getAccessor(), srcType, dst, dstType, dir);
+            if (widenAccessor == null) {
+                throw new IncompatibleSchemaException(
+                        "Source type not eq or narrower " + details(dstGroup, dstField, dir));
+            }
+            SymbolMapping<?> outboundMapping = srcField.getBinding().getSymbolMapping();
+
+            if (outboundMapping != null) {
+                switch (dstType.getType()) {
+                case ENUM:
+                    outboundMapping = new ConverterSymbolMapping<>(
+                            outboundMapping, ((TypeDef.Enum) dstType).getSymbols());
+                    javaType = srcField.getJavaClass();
+                    break;
+                case SEQUENCE:
+                    TypeDef componentType = dst.resolveToType(
+                            ((TypeDef.Sequence) dstType).getComponentType(), true);
+                    if (componentType != null && componentType.getType() == Type.ENUM) {
+                        outboundMapping = new ConverterSymbolMapping<>(
+                                outboundMapping, ((TypeDef.Enum) componentType).getSymbols());
+                        javaType = srcField.getJavaClass();
+                        javaComponentType = srcField.getComponentJavaClass();
+                        break;
+                    }
+                default:
+                    throw new IncompatibleSchemaException("Symbol mapping but no enum");
+                }
+            }
+
+            return dstField.bind(new FieldBinding(widenAccessor, javaType, javaComponentType, outboundMapping));
+        default:
+            throw new RuntimeException("Unhandled case: " + dir);
         }
     }
 

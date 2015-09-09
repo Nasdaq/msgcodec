@@ -31,7 +31,6 @@ import com.cinnober.msgcodec.Factory;
 import com.cinnober.msgcodec.FieldAccessor;
 import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.GroupDef;
-import com.cinnober.msgcodec.IgnoreAccessor;
 import com.cinnober.msgcodec.JavaClassGroupTypeAccessor;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBinding;
@@ -321,8 +320,6 @@ class BaseByteCodeGenerator {
 
                 if (isPublicFieldAccessor(accessor)) {
                     // no accessor needed
-                } else if (accessor.getClass() == IgnoreAccessor.class) {
-                    // no accessor needed
                 } else {
                     // field
                     FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
@@ -591,8 +588,6 @@ class BaseByteCodeGenerator {
                         // this can happen when the field is a generic type variable in a super-class.
                         writemv.visitTypeInsn(CHECKCAST, Type.getInternalName(javaClass));
                     }
-                } else if (accessor.getClass() == IgnoreAccessor.class) {
-                    writemv.visitInsn(NULL);
                 } else {
                     writemv.visitVarInsn(ALOAD, 0);
                     writemv.visitFieldInsn(GETFIELD, genClassInternalName,
@@ -793,12 +788,7 @@ class BaseByteCodeGenerator {
                     // store
                     mv.visitFieldInsn(PUTFIELD, Type.getInternalName(f.getDeclaringClass()), f.getName(),
                             Type.getDescriptor(f.getType()));
-                } else if(accessor.getClass() == IgnoreAccessor.class) {
-                    // value
-                    readValue.run();
-                    // discard
-                    mv.visitInsn(POP);
-                } else if(accessor.getClass() == CreateAccessor.class) {
+                } else if (accessor.getClass() == CreateAccessor.class) {
                     mv.visitVarInsn(ALOAD, 2); // instance
 
                     Label tryStart = new Label();
