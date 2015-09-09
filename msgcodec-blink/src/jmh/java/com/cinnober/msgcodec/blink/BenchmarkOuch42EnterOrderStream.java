@@ -30,6 +30,7 @@ import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBufferInputStream;
 import com.cinnober.msgcodec.io.ByteBufferOutputStream;
+import com.cinnober.msgcodec.io.ByteBuffers;
 import com.cinnober.msgcodec.io.InputStreamSource;
 import com.cinnober.msgcodec.io.OutputStreamSink;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class BenchmarkOuch42EnterOrderStream {
 
         encodedSize = benchmarkEncode();
         System.out.println("Encoded size: " + encodedSize);
-        System.out.println("Encoded hex: " + ByteArrays.toHex(buf.array(), 0, encodedSize, 1, 100, 100));
+        System.out.println("Encoded hex: " + ByteBuffers.toHex(buf, 0, encodedSize, 1, 100, 100));
     }
 
     @Benchmark

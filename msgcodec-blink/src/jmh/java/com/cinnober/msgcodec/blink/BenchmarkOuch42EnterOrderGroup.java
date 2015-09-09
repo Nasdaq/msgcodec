@@ -113,21 +113,7 @@ public class BenchmarkOuch42EnterOrderGroup {
 
         encodedSize = benchmarkEncode();
         System.out.println("Encoded size: " + encodedSize);
-        switch(bufType) {
-        case ARRAY:
-            System.out.println("Encoded hex: " + ByteArrays.toHex(((ByteArrayBuf)buf).array(), 0, encodedSize, 1, 100, 100));
-            break;
-        case BUFFER:
-        case DIRECT_BUFFER:
-            System.out.println("Encoded hex: " + ByteBuffers.toHex(((ByteBufferBuf)buf).buffer(), 0, encodedSize, 1, 100, 100));
-            break;
-        case REALLOCATING_BUFFER:
-            System.out.println("Encoded hex: " + ByteBuffers.toHex(((ReallocatingByteBuf)buf).getBuffer(), 0, encodedSize, 1, 100, 100));
-            break;
-        case REALLOCATING_ARRAY:
-//            System.out.println("Encoded hex: " + ByteBuffers.toHex(((ReallocatingByteBuf2)buf).getBuffer(), 0, encodedSize, 1, 100, 100));
-            break;
-    }
+        System.out.println("Encoded hex: " + ByteBuffers.toHex(buf.getByteBuffer(), 0, encodedSize, 1, 100, 100));
     }
 
     public Group createOuch42EnterOrder() {

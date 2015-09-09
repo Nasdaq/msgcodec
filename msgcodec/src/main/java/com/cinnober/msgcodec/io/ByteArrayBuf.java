@@ -25,6 +25,7 @@
 package com.cinnober.msgcodec.io;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 /**
@@ -230,6 +231,11 @@ public class ByteArrayBuf implements ByteBuf {
         data[pos+6] = (byte) (v >> 48);
         data[pos+7] = (byte) (v >> 56);
         pos += 8;
+    }
+    
+    @Override
+    public ByteBuffer getByteBuffer() {
+        return ByteBuffer.wrap(data);
     }
 
 }

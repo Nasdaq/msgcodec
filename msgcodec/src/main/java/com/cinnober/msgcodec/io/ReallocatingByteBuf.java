@@ -156,11 +156,10 @@ public class ReallocatingByteBuf implements ByteBuf {
         return this.getClass().getSimpleName()+"[pos="+position()+" lim="+limit+" cap="+capacity()+"]";
     }
     
-    
-    public ByteBuffer getBuffer() {
+    @Override
+    public ByteBuffer getByteBuffer() {
         return buffer;
     }
-    
     
     @Override
     public void skip(int len) throws IOException {

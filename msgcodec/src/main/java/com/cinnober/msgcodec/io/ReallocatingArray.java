@@ -253,8 +253,8 @@ public class ReallocatingArray implements ByteBuf {
         position += 8;
     }
     
-    
-    public ByteBuffer getBuffer() {
+    @Override
+    public ByteBuffer getByteBuffer() {
         return ByteBuffer.wrap(buffer);
     }
 }

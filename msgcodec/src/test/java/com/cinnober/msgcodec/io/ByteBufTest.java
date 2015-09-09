@@ -29,21 +29,7 @@ public class ByteBufTest {
         
         
         System.out.format("%-54s", buf.getClass());
-        if(buf instanceof ByteArrayBuf) {
-            System.out.println(ByteArrays.toHex(((ByteArrayBuf)buf).array(), 0, buf.position(), 1, 100, 100));
-        }
-        else if (buf instanceof ByteBufferBuf) {
-            System.out.println(ByteBuffers.toHex(((ByteBufferBuf)buf).buffer(), 0, buf.position(), 1, 100, 100));
-        }
-        else if (buf instanceof ReallocatingByteBuf) {
-            System.out.println(ByteBuffers.toHex(((ReallocatingByteBuf)buf).getBuffer(), 0, buf.position(), 1, 100, 100));
-        }
-        else if (buf instanceof ReallocatingArray) {
-            System.out.println(ByteBuffers.toHex(((ReallocatingArray)buf).getBuffer(), 0, buf.position(), 1, 100, 100));
-        }
-        else {
-            throw new RuntimeException("Unhandled type: " + buf.getClass());
-        }
+        System.out.println(ByteBuffers.toHex(buf.getByteBuffer(), 0, buf.position(), 1, 100, 100));
             
         buf.flip();
         

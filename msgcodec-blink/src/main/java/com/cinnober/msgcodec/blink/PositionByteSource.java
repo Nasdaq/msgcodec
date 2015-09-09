@@ -27,6 +27,7 @@ package com.cinnober.msgcodec.blink;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteSource;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Wrapper of a ByteSource with a position.
@@ -129,6 +130,11 @@ class PositionByteSource implements ByteBuf {
 
     @Override
     public void write(int b) throws IOException {
+        throw new UnsupportedOperationException("Not supported.");
+    }
+    
+    @Override
+    public ByteBuffer getByteBuffer() {
         throw new UnsupportedOperationException("Not supported.");
     }
 }

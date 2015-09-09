@@ -53,7 +53,8 @@ public class ByteBufferBuf implements ByteBuf {
      * Returns the underlying byte buffer.
      * @return the underlying byte buffer, not null.
      */
-    public ByteBuffer buffer() {
+    @Override
+    public ByteBuffer getByteBuffer() {
         return buf;
     }
 

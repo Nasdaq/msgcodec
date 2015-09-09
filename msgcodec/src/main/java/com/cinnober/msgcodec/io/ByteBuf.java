@@ -24,6 +24,8 @@
 
 package com.cinnober.msgcodec.io;
 
+import java.nio.ByteBuffer;
+
 /**
  * A byte buffer.
  *
@@ -105,4 +107,6 @@ public interface ByteBuf extends ByteSource, ByteSink {
      * @return number of bytes
      */
     int allocation();
+    
+    public ByteBuffer getByteBuffer();
 }
