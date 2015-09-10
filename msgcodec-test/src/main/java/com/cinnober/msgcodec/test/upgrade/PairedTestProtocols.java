@@ -60,12 +60,14 @@ public class PairedTestProtocols {
     public static Schema getOriginalSchema() {
         ArrayList<Class<?>> classes = new ArrayList<>(Arrays.asList(originalSchemaClasses));
         classes.addAll(UpgradeBasicMessages.getOriginalSchemaClasses());
+        classes.addAll(UpgradeMissingGroupDefs.getOriginalSchemaClasses());
         return new SchemaBuilder().build(classes.toArray(new Class<?>[classes.size()]));
     }
     
     public static Schema getUpgradedSchema() {
         ArrayList<Class<?>> classes = new ArrayList<>(Arrays.asList(upgradedSchemaClasses));
         classes.addAll(UpgradeBasicMessages.getUpgradedSchemaClasses());
+        classes.addAll(UpgradeMissingGroupDefs.getUpgradedSchemaClasses());
         return new SchemaBuilder().build(classes.toArray(new Class<?>[classes.size()]));
     }
 
@@ -87,6 +89,8 @@ public class PairedTestProtocols {
         putAll(messages, "EnumSequence.", UpgradeEnumSequenceMessages.createMessages());
         putAll(messages, "IntegerEnums.", UpgradeIntegerEnumsMessages.createMessages());
         putAll(messages, "BasicMessages.", UpgradeBasicMessages.createMessages());
+        putAll(messages, "GroupDefsMissing.", UpgradeMissingGroupDefs.createMessages());
+
 
         return messages;
     }

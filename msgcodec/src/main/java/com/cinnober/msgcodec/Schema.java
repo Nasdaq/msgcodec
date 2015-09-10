@@ -23,16 +23,6 @@
  */
 package com.cinnober.msgcodec;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
 import com.cinnober.msgcodec.TypeDef.Ref;
 import com.cinnober.msgcodec.messages.MetaGroupDef;
 import com.cinnober.msgcodec.messages.MetaNamedType;
@@ -41,7 +31,17 @@ import com.cinnober.msgcodec.visitor.FieldDefVisitor;
 import com.cinnober.msgcodec.visitor.GroupDefVisitor;
 import com.cinnober.msgcodec.visitor.NamedTypeVisitor;
 import com.cinnober.msgcodec.visitor.SchemaVisitor;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -134,7 +134,7 @@ public class Schema implements Annotatable<Schema> {
                     throw new IllegalArgumentException("Duplicate group id: " + group.getId());
                 }
             }
-            if (group.getGroupType() != null) {
+            if (group.getGroupType() != null && group.getGroupType() != Object.class) {
                 if (groupsByType.put(group.getGroupType(), group) != null) {
                     throw new IllegalArgumentException("Duplicate group type: " + group.getGroupType());
                 }
@@ -149,12 +149,15 @@ public class Schema implements Annotatable<Schema> {
                     throw new IllegalArgumentException("Unknown super group: " + group.getSuperGroup());
                 }
                 if (binding != null && binding.getGroupTypeAccessor() instanceof JavaClassGroupTypeAccessor) {
-                    Class<?> superGroupClass = (Class<?>) superGroup.getGroupType();
-                    Class<?> groupClass = (Class<?>) group.getGroupType();
-                    if (groupClass != null && superGroupClass != null &&
-                            !superGroupClass.isAssignableFrom(groupClass)) {
-                        throw new IllegalArgumentException("Java inheritance does not match super group in group: " +
-                            group.getName());
+                    if (superGroup.getGroupType() instanceof Class<?> &&
+                            group.getGroupType() instanceof Class<?>) {
+                        Class<?> superGroupClass = (Class<?>) superGroup.getGroupType();
+                        Class<?> groupClass = (Class<?>) group.getGroupType();
+                        if (groupClass != null && superGroupClass != null &&
+                                !superGroupClass.isAssignableFrom(groupClass)) {
+                            throw new IllegalArgumentException("Java inheritance does not match super group in group: " +
+                                    group.getName());
+                        }
                     }
                 }
             }

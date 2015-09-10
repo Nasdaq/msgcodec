@@ -29,8 +29,17 @@ import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.TypeDef;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
-import static org.objectweb.asm.Opcodes.*;
-import org.objectweb.asm.Type;
+
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ATHROW;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.RETURN;
 
 /**
  *
@@ -51,7 +60,7 @@ class NativeByteCodeGenerator extends BaseByteCodeGenerator {
             String genClassInternalName, boolean javaClassCodec) {
         for (GroupDef group : schema.getGroups()) {
             Object groupType = group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
+            String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
             MethodVisitor mv = cv.visitMethod(
                     ACC_PRIVATE,
                     "writeStaticGroupWithId_" + group.getName(),

@@ -130,9 +130,16 @@ public class SchemaBinder {
                 if (dstGroup.getSuperGroup() != null) {
                     // flatten into super group
                     GroupBinding superBinding = newGroups.get(dstGroup.getSuperGroup()).getBinding();
-                    groupBinding = new GroupBinding(superBinding.getFactory(), null);
+                    groupBinding = new GroupBinding(superBinding.getFactory(),
+                            superBinding.getGroupType() instanceof MissingGroupType ? new MissingGroupType(dstGroup.getId()) : superBinding.getGroupType());
                 } else {
-                    groupBinding = dstGroup.getBinding();
+                    try {
+                        groupBinding = new GroupBinding(new ConstructorFactory<>(Object.class.getConstructor()),
+                                new MissingGroupType(dstGroup.getId()));
+                    } catch (NoSuchMethodException e) {
+                        // should not happen
+                        throw new RuntimeException(e);
+                    }
                 }
                 for (FieldDef dstField : dstGroup.getFields()) {
                     newFields.add(new CreateAccessor<>(dstField).bindField(dstField));
@@ -172,6 +179,29 @@ public class SchemaBinder {
         Schema s = new Schema(newGroups.values(), dst.getNamedTypes(), dst.getAnnotations(), src.getBinding());
 
         return s;
+    }
+
+    private class MissingGroupType {
+        private final int id;
+
+        public MissingGroupType(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, MissingGroupType.class.hashCode());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof MissingGroupType) && ((MissingGroupType) obj).id == id;
+        }
+
+        @Override
+        public String toString() {
+            return "-<MISSING:"+id+">-";
+        }
     }
 
     private Direction getAcceptableEnumConversion(TypeDef.Enum source, TypeDef.Enum destination) {

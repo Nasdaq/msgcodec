@@ -400,6 +400,17 @@ public class BlinkOutput {
      * @param value the value to be written
      * @throws IOException if the underlying stream throws an exception
      */
+    public static void writePresenceByte(ByteSink out, boolean value) throws IOException {
+        out.write(value ? (byte)0x01 : (byte)0xc0);
+    }
+
+    /**
+     * Write a boolean.
+     *
+     * @param out the output stream to write to, not null.
+     * @param value the value to be written
+     * @throws IOException if the underlying stream throws an exception
+     */
     public static void writeBoolean(ByteSink out, boolean value) throws IOException {
         out.write(value ? (byte)1 : (byte)0);
     }
