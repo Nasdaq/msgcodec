@@ -32,6 +32,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -39,11 +40,15 @@ import org.junit.Test;
 
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Epoch;
+import com.cinnober.msgcodec.FieldBinding;
+import com.cinnober.msgcodec.FieldDef;
 import com.cinnober.msgcodec.Group;
+import com.cinnober.msgcodec.GroupDef;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgObject;
 import com.cinnober.msgcodec.Schema;
 import com.cinnober.msgcodec.SchemaBuilder;
+import com.cinnober.msgcodec.SymbolMapping;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Required;
@@ -315,7 +320,70 @@ public class BlinkCodecTest {
             throw e;
         }
     }
+    
+    @Test(expected = DecodeException.class)
+    public void testFailDecodeBadSymbol() throws IOException {
+        Schema schema = new SchemaBuilder().build(EnumMsg.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        codec.encode(new EnumMsg(AEnum.VALUE), bout);
 
+        // Change the symbol mapping
+        ArrayList<GroupDef> groups = new ArrayList<>();
+        for (GroupDef group : schema.getGroups()) {
+            if (group.getName().equals("EnumMsg")) {
+                ArrayList<FieldDef> fields = new ArrayList<>();
+                for (FieldDef field : group.getFields()) {
+                    if (field.getName().equals("aEnum")) {
+                        FieldBinding binding = field.getBinding();
+                        field = field.bind(
+                                new FieldBinding(binding.getAccessor(), binding.getJavaClass(), 
+                                        binding.getComponentJavaClass(), new BadSymbolMapping()));
+                    }
+                    fields.add(field);
+                }
+                group = new GroupDef(group.getName(), group.getId(), group.getSuperGroup(), 
+                        fields, group.getAnnotations(), group.getBinding());
+            }
+            groups.add(group);
+        }
+        
+        schema = new Schema(groups, schema.getNamedTypes(), schema.getAnnotations(), schema.getBinding());
+        
+        codec = new BlinkCodecFactory(schema).createCodec();
+        codec.decode(new ByteArrayInputStream(bout.toByteArray()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testFailEncodeBadSymbol() throws IOException {
+        Schema schema = new SchemaBuilder().build(EnumMsg.class);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+        // Change the symbol mapping
+        ArrayList<GroupDef> groups = new ArrayList<>();
+        for (GroupDef group : schema.getGroups()) {
+            if (group.getName().equals("EnumMsg")) {
+                ArrayList<FieldDef> fields = new ArrayList<>();
+                for (FieldDef field : group.getFields()) {
+                    if (field.getName().equals("aEnum")) {
+                        FieldBinding binding = field.getBinding();
+                        field = field.bind(
+                                new FieldBinding(binding.getAccessor(), binding.getJavaClass(), 
+                                        binding.getComponentJavaClass(), new BadSymbolMapping()));
+                    }
+                    fields.add(field);
+                }
+                group = new GroupDef(group.getName(), group.getId(), group.getSuperGroup(), 
+                        fields, group.getAnnotations(), group.getBinding());
+            }
+            groups.add(group);
+        }
+        schema = new Schema(groups, schema.getNamedTypes(), schema.getAnnotations(), schema.getBinding());
+        
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        codec.encode(new EnumMsg(AEnum.VALUE), bout);
+    }
 
     @Id(1)
     public static class Hello extends MsgObject {
@@ -425,6 +493,44 @@ public class BlinkCodecTest {
         
         public IntMsg(int value) {
             this.value = value;
+        }
+    }
+    
+    public enum AEnum {
+        VALUE
+    }
+    
+    @Id(9)
+    public static class EnumMsg {
+        AEnum aEnum;
+        
+        public EnumMsg() {
+        }
+        
+        public EnumMsg(AEnum aEnum) {
+            this.aEnum = aEnum;
+        }
+    }
+    
+    private static class BadSymbolMapping implements SymbolMapping<AEnum>{
+        @Override
+        public AEnum lookup(Integer id) throws IllegalArgumentException {
+            throw new IllegalArgumentException("Bad symbol");
+        }
+
+        @Override
+        public AEnum lookup(String name) throws IllegalArgumentException {
+            throw new IllegalArgumentException("Bad symbol");
+        }
+
+        @Override
+        public Integer getId(AEnum value) throws IllegalArgumentException {
+            throw new IllegalArgumentException("Bad symbol");
+        }
+
+        @Override
+        public String getName(AEnum value) throws IllegalArgumentException {
+            throw new IllegalArgumentException("Bad symbol");
         }
     }
 }
