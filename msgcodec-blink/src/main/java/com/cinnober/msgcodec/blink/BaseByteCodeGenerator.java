@@ -57,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -139,7 +140,7 @@ class BaseByteCodeGenerator {
     private static final String BYTE_SINK_INAME = Type.getInternalName(ByteSink.class);
     @SuppressWarnings("unused")
     private static final String BYTE_SOURCE_INAME = Type.getInternalName(ByteSource.class);
-    @SuppressWarnings("unused")
+    private static final String GROUPDEF_INAME = Type.getInternalName(GroupDef.class);
     private static final String SCHEMA_INAME = Type.getInternalName(Schema.class);
     @SuppressWarnings("unused")
     private static final String SCHEMA_BINDING_INAME = Type.getInternalName(SchemaBinding.class);
@@ -310,11 +311,20 @@ class BaseByteCodeGenerator {
         ctormv.visitMethodInsn(INVOKESPECIAL, baseclassIName, "<init>",
                 "(L" + blinkCodecIName + ";)V", false);
 
+        // schema field
+        FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "schema",
+                "Lcom/cinnober/msgcodec/Schema;", null, null);
+        fv.visitEnd();
+        ctormv.visitVarInsn(ALOAD, 0); // this
+        ctormv.visitVarInsn(ALOAD, 2); // schema
+        ctormv.visitFieldInsn(PUTFIELD, genClassInternalName, "schema",
+                "Lcom/cinnober/msgcodec/Schema;");
+
         if (!javaClassCodec) {
             // store the group type accessor
 
             // field
-            FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "groupTypeAccessor",
+            fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "groupTypeAccessor",
                     "Lcom/cinnober/msgcodec/GroupTypeAccessor;", null, null);
             fv.visitEnd();
 
@@ -329,13 +339,11 @@ class BaseByteCodeGenerator {
                     "Lcom/cinnober/msgcodec/GroupTypeAccessor;");
         }
 
-
-
         for (GroupDef group : schema.getGroups()) {
             if (!javaClassCodec) {
                 // store the group type
                 // field
-                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "groupType_" + group.getName(),
+                fv = cv.visitField(ACC_PRIVATE + ACC_FINAL, "groupType_" + group.getName(),
                         "Ljava/lang/Object;", null, null);
                 fv.visitEnd();
 
@@ -357,7 +365,7 @@ class BaseByteCodeGenerator {
                 // no factory is needed
             } else {
                 // field
-                FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
                         "factory_" + group.getName(),
                         "Lcom/cinnober/msgcodec/Factory;", null, null);
                 fv.visitEnd();
@@ -389,7 +397,7 @@ class BaseByteCodeGenerator {
                     // no accessor needed
                 } else {
                     // field
-                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                    fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
                             "accessor_" + group.getName() + "_" + field.getName(),
                             "Lcom/cinnober/msgcodec/Accessor;", null, null);
                     fv.visitEnd();
@@ -420,7 +428,7 @@ class BaseByteCodeGenerator {
                     // Create field
                     String symbolMappingFieldName = "symbolMapping_" + group.getName() + "_" + field.getName();
                     
-                    FieldVisitor fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
+                    fv = cv.visitField(ACC_PRIVATE + ACC_FINAL,
                             symbolMappingFieldName, "Lcom/cinnober/msgcodec/SymbolMapping;", null, null);
                     fv.visitEnd();
 
@@ -477,6 +485,7 @@ class BaseByteCodeGenerator {
 
         // switch on class.hashCode()
         Map<Integer,ObjectHashCodeSwitchCase<Object>> casesByHashCode = new TreeMap<>();
+        Map<Integer,Label> labelsByGroupId = new TreeMap<>();
         for (GroupDef group : schema.getGroups()) {
             Object groupType = group.getGroupType();
             int groupHash = groupType.hashCode();
@@ -506,12 +515,17 @@ class BaseByteCodeGenerator {
             mv.visitLabel(hashCase.label);
             mv.visitFrame(F_SAME, 0, null, 0, null);
             for (ObjectSwitchCase<Object> classCase : hashCase.cases) {
+                GroupDef group = schema.getGroup(classCase.object);
+                int groupId = schema.getGroup(classCase.object).getId();
+                if (groupId != -1) {
+                    labelsByGroupId.put(groupId, classCase.label);
+                }
+                
                 mv.visitVarInsn(ALOAD, groupTypeVar);
                 if (javaClassCodec) {
                     mv.visitLdcInsn(getJavaType(classCase.object));
                     mv.visitJumpInsn(IF_ACMPEQ, classCase.label);
                 } else {
-                    GroupDef group = schema.getGroup(classCase.object);
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, genClassInternalName, "groupType_" + group.getName(),
                             "Ljava/lang/Object;");
@@ -521,14 +535,53 @@ class BaseByteCodeGenerator {
                 }
             }
         }
-        mv.visitLabel(unknownHashLabel);
-        mv.visitFrame(F_SAME, 0, null, 0, null);
-        mv.visitVarInsn(ALOAD, groupTypeVar);
-        mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unknownGroupType",
-                "(Ljava/lang/Object;)Ljava/lang/IllegalArgumentException;", false);
-        mv.visitInsn(ATHROW);
+        // Default case for class hashcode switch, do lookup using schema.getGroup(Object)
+        {
+            Label unknownGroupIdLabel = new Label();
+            mv.visitLabel(unknownHashLabel);
+            mv.visitFrame(F_SAME, 0, null, 0, null);
+            Label[] groupIdLabels = new Label[labelsByGroupId.size()];
+            int[] groupIds = new int[groupIdLabels.length];
+            
+            {
+                int i = 0;
+                for (Entry<Integer, Label> entry : labelsByGroupId.entrySet()) {
+                    groupIds[i] = entry.getKey();
+                    groupIdLabels[i] = new Label();
+                    i++;
+                }
+            }
+            
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitFieldInsn(GETFIELD, genClassInternalName, "schema",
+                    "Lcom/cinnober/msgcodec/Schema;");
+            
+            mv.visitVarInsn(ALOAD, groupTypeVar);
+            mv.visitMethodInsn(INVOKEVIRTUAL, SCHEMA_INAME, "getGroup",
+                    "(Ljava/lang/Object;)Lcom/cinnober/msgcodec/GroupDef;", false);
+            mv.visitMethodInsn(INVOKEVIRTUAL, GROUPDEF_INAME, "getId",
+                    "()I", false);
+            
+            // Switch on the group id
+            mv.visitLookupSwitchInsn(unknownHashLabel, groupIds, groupIdLabels);
+            
+            // Cases for the group ids
+            for (int i = 0; i < groupIds.length; i++) {
+                mv.visitLabel(groupIdLabels[i]);
+                mv.visitFrame(F_SAME, 0, null, 0, null);
+                mv.visitJumpInsn(GOTO, labelsByGroupId.get(groupIds[i]));
+            }
 
+            // Throw exception if there is no match on class or group id
+            mv.visitLabel(unknownGroupIdLabel);
+            mv.visitFrame(F_SAME, 0, null, 0, null);
+            mv.visitVarInsn(ALOAD, groupTypeVar);
+            mv.visitMethodInsn(INVOKESTATIC, baseclassIName, "unknownGroupType",
+                    "(Ljava/lang/Object;)Ljava/lang/IllegalArgumentException;", false);
+            mv.visitInsn(ATHROW);
+        }
 
+        // Generate the labeled calls to group writer methods
         for (ObjectHashCodeSwitchCase<Object> hashCase : casesByHashCode.values()) {
             for (ObjectSwitchCase<Object> classCase : hashCase.cases) {
                 Object groupType = classCase.object;
@@ -2290,7 +2343,7 @@ class BaseByteCodeGenerator {
 
     final static String getTypeDescriptor(Object msgClass, boolean javaClassCodec) {
         if (javaClassCodec && msgClass instanceof Class) {
-            return Type.getDescriptor((Class) msgClass);
+            return Type.getDescriptor((Class<?>) msgClass);
         } else {
             return "Ljava/lang/Object;";
         }
@@ -2298,7 +2351,7 @@ class BaseByteCodeGenerator {
 
     final static String getTypeInternalName(Object msgClass, boolean javaClassCodec) {
         if (javaClassCodec && msgClass instanceof Class) {
-            return Type.getInternalName((Class) msgClass);
+            return Type.getInternalName((Class<?>) msgClass);
         } else if (javaClassCodec) {
             return Type.getInternalName(Object.class);
         } else {
@@ -2308,7 +2361,7 @@ class BaseByteCodeGenerator {
 
     final static Type getJavaType(Object msgClass) {
         if (msgClass instanceof Class) {
-            return Type.getType((Class) msgClass);
+            return Type.getType((Class<?>) msgClass);
         } else {
             return Type.getType(Object.class);
         }
