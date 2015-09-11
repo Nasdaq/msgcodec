@@ -559,6 +559,12 @@ class BaseByteCodeGenerator {
             mv.visitVarInsn(ALOAD, groupTypeVar);
             mv.visitMethodInsn(INVOKEVIRTUAL, SCHEMA_INAME, "getGroup",
                     "(Ljava/lang/Object;)Lcom/cinnober/msgcodec/GroupDef;", false);
+
+            // check for null result from getGroup
+            Label noGroupDefLabel = new Label();
+            mv.visitInsn(DUP);
+            mv.visitJumpInsn(IFNULL, noGroupDefLabel);
+
             mv.visitMethodInsn(INVOKEVIRTUAL, GROUPDEF_INAME, "getId",
                     "()I", false);
             
@@ -571,6 +577,11 @@ class BaseByteCodeGenerator {
                 mv.visitFrame(F_SAME, 0, null, 0, null);
                 mv.visitJumpInsn(GOTO, labelsByGroupId.get(groupIds[i]));
             }
+
+            mv.visitLabel(noGroupDefLabel);
+            mv.visitFrame(F_SAME, 0, null, 0, null);
+            mv.visitInsn(POP);
+
 
             // Throw exception if there is no match on class or group id
             mv.visitLabel(unknownGroupIdLabel);
