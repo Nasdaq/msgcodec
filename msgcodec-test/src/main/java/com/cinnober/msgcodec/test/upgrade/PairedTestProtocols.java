@@ -62,7 +62,7 @@ public class PairedTestProtocols {
         classes.addAll(UpgradeBasicMessages.getOriginalSchemaClasses());
         classes.addAll(UpgradeMissingGroupDefs.getOriginalSchemaClasses());
         //classes.addAll(UpgradeWithInheritedGroups.getOriginalSchemaClasses());
-        //classes.addAll(UpgradeWithInheritedGroups2.getOriginalSchemaClasses());
+        classes.addAll(UpgradeWithInheritedGroups2.getOriginalSchemaClasses());
         return new SchemaBuilder().build(classes.toArray(new Class<?>[classes.size()]));
     }
     
@@ -71,7 +71,7 @@ public class PairedTestProtocols {
         classes.addAll(UpgradeBasicMessages.getUpgradedSchemaClasses());
         classes.addAll(UpgradeMissingGroupDefs.getUpgradedSchemaClasses());
         //classes.addAll(UpgradeWithInheritedGroups.getUpgradedSchemaClasses());
-        //classes.addAll(UpgradeWithInheritedGroups2.getUpgradedSchemaClasses());
+        classes.addAll(UpgradeWithInheritedGroups2.getUpgradedSchemaClasses());
         return new SchemaBuilder().build(classes.toArray(new Class<?>[classes.size()]));
     }
 
@@ -95,7 +95,7 @@ public class PairedTestProtocols {
         putAll(messages, "BasicMessages.", UpgradeBasicMessages.createMessages());
         putAll(messages, "GroupDefsMissing.", UpgradeMissingGroupDefs.createMessages());
         //putAll(messages, "InheritedGroups.", UpgradeWithInheritedGroups.createMessages());
-        //putAll(messages, "InheritedGroups2.", UpgradeWithInheritedGroups2.createMessages());
+        putAll(messages, "InheritedGroups2.", UpgradeWithInheritedGroups2.createMessages());
 
 
         return messages;

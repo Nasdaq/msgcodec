@@ -53,7 +53,11 @@ import com.cinnober.msgcodec.xml.XmlElementHandler.StaticGroupValue;
 import com.cinnober.msgcodec.xml.XmlElementHandler.ValueHandler;
 import com.cinnober.msgcodec.xml.XmlEnumFormat.DummyJavaEnumFormat;
 import com.cinnober.msgcodec.xml.XmlEnumFormat.SymbolMappingEnumFormat;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,10 +70,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import org.xml.sax.SAXException;
 
 /**
  * The XML codec can serialize and deserialize Java objects to/from XML.
@@ -145,6 +145,8 @@ public class XmlCodec implements MsgCodec {
     private final Map<String, StaticGroupValue> staticGroupsByName;
     private final Map<Object, StaticGroupValue> staticGroupsByGroupType;
 
+    private final Schema schema;
+
     private String namespace;
 
     private final XmlDocumentHandler saxHandler;
@@ -155,6 +157,8 @@ public class XmlCodec implements MsgCodec {
             throw new IllegalArgumentException("Schema not bound");
         }
 
+        this.schema = schema;
+        System.err.println("XmlCodec created with Schema where ="+this.schema.toString());
         groupTypeAccessor = schema.getBinding().getGroupTypeAccessor();
         int mapSize = schema.getGroups().size() * 2;
         staticGroupsByNsName = new HashMap<>(mapSize);
@@ -170,7 +174,7 @@ public class XmlCodec implements MsgCodec {
 
         // create field instructions for all groups
         for (GroupDef groupDef : schema.getGroups()) {
-            StaticGroupValue groupInstruction = staticGroupsByGroupType.get(groupDef.getGroupType());
+            StaticGroupValue groupInstruction = staticGroupsByName.get(groupDef.getName());
             Map<NsName, FieldHandler> elementFields = new LinkedHashMap<>();
             Map<NsName, SimpleField> attributeFields = new LinkedHashMap<>();
             List<SimpleField> inlineField = new ArrayList<>(1);
@@ -444,11 +448,24 @@ public class XmlCodec implements MsgCodec {
         Object groupType = groupTypeAccessor.getGroupType(group);
         StaticGroupValue groupInstr = staticGroupsByGroupType.get(groupType);
         if (groupInstr == null) {
-            throw new IllegalArgumentException("Unknown Java class: " + group.getClass());
+            // could be remapped class?
+            GroupDef groupDef = schema.getGroup((Object)groupType);
+            groupInstr = groupDef != null ? staticGroupsByName.get(groupDef.getName()) : null;
+            if (groupInstr == null) {
+                throw new IllegalArgumentException("Unknown Java class: " + group.getClass());
+            }
         }
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(out, UTF8));
-        groupInstr.writeElementValue(group, groupInstr.getNsName(), writer);
+        groupInstr.writeElementValue(group, determineGroupClass(group), groupInstr.getNsName(), writer);
         writer.flush();
+    }
+
+    private Class<?> determineGroupClass(Object group) {
+        if (group == null) {
+            return null;
+        }
+        Object grTp = schema.getGroup((Object)(group.getClass())).getGroupType();
+        return grTp instanceof Class<?> ? (Class<?>) grTp : null;
     }
 
     @Override
@@ -474,7 +491,12 @@ public class XmlCodec implements MsgCodec {
         return staticGroupsByNsName.get(name);
     }
     StaticGroupValue lookupGroup(Class<?> javaClass) {
-        return staticGroupsByGroupType.get(javaClass);
+        StaticGroupValue value = staticGroupsByGroupType.get(javaClass);
+        if (value == null) {
+            GroupDef groupDef = schema.getGroup((Object)value);
+            value = groupDef != null ? staticGroupsByName.get(groupDef.getName()) : null;
+        }
+        return value;
     }
 
 }
