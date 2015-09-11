@@ -105,6 +105,7 @@ public class JsonCodec implements MsgCodec {
     private final Map<String, StaticGroupHandler> staticGroupsByName;
     private final Map<Object, StaticGroupHandler> staticGroupsByGroupType;
     private final DynamicGroupHandler dynamicGroupHandler;
+    private final Schema schema;
 
     @SuppressWarnings("rawtypes")
     JsonCodec(Schema schema, boolean jsSafe) {
@@ -112,6 +113,7 @@ public class JsonCodec implements MsgCodec {
             throw new IllegalArgumentException("Schema not bound");
         }
 
+        this.schema = schema;
         dynamicGroupHandler = new DynamicGroupHandler(this);
         groupTypeAccessor = schema.getBinding().getGroupTypeAccessor();
         int mapSize = schema.getGroups().size() * 2;
@@ -126,7 +128,7 @@ public class JsonCodec implements MsgCodec {
 
         // create field instructions for all groups
         for (GroupDef groupDef : schema.getGroups()) {
-            StaticGroupHandler groupInstruction = staticGroupsByGroupType.get(groupDef.getGroupType());
+            StaticGroupHandler groupInstruction = staticGroupsByName.get(groupDef.getName());
             Map<String, FieldHandler> fields = new LinkedHashMap<>();
             int nextRequiredSlot = 0;
             if (groupDef.getSuperGroup() != null) {
@@ -388,7 +390,13 @@ public class JsonCodec implements MsgCodec {
         return staticGroupsByName.get(name);
     }
     StaticGroupHandler lookupGroupByValue(Object group) {
-        return staticGroupsByGroupType.get(groupTypeAccessor.getGroupType(group));
+        Object groupType = groupTypeAccessor.getGroupType(group);
+        StaticGroupHandler handler = staticGroupsByGroupType.get(groupType);
+        if (handler == null) {
+            GroupDef groupDef = schema.getGroup((Object)(groupType));
+            handler = groupDef != null ? staticGroupsByName.get(groupDef.getName()) : null;
+        }
+        return handler;
     }
 
 }

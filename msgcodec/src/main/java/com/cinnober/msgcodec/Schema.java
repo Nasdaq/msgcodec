@@ -132,7 +132,7 @@ public class Schema implements Annotatable<Schema> {
         } else{
             this.annotations = Collections.unmodifiableMap(new LinkedHashMap<>(annotations));
         }
-        this.remappedClasses = remappedClasses;
+        this.remappedClasses = Collections.unmodifiableMap(remappedClasses);
         this.binding = binding;
         if (namedTypes != null) {
             LinkedHashMap<String, NamedType> tempMap = new LinkedHashMap<>(namedTypes.size() * 2);

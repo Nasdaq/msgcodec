@@ -257,7 +257,11 @@ class XmlElementHandler {
 
         @Override
         public void writeElementValue(Object value, NsName name, PrintWriter appendTo) throws IOException {
-            if (value == null || !value.getClass().equals(groupDef.getGroupType())) {
+            writeElementValue(value, value.getClass(), name, appendTo);
+        }
+
+        protected void writeElementValue(Object value, Class<?> valueClass, NsName name, PrintWriter appendTo) throws IOException {
+            if (value == null || !valueClass.equals(groupDef.getGroupType())) {
                 return;
             }
             BitSet requiredFields = new BitSet(numRequiredFields);
