@@ -23,13 +23,12 @@
  */
 package com.cinnober.msgcodec.xml;
 
-import javax.xml.parsers.ParserConfigurationException;
-
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.test.upgrade.TestUpgradesSuite;
 import org.junit.runners.model.InitializationError;
 import org.xml.sax.SAXException;
 
-import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.test.upgrade.TestUpgradesSuite;
+import javax.xml.parsers.ParserConfigurationException;
 
 public class XmlUpgradeSuiteImpl extends TestUpgradesSuite {
 

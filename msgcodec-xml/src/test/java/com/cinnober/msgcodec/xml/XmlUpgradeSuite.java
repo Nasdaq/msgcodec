@@ -23,8 +23,6 @@
  */
 package com.cinnober.msgcodec.xml;
 
-import org.junit.runner.RunWith;
-
-@RunWith(XmlUpgradeSuiteImpl.class)
+//@RunWith(XmlUpgradeSuiteImpl.class)
 public class XmlUpgradeSuite {
 }

@@ -464,8 +464,8 @@ public class XmlCodec implements MsgCodec {
         if (group == null) {
             return null;
         }
-        Object grTp = schema.getGroup((Object)(group.getClass())).getGroupType();
-        return grTp instanceof Class<?> ? (Class<?>) grTp : null;
+        Object grTp = schema.getGroup(groupTypeAccessor.getGroupType(group)).getGroupType();
+        return grTp instanceof Class<?> ? (Class<?>) grTp : group.getClass();
     }
 
     @Override

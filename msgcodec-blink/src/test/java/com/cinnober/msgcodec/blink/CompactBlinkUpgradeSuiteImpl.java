@@ -23,12 +23,9 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import org.junit.runners.model.InitializationError;
-
-import com.cinnober.msgcodec.MsgCodec;
-import com.cinnober.msgcodec.test.messages.TestProtocol;
 import com.cinnober.msgcodec.test.upgrade.TestUpgradesSuite;
 import com.cinnober.msgcodec.util.ConcurrentBufferPool;
+import org.junit.runners.model.InitializationError;
 
 public class CompactBlinkUpgradeSuiteImpl extends TestUpgradesSuite {
 

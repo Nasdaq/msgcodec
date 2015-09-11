@@ -133,13 +133,8 @@ public class SchemaBinder {
                     groupBinding = new GroupBinding(superBinding.getFactory(),
                             superBinding.getGroupType() instanceof MissingGroupType ? new MissingGroupType(dstGroup.getId()) : superBinding.getGroupType());
                 } else {
-                    try {
-                        groupBinding = new GroupBinding(new ConstructorFactory<>(Object.class.getConstructor()),
-                                new MissingGroupType(dstGroup.getId()));
-                    } catch (NoSuchMethodException e) {
-                        // should not happen
-                        throw new RuntimeException(e);
-                    }
+                    groupBinding = new GroupBinding(Object::new,
+                            new MissingGroupType(dstGroup.getId()));
                 }
                 for (FieldDef dstField : dstGroup.getFields()) {
                     newFields.add(new CreateAccessor<>(dstField).bindField(dstField));
