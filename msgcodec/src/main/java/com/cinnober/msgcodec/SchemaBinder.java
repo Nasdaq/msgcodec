@@ -130,9 +130,16 @@ public class SchemaBinder {
                 if (dstGroup.getSuperGroup() != null) {
                     // flatten into super group
                     GroupBinding superBinding = newGroups.get(dstGroup.getSuperGroup()).getBinding();
-                    groupBinding = new GroupBinding(superBinding.getFactory(), null);
+                    groupBinding = new GroupBinding(superBinding.getFactory(),
+                            superBinding.getGroupType() instanceof MissingGroupType ? new MissingGroupType(dstGroup.getId()) : superBinding.getGroupType());
                 } else {
-                    groupBinding = dstGroup.getBinding();
+                    try {
+                        groupBinding = new GroupBinding(new ConstructorFactory<>(Object.class.getConstructor()),
+                                new MissingGroupType(dstGroup.getId()));
+                    } catch (NoSuchMethodException e) {
+                        // should not happen
+                        throw new RuntimeException(e);
+                    }
                 }
                 for (FieldDef dstField : dstGroup.getFields()) {
                     newFields.add(new CreateAccessor<>(dstField).bindField(dstField));
@@ -169,9 +176,56 @@ public class SchemaBinder {
             newGroups.put(newGroup.getName(), newGroup);
         }
 
-        Schema s = new Schema(newGroups.values(), dst.getNamedTypes(), dst.getAnnotations(), src.getBinding());
+        Schema s = new Schema(newGroups.values(), dst.getNamedTypes(), dst.getAnnotations(), src.getBinding(),
+                buildRemovedClassRemap(newGroups, src.getGroups()));
 
         return s;
+    }
+
+    private Map<Object, Integer> buildRemovedClassRemap(Map<String,GroupDef> newGroups, Collection<GroupDef> sourceGroups) {
+        HashMap<Object, Integer> remap = new HashMap<>();
+
+
+        Map<String,GroupDef> sourceOnlyGroups = sourceGroups.stream().filter(def -> !newGroups.containsKey(def.getName())).collect(Collectors.toMap(GroupDef::getName,
+                d -> d));
+
+        for (GroupDef sourceGroup: sourceOnlyGroups.values()) {
+            String superName = sourceGroup.getSuperGroup();
+            if (superName != null) {
+                while (superName != null && (!newGroups.containsKey(superName))) {
+                    GroupDef parent = sourceOnlyGroups.get(superName);
+                    superName = parent != null ? parent.getSuperGroup() : null;
+                }
+                if (superName != null) {
+                    remap.put(sourceGroup.getBinding().getGroupType(), newGroups.get(superName).getId());
+                }
+            }
+        }
+
+        return remap;
+    }
+
+    private class MissingGroupType {
+        private final int id;
+
+        public MissingGroupType(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(id, MissingGroupType.class.hashCode());
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj instanceof MissingGroupType) && ((MissingGroupType) obj).id == id;
+        }
+
+        @Override
+        public String toString() {
+            return "-<MISSING:"+id+">-";
+        }
     }
 
     private Direction getAcceptableEnumConversion(TypeDef.Enum source, TypeDef.Enum destination) {

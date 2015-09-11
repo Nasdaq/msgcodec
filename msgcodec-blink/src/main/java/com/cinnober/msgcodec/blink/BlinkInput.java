@@ -23,8 +23,9 @@
  */
 package com.cinnober.msgcodec.blink;
 
-import com.cinnober.msgcodec.io.ByteSource;
 import com.cinnober.msgcodec.DecodeException;
+import com.cinnober.msgcodec.io.ByteSource;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -384,6 +385,18 @@ public class BlinkInput {
         } else {
             return new BigDecimal(readSignedBigVLCNull(in, b1), -exp);
         }
+    }
+
+    /**
+     * Read a presence byte. Assume false if weak error.
+     *
+     * Backwards compatibility requires us to handle 0 as NULL.
+     *
+     * @param in the input stream to read from, not null.
+     * @throws IOException if the underlying stream throws an exception
+     */
+    public static boolean readPresenceByte(ByteSource in) throws IOException {
+        return in.read() == 0x01;
     }
 
     /**

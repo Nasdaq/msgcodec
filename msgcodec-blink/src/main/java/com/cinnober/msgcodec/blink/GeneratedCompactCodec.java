@@ -139,6 +139,7 @@ public abstract class GeneratedCompactCodec extends GeneratedCodec {
         int expectedEndPos = inbuf.position() + size;
         int groupId = BlinkInput.readUInt32(inbuf);
         try {
+            System.err.println("READ STATIC GROUP "+groupId);
             Object group = readStaticGroup(groupId, inbuf);
             
             int skip = expectedEndPos - inbuf.position();

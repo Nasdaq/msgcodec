@@ -227,30 +227,32 @@ public class ObjectDispatcher {
      * @throws NoSuchMethodException if no target was found.
      */
     private Target findTarget(Class<?> type) throws NoSuchMethodException {
-        Target target = targets.get(type);
-        if (target == null) {
-            for (Class<?> superType : superTypeTraverser.getSuperTypes(type)) {
-                target = targets.get(superType);
-                if (target != null) {
-                    targets.put(type, target);
-                    break;
+        synchronized (targets) {
+            Target target = targets.get(type);
+            if (target == null) {
+                for (Class<?> superType : superTypeTraverser.getSuperTypes(type)) {
+                    target = targets.get(superType);
+                    if (target != null) {
+                        targets.put(type, target);
+                        break;
+                    }
+                }
+                if (target == null) {
+                    StringBuilder str = new StringBuilder();
+                    str.append("Unhandled type " + type);
+                    str.append("\n");
+                    str.append("Available targets:");
+                    str.append("\n");
+                    for (Map.Entry<Class<?>, Target> entry : targets.entrySet()) {
+                        str.append("    ");
+                        str.append(entry.getValue().toString());
+                        str.append("\n");
+                    }
+                    throw new NoSuchMethodException(str.toString());
                 }
             }
-            if (target == null) {
-            	StringBuilder str = new StringBuilder();
-            	str.append("Unhandled type " + type);
-            	str.append("\n");
-            	str.append("Available targets:");
-            	str.append("\n");
-            	for(Map.Entry<Class<?>, Target> entry : targets.entrySet()) {
-            		str.append("    ");
-            		str.append(entry.getValue().toString());
-            		str.append("\n");
-            	}
-                throw new NoSuchMethodException(str.toString());
-            }
+            return target;
         }
-        return target;
     }
 
     private static class Target {

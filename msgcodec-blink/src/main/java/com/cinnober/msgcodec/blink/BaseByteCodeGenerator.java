@@ -39,6 +39,15 @@ import com.cinnober.msgcodec.TypeDef;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteSink;
 import com.cinnober.msgcodec.io.ByteSource;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
+import org.objectweb.asm.Label;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.util.CheckClassAdapter;
+import org.objectweb.asm.util.TraceClassVisitor;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
@@ -52,15 +61,71 @@ import java.util.Objects;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodVisitor;
-import static org.objectweb.asm.Opcodes.*;
-import org.objectweb.asm.Type;
-import org.objectweb.asm.util.CheckClassAdapter;
-import org.objectweb.asm.util.TraceClassVisitor;
+
+import static org.objectweb.asm.Opcodes.AALOAD;
+import static org.objectweb.asm.Opcodes.AASTORE;
+import static org.objectweb.asm.Opcodes.ACC_FINAL;
+import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
+import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
+import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
+import static org.objectweb.asm.Opcodes.ACONST_NULL;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.ANEWARRAY;
+import static org.objectweb.asm.Opcodes.ARETURN;
+import static org.objectweb.asm.Opcodes.ARRAYLENGTH;
+import static org.objectweb.asm.Opcodes.ASTORE;
+import static org.objectweb.asm.Opcodes.ATHROW;
+import static org.objectweb.asm.Opcodes.BALOAD;
+import static org.objectweb.asm.Opcodes.BASTORE;
+import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.DALOAD;
+import static org.objectweb.asm.Opcodes.DASTORE;
+import static org.objectweb.asm.Opcodes.DUP;
+import static org.objectweb.asm.Opcodes.FALOAD;
+import static org.objectweb.asm.Opcodes.FASTORE;
+import static org.objectweb.asm.Opcodes.F_SAME;
+import static org.objectweb.asm.Opcodes.GETFIELD;
+import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.IALOAD;
+import static org.objectweb.asm.Opcodes.IASTORE;
+import static org.objectweb.asm.Opcodes.ICONST_0;
+import static org.objectweb.asm.Opcodes.ICONST_1;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.IFNE;
+import static org.objectweb.asm.Opcodes.IFNONNULL;
+import static org.objectweb.asm.Opcodes.IFNULL;
+import static org.objectweb.asm.Opcodes.IF_ACMPEQ;
+import static org.objectweb.asm.Opcodes.IF_ICMPGE;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKEINTERFACE;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.ISTORE;
+import static org.objectweb.asm.Opcodes.LADD;
+import static org.objectweb.asm.Opcodes.LALOAD;
+import static org.objectweb.asm.Opcodes.LASTORE;
+import static org.objectweb.asm.Opcodes.LDIV;
+import static org.objectweb.asm.Opcodes.LLOAD;
+import static org.objectweb.asm.Opcodes.LMUL;
+import static org.objectweb.asm.Opcodes.LSTORE;
+import static org.objectweb.asm.Opcodes.LSUB;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.NEWARRAY;
+import static org.objectweb.asm.Opcodes.POP;
+import static org.objectweb.asm.Opcodes.PUTFIELD;
+import static org.objectweb.asm.Opcodes.RETURN;
+import static org.objectweb.asm.Opcodes.SALOAD;
+import static org.objectweb.asm.Opcodes.SASTORE;
+import static org.objectweb.asm.Opcodes.SWAP;
+import static org.objectweb.asm.Opcodes.T_BOOLEAN;
+import static org.objectweb.asm.Opcodes.T_BYTE;
+import static org.objectweb.asm.Opcodes.T_DOUBLE;
+import static org.objectweb.asm.Opcodes.T_FLOAT;
+import static org.objectweb.asm.Opcodes.T_INT;
+import static org.objectweb.asm.Opcodes.T_LONG;
+import static org.objectweb.asm.Opcodes.T_SHORT;
+import static org.objectweb.asm.Opcodes.V1_7;
 
 /**
  *
@@ -264,6 +329,8 @@ class BaseByteCodeGenerator {
                     "Lcom/cinnober/msgcodec/GroupTypeAccessor;");
         }
 
+
+
         for (GroupDef group : schema.getGroups()) {
             if (!javaClassCodec) {
                 // store the group type
@@ -441,7 +508,7 @@ class BaseByteCodeGenerator {
             for (ObjectSwitchCase<Object> classCase : hashCase.cases) {
                 mv.visitVarInsn(ALOAD, groupTypeVar);
                 if (javaClassCodec) {
-                    mv.visitLdcInsn(Type.getType((Class<?>)classCase.object));
+                    mv.visitLdcInsn(getJavaType(classCase.object));
                     mv.visitJumpInsn(IF_ACMPEQ, classCase.label);
                 } else {
                     GroupDef group = schema.getGroup(classCase.object);
@@ -466,15 +533,14 @@ class BaseByteCodeGenerator {
             for (ObjectSwitchCase<Object> classCase : hashCase.cases) {
                 Object groupType = classCase.object;
                 GroupDef group = schema.getGroup(groupType);
-                String groupDescriptor =
-                        javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
+                String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
                 mv.visitLabel(classCase.label);
                 mv.visitFrame(F_SAME, 0, null, 0, null);
                 mv.visitVarInsn(ALOAD, 0); // this
                 mv.visitVarInsn(ALOAD, 1); // out
                 mv.visitVarInsn(ALOAD, 2); // obj
                 if (javaClassCodec) {
-                    mv.visitTypeInsn(CHECKCAST, Type.getInternalName((Class<?>)groupType));
+                    mv.visitTypeInsn(CHECKCAST, getTypeInternalName(groupType, javaClassCodec));
                 }
                 mv.visitMethodInsn(INVOKEVIRTUAL, genClassInternalName, "writeStaticGroupWithId_" + group.getName(),
                         "(Lcom/cinnober/msgcodec/io/ByteSink;" + groupDescriptor + ")V", false);
@@ -490,7 +556,7 @@ class BaseByteCodeGenerator {
             String genClassInternalName, boolean javaClassCodec) {
         for (GroupDef group : schema.getGroups()) {
             Object groupType = group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
+            String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
             MethodVisitor mv = cv.visitMethod(
                     ACC_PRIVATE,
                     "writeStaticGroupWithId_" + group.getName(),
@@ -532,7 +598,7 @@ class BaseByteCodeGenerator {
             boolean javaClassCodec) {
         for (GroupDef group : schema.getGroups()) {
             Object groupType = group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
+            String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
             MethodVisitor writemv = cv.visitMethod(
                     ACC_PRIVATE,
                     "writeStaticGroup_" + group.getName(),
@@ -546,8 +612,7 @@ class BaseByteCodeGenerator {
             if (group.getSuperGroup() != null) {
                 GroupDef superGroup = schema.getGroup(group.getSuperGroup());
                 Object superGroupType = superGroup.getGroupType();
-                String superGroupDescriptor =
-                        javaClassCodec ? Type.getDescriptor((Class<?>)superGroupType) : "Ljava/lang/Object;";
+                String superGroupDescriptor = getTypeDescriptor(superGroupType, javaClassCodec);
                 writemv.visitVarInsn(ALOAD, 0);
                 writemv.visitVarInsn(ALOAD, 1);
                 writemv.visitVarInsn(ALOAD, 2);
@@ -648,7 +713,7 @@ class BaseByteCodeGenerator {
         for (Map.Entry<Integer, Label> caseEntry : labelsByGroupId.entrySet()) {
             GroupDef group = schema.getGroup(caseEntry.getKey().intValue());
             Object groupType = group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
+            String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
 
             mv.visitLabel(caseEntry.getValue());
             mv.visitFrame(F_SAME, 0, null, 0, null);
@@ -673,8 +738,8 @@ class BaseByteCodeGenerator {
             String genClassInternalName, boolean javaClassCodec) {
         for (GroupDef group : schema.getGroups()) {
             Object groupType = group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
-            String groupInternalName = javaClassCodec ? Type.getInternalName((Class<?>)groupType) : null;
+            String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
+            String groupInternalName = getTypeInternalName(groupType, javaClassCodec);
             MethodVisitor readmv = cv.visitMethod(
                     ACC_PRIVATE,
                     "readStaticGroup_" + group.getName(),
@@ -722,7 +787,7 @@ class BaseByteCodeGenerator {
             final String genClassInternalName, final boolean javaClassCodec) {
         for (final GroupDef group : schema.getGroups()) {
             Object groupType = group.getGroupType();
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor((Class<?>)groupType) : "Ljava/lang/Object;";
+            String groupDescriptor = getTypeDescriptor(groupType, javaClassCodec);
             final MethodVisitor mv = cv.visitMethod(
                     ACC_PRIVATE,
                     "readStaticGroup_" + group.getName(),
@@ -736,8 +801,7 @@ class BaseByteCodeGenerator {
             if (group.getSuperGroup() != null) {
                 GroupDef superGroup = schema.getGroup(group.getSuperGroup());
                 Object superGroupType = superGroup.getGroupType();
-                String superGroupDescriptor =
-                        javaClassCodec ? Type.getDescriptor((Class<?>)superGroupType) : "Ljava/lang/Object;";
+                String superGroupDescriptor = getTypeDescriptor(superGroupType, javaClassCodec);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitVarInsn(ALOAD, 1);
                 mv.visitVarInsn(ALOAD, 2);
@@ -1195,7 +1259,7 @@ class BaseByteCodeGenerator {
         }
     }
 
-    /**
+    /**                                                    en
      * Generate value encoding using the blink output.
      *
      * <p>Defaults to <code>writeUInt16Null].</code>
@@ -1301,8 +1365,7 @@ class BaseByteCodeGenerator {
             boolean javaClassCodec) throws IllegalArgumentException {
         if (refGroup != null) {
             Object refGroupType = refGroup.getGroupType();
-            String refGroupDescriptor =
-                    javaClassCodec ? Type.getDescriptor((Class<?>)refGroupType) : "Ljava/lang/Object;";
+            String refGroupDescriptor = getTypeDescriptor(refGroupType, javaClassCodec);
             if (required) {
                 int instanceVar = nextVar.next();
                 mv.visitVarInsn(ASTORE, instanceVar);
@@ -1320,7 +1383,7 @@ class BaseByteCodeGenerator {
                 // null
                 mv.visitInsn(POP);
                 mv.visitInsn(ICONST_0); // false
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeBoolean", "(Lcom/cinnober/msgcodec/io/ByteSink;Z)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writePresenceByte", "(Lcom/cinnober/msgcodec/io/ByteSink;Z)V", false);
                 mv.visitJumpInsn(GOTO, endLabel);
 
                 // not null
@@ -1328,7 +1391,7 @@ class BaseByteCodeGenerator {
                 // PENDING: mv.visitFrame?
                 mv.visitVarInsn(ASTORE, instanceVar);
                 mv.visitInsn(ICONST_1); // true
-                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeBoolean", "(Lcom/cinnober/msgcodec/io/ByteSink;Z)V", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writePresenceByte", "(Lcom/cinnober/msgcodec/io/ByteSink;Z)V", false);
                 mv.visitVarInsn(ALOAD, 0); // this
                 mv.visitVarInsn(ALOAD, outputStreamVar);
                 mv.visitVarInsn(ALOAD, instanceVar);
@@ -2225,11 +2288,37 @@ class BaseByteCodeGenerator {
         }
     }
 
+    final static String getTypeDescriptor(Object msgClass, boolean javaClassCodec) {
+        if (javaClassCodec && msgClass instanceof Class) {
+            return Type.getDescriptor((Class) msgClass);
+        } else {
+            return "Ljava/lang/Object;";
+        }
+    }
+
+    final static String getTypeInternalName(Object msgClass, boolean javaClassCodec) {
+        if (javaClassCodec && msgClass instanceof Class) {
+            return Type.getInternalName((Class) msgClass);
+        } else if (javaClassCodec) {
+            return Type.getInternalName(Object.class);
+        } else {
+            return null;
+        }
+    }
+
+    final static Type getJavaType(Object msgClass) {
+        if (msgClass instanceof Class) {
+            return Type.getType((Class) msgClass);
+        } else {
+            return Type.getType(Object.class);
+        }
+    }
+
     protected void generateDecodeRefValue(GroupDef refGroup, boolean required, MethodVisitor mv, int byteSourceVar,
             String genClassInternalName,
             Class<?> javaClass, TypeDef type, boolean javaClassCodec) throws IllegalArgumentException {
         if (refGroup != null) {
-            String groupDescriptor = javaClassCodec ? Type.getDescriptor(javaClass) : "Ljava/lang/Object;";
+            String groupDescriptor = getTypeDescriptor(javaClass,javaClassCodec);
             if (required) {
                 mv.visitInsn(POP); // input stream
                 mv.visitVarInsn(ALOAD, 0);
@@ -2238,7 +2327,7 @@ class BaseByteCodeGenerator {
                         "(Lcom/cinnober/msgcodec/io/ByteSource;)" + groupDescriptor,
                         false);
             } else {
-                mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readBoolean", "(Lcom/cinnober/msgcodec/io/ByteSource;)Z", false);
+                mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readPresenceByte", "(Lcom/cinnober/msgcodec/io/ByteSource;)Z", false);
                 Label nonNullLabel = new Label();
                 Label endLabel = new Label();
                 mv.visitJumpInsn(IFNE, nonNullLabel); // not false, i.e. true
