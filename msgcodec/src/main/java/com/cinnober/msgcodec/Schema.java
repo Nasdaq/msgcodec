@@ -113,7 +113,7 @@ public class Schema implements Annotatable<Schema> {
      */
     public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
                   Map<String, String> annotations, SchemaBinding binding) {
-        this(groups, namedTypes, annotations, binding, Collections.EMPTY_MAP);
+        this(groups, namedTypes, annotations, binding, Collections.emptyMap());
     }
 
     /**

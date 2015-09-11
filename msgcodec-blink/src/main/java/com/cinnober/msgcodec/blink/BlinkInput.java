@@ -393,6 +393,7 @@ public class BlinkInput {
      * Backwards compatibility requires us to handle 0 as NULL.
      *
      * @param in the input stream to read from, not null.
+     * @return true if the presence byte is 0x01 else false 
      * @throws IOException if the underlying stream throws an exception
      */
     public static boolean readPresenceByte(ByteSource in) throws IOException {
