@@ -329,6 +329,8 @@ class BaseByteCodeGenerator {
                     "Lcom/cinnober/msgcodec/GroupTypeAccessor;");
         }
 
+
+
         for (GroupDef group : schema.getGroups()) {
             if (!javaClassCodec) {
                 // store the group type

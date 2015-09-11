@@ -24,19 +24,6 @@
 package com.cinnober.msgcodec.blink;
 
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
-
 import com.cinnober.msgcodec.DecodeException;
 import com.cinnober.msgcodec.Epoch;
 import com.cinnober.msgcodec.Group;
@@ -51,7 +38,21 @@ import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.io.ByteArrays;
 import com.cinnober.msgcodec.io.ByteBuf;
 import com.cinnober.msgcodec.io.ByteBufferBuf;
+import com.cinnober.msgcodec.io.ByteBuffers;
 import com.cinnober.msgcodec.messages.MetaProtocol;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author mikael.brannstrom
@@ -316,6 +317,67 @@ public class BlinkCodecTest {
         }
     }
 
+    @Test
+    public void testWriteNonReqWithNonNullReference() throws IOException {
+        Schema schema = new SchemaBuilder().build(SingleFieldEntity.class, IntMsg.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        SingleFieldEntity entity = new SingleFieldEntity();
+        entity.optionalIntMessage = new IntMsg(0x37);
+        codec.encode(entity, out);
+        byte[] expected = new byte[]{0x03, 0x09, 0x01, 0x37}; // size, type
+        System.err.println(ByteBuffers.toHex(ByteBuffer.wrap(out.toByteArray())));
+        assertArrayEquals(expected, out.toByteArray());
+    }
+
+    @Test
+    public void testWriteNonReqWithNullReference() throws IOException {
+        Schema schema = new SchemaBuilder().build(SingleFieldEntity.class, IntMsg.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        SingleFieldEntity entity = new SingleFieldEntity();
+        codec.encode(entity, out);
+        byte[] expected = new byte[]{0x02, 0x09, (byte)0xc0}; // size, type
+        System.err.println(ByteBuffers.toHex(ByteBuffer.wrap(out.toByteArray())));
+        assertArrayEquals(expected, out.toByteArray());
+    }
+
+    @Test
+    public void testReadNonReqWithNonNullReference() throws IOException {
+        Schema schema = new SchemaBuilder().build(SingleFieldEntity.class, IntMsg.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        byte[] data = new byte[]{0x03, 0x09, 0x01, 0x37}; // size, type
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+
+        SingleFieldEntity entity = (SingleFieldEntity) codec.decode(in);
+        assertNotNull(entity.optionalIntMessage);
+        assertEquals(0x37, entity.optionalIntMessage.value);
+    }
+
+    @Test
+    public void testReadNonReqWithNullReference() throws IOException {
+        Schema schema = new SchemaBuilder().build(SingleFieldEntity.class, IntMsg.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        byte[] data = new byte[]{0x02, 0x09, (byte)0xc0}; // size, type
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+
+        SingleFieldEntity entity = (SingleFieldEntity) codec.decode(in);
+        assertNull(entity.optionalIntMessage);
+    }
+
+    @Test
+    public void testReadNonReqWithCompatibilityNullReference() throws IOException {
+        Schema schema = new SchemaBuilder().build(SingleFieldEntity.class, IntMsg.class);
+        BlinkCodec codec = new BlinkCodecFactory(schema).createCodec();
+        byte[] data = new byte[]{0x02, 0x09, (byte)0x00}; // size, type
+        ByteArrayInputStream in = new ByteArrayInputStream(data);
+
+        SingleFieldEntity entity = (SingleFieldEntity) codec.decode(in);
+        assertNull(entity.optionalIntMessage);
+    }
+
 
     @Id(1)
     public static class Hello extends MsgObject {
@@ -396,6 +458,12 @@ public class BlinkCodecTest {
     @Id(5)
     public static abstract class AbstractMessage extends MsgObject {
     }
+
+    @Id(9)
+    public static class SingleFieldEntity {
+        public IntMsg optionalIntMessage;
+    }
+
     
     @Id(7)
     public static class DynamicMsgs {

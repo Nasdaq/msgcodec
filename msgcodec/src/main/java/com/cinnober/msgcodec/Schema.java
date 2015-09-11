@@ -64,6 +64,7 @@ public class Schema implements Annotatable<Schema> {
     private final Map<Object, GroupDef> groupsByType;
     private final Collection<GroupDef> sortedGroups;
     private final Map<String, String> annotations;
+    private final Map<Object,Integer> remappedClasses;
 
     private final SchemaBinding binding;
     private BindingStatus bindingStatus;
@@ -90,6 +91,18 @@ public class Schema implements Annotatable<Schema> {
         this(groups, namedTypes, null, binding);
     }
 
+    private boolean isSuperGroup(GroupDef parent, GroupDef child) {
+        if (child.getSuperGroup() == null) {
+            return false;
+        }
+        if (child.getSuperGroup().equals(parent.getName())) {
+            return true;
+        }
+
+        // should always exist in groupsByName
+        return isSuperGroup(parent, groupsByName.get(child.getSuperGroup()));
+    }
+
     /**
      * Creates a schema.
      *
@@ -99,12 +112,27 @@ public class Schema implements Annotatable<Schema> {
      * @param binding the protocol schema binding, or null if unbound
      */
     public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
-        Map<String, String> annotations, SchemaBinding binding) {
+                  Map<String, String> annotations, SchemaBinding binding) {
+        this(groups, namedTypes, annotations, binding, Collections.EMPTY_MAP);
+    }
+
+    /**
+     * Creates a schema.
+     *
+     * @param groups the group definitions (the protocol messages), not null.
+     * @param namedTypes any named types, or null if none.
+     * @param annotations the group annotations.
+     * @param binding the protocol schema binding, or null if unbound
+     * @param remappedClasses altered mapping for classes that are not included in the schema (replaces a class with another)
+     */
+    public Schema(Collection<GroupDef> groups, Collection<NamedType> namedTypes,
+        Map<String, String> annotations, SchemaBinding binding, Map<Object,Integer> remappedClasses) {
         if (annotations == null || annotations.isEmpty()) {
             this.annotations = Collections.emptyMap();
         } else{
             this.annotations = Collections.unmodifiableMap(new LinkedHashMap<>(annotations));
         }
+        this.remappedClasses = remappedClasses;
         this.binding = binding;
         if (namedTypes != null) {
             LinkedHashMap<String, NamedType> tempMap = new LinkedHashMap<>(namedTypes.size() * 2);
@@ -135,8 +163,17 @@ public class Schema implements Annotatable<Schema> {
                 }
             }
             if (group.getGroupType() != null && group.getGroupType() != Object.class) {
-                if (groupsByType.put(group.getGroupType(), group) != null) {
-                    throw new IllegalArgumentException("Duplicate group type: " + group.getGroupType());
+                GroupDef existingGroup = groupsByType.put(group.getGroupType(), group);
+
+                if (existingGroup != null) {
+                    if (isSuperGroup(existingGroup, group)) {
+                        groupsByType.put(group.getGroupType(), existingGroup);
+                    } else if (isSuperGroup(group, existingGroup)) {
+                        groupsByType.put(group.getGroupType(), group);
+                    } else {
+                        throw new IllegalArgumentException("Duplicate group type: " + group.getGroupType());
+                    }
+
                 }
             }
         }
@@ -390,7 +427,13 @@ public class Schema implements Annotatable<Schema> {
      * @return the group definition, or null if not found.
      */
     public GroupDef getGroup(Object groupType) {
-        return groupsByType.get(groupType);
+        GroupDef g = groupsByType.get(groupType);
+        if (g != null) {
+            return g;
+        } else {
+            Integer gId = remappedClasses.get(groupType);
+            return gId != null ? groupsById.get(gId) : null;
+        }
     }
 
     /** Returns the group definition for the specified group name.
@@ -677,5 +720,6 @@ public class Schema implements Annotatable<Schema> {
             }
         }
     }
+
 
 }

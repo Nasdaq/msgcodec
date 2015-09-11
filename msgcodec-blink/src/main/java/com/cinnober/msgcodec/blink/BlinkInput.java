@@ -390,6 +390,8 @@ public class BlinkInput {
     /**
      * Read a presence byte. Assume false if weak error.
      *
+     * Backwards compatibility requires us to handle 0 as NULL.
+     *
      * @param in the input stream to read from, not null.
      * @throws IOException if the underlying stream throws an exception
      */
