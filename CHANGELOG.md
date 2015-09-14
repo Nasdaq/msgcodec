@@ -1,5 +1,20 @@
 # MsgCodec Changelog
 
+## 3.1.0
+
+### msgcodec
+Support for creating upgrade codecs by combining the old and new codec (SchemaBinder).
+New Enum handling, symbols are now mapped in a general way which allows upgrade codecs to map values using names in order to allow reordering and additions.
+
+Added a utility buffer implementation that can dynamically reallocate underlying storage (ReallocatingByteBuf).
+
+Fixed threading issue in ObjectDispatcher.
+
+
+### msgcodec-blink
+
+Fixed a bug in buffer handling that affected encoding of multiple dynamics in one message.
+
 ## 3.0.0
 
 Changed requirement from JDK 7 to JDK 8.
