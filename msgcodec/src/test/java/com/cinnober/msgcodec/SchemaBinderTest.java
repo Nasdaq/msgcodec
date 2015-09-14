@@ -29,7 +29,6 @@ import com.cinnober.msgcodec.anot.Enumeration;
 import com.cinnober.msgcodec.anot.Id;
 import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Unsigned;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -53,15 +52,6 @@ public class SchemaBinderTest {
         new SchemaBinder(schema1).bind(schema2, SchemaBinderTest::getDirAtClient);
     }
 
-
-    @Ignore()
-    @Test(expected = IncompatibleSchemaException.class)
-    public void testUpgradeFail() throws IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().addMessages(FooReqV1.class, FooRspV1.class).build();
-        Schema schema2 = new SchemaBuilder().addMessages(FooReqV2.class, FooRspV2.class).build();
-        new SchemaBinder(schema1).bind(schema2, g -> Direction.BOTH);
-    }
-
     @Test
     public void testUpgradeBoundToGroupOk() throws IncompatibleSchemaException {
         Schema schema1 = new SchemaBuilder().addMessages(FooReqV1.class, FooRspV1.class).build();
@@ -69,26 +59,6 @@ public class SchemaBinderTest {
         schema1 = Group.bind(schema1);
         schema2 = Group.bind(schema2);
         new SchemaBinder(schema1).bind(schema2, SchemaBinderTest::getDirAtClient);
-    }
-
-    @Ignore()
-    @Test(expected = IncompatibleSchemaException.class)
-    public void testUpgradeBoundToGroupFail() throws IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().addMessages(FooRspV1.class).build();
-        Schema schema2 = new SchemaBuilder().addMessages(FooRspV2.class).build();
-        schema1 = Group.bind(schema1);
-        schema2 = Group.bind(schema2);
-        new SchemaBinder(schema1).bind(schema2, g -> Direction.INBOUND);
-    }
-
-    @Ignore()
-    @Test(expected = IncompatibleSchemaException.class)
-    public void testUpgradeBoundToGroupFail2() throws IncompatibleSchemaException {
-        Schema schema1 = new SchemaBuilder().addMessages(FooRspV2.class).build();
-        Schema schema2 = new SchemaBuilder().addMessages(FooRspV1.class).build();
-        schema1 = Group.bind(schema1);
-        schema2 = Group.bind(schema2);
-        new SchemaBinder(schema1).bind(schema2, g -> Direction.OUTBOUND);
     }
     
     @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -267,6 +237,34 @@ public class SchemaBinderTest {
         Schema schemaNarrow = new SchemaBuilder().build(DifferentNameSameId1.class);
         Schema schemaWide = new SchemaBuilder().build(DifferentNameSameId2.class);
         new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testSeqTypeWideningOutbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqNumberNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqNumberWide.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testSeqTypeWideningInbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqNumberNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqNumberWide.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testSeqTypeNarrowingOutbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqNumberNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqNumberWide.class);
+        new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.OUTBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testSeqTypeNarrowingInbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqNumberNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqNumberWide.class);
+        new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.INBOUND);
     }
 
 
@@ -473,6 +471,32 @@ public class SchemaBinderTest {
         }
     }
 
+    @Name("SeqNumberEnt")
+    @Id(12)
+    public static class SeqNumberNarrow extends MsgObject {
+        public Integer[] numberSeq;
+
+        public SeqNumberNarrow() {
+        }
+
+        public SeqNumberNarrow(Integer[] eValue) {
+            numberSeq = eValue;
+        }
+    }
+
+    @Name("SeqNumberEnt")
+    @Id(12)
+    public static class SeqNumberWide extends MsgObject {
+        public Long[] numberSeq;
+
+        public SeqNumberWide() {
+        }
+
+        public SeqNumberWide(Long[] eValue) {
+            numberSeq = eValue;
+        }
+    }
+
     @Name("ReqTestEntity")
     @Id(10)
     public static class ReqTestEntity extends MsgObject {
@@ -494,6 +518,8 @@ public class SchemaBinderTest {
             year = (int)(System.nanoTime()%3000);
         }
     }
+
+
 
 
 
