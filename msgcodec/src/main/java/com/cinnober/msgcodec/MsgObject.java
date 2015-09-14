@@ -23,26 +23,40 @@
  */
 package com.cinnober.msgcodec;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.concurrent.ConcurrentHashMap;
-
-import java.util.Arrays;
-import static com.cinnober.msgcodec.MsgObjectValueHandler.*;
 import com.cinnober.msgcodec.anot.Sequence;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
+
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.cinnober.msgcodec.MsgObjectValueHandler.ArraySequenceHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.BINARY;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.DateTimeHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.FieldHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.GROUP;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.GroupHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.IntTimeHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.ListSequenceHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.LongTimeHandler;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.SIMPLE;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.UINT16;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.UINT32;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.UINT64;
+import static com.cinnober.msgcodec.MsgObjectValueHandler.UINT8;
 
 /**
  * Base class or stand-alone utility for annotated messages.
@@ -72,7 +86,6 @@ public class MsgObject {
         GroupHandler classToString = groupHandlerByClass.get(javaClass);
         if (classToString == null) {
             classToString = new GroupHandler(javaClass);
-            groupHandlerByClass.put(javaClass, classToString);
 
             // init
             Class<?> superClass = javaClass.getSuperclass();
@@ -98,6 +111,8 @@ public class MsgObject {
             fields.addAll(declaredFields);
 
             classToString.init(fields.toArray(new FieldHandler[fields.size()]));
+
+            groupHandlerByClass.put(javaClass, classToString);
         }
         return classToString;
     }
