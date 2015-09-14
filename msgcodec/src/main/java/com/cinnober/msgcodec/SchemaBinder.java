@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -246,6 +247,40 @@ public class SchemaBinder {
 
     }
 
+    private void checkSeqType(TypeDef srcType, TypeDef dstType, Schema srcSchema, Schema dstSchema, Direction direction,
+                              Supplier<String> detailsFunction) throws IncompatibleSchemaException {
+        if (! (srcType instanceof TypeDef.Sequence)) {
+            throw new IncompatibleSchemaException("Expected sequence source type - found "+srcType+detailsFunction.get());
+        }
+        if (! (dstType instanceof TypeDef.Sequence)) {
+            throw new IncompatibleSchemaException("Expected sequence destination type - found "+dstType+detailsFunction.get());
+        }
+        TypeDef.Sequence srcSeqTp = (TypeDef.Sequence) srcType;
+        TypeDef.Sequence dstSeqTp = (TypeDef.Sequence) dstType;
+        if (srcSeqTp.getComponentType()==null || dstSeqTp.getComponentType()==null) {
+            if (srcSeqTp.getComponentType() != null) {
+                throw new IncompatibleSchemaException("Null component type on src sequence"+detailsFunction.get());
+            }
+            if (dstSeqTp.getComponentType() != null) {
+                throw new IncompatibleSchemaException("Null component type on dst sequence"+detailsFunction.get());
+            }
+            return;
+        }
+
+        TypeDef srcComponentType = srcSchema.resolveToType(srcSeqTp.getComponentType(), true);
+        TypeDef dstComponentType = dstSchema.resolveToType(dstSeqTp.getComponentType(), true);
+        if (!srcComponentType.getType().equals(dstComponentType.getType())) {
+            throw new IncompatibleSchemaException("Sequence contains different types"+detailsFunction.get());
+        }
+        if (srcComponentType.getType() == Type.ENUM) {
+            Direction acceptable = getAcceptableEnumConversion((TypeDef.Enum)srcComponentType, (TypeDef.Enum)dstComponentType);
+            if (acceptable != Direction.BOTH && direction != acceptable) {
+                throw new IncompatibleSchemaException("Unacceptable enum field conversion"+detailsFunction.get());
+            }
+        }
+
+    }
+
     private FieldDef bindField(FieldDef srcField, FieldDef dstField, GroupDef dstGroup, Schema dst, Direction dir)
             throws IncompatibleSchemaException {
         TypeDef srcType = src.resolveToType(srcField.getType(), true);
@@ -276,6 +311,7 @@ public class SchemaBinder {
                     javaType = srcField.getJavaClass();
                     break;
                 case SEQUENCE:
+                    checkSeqType(srcType, dstType, src, dst, dir, () -> details(dstGroup, dstField, dir));
                     TypeDef componentType = dst.resolveToType(
                             ((TypeDef.Sequence) dstType).getComponentType(), true);
                     if (componentType != null && componentType.getType() == Type.ENUM) {
@@ -307,6 +343,7 @@ public class SchemaBinder {
                     javaType = srcField.getJavaClass();
                     break;
                 case SEQUENCE:
+                    checkSeqType(srcType, dstType, src, dst, dir, () -> details(dstGroup, dstField, dir));
                     TypeDef componentType = dst.resolveToType(
                             ((TypeDef.Sequence) dstType).getComponentType(), true);
                     if (componentType != null && componentType.getType() == Type.ENUM) {

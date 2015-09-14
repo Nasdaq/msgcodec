@@ -270,6 +270,35 @@ public class SchemaBinderTest {
     }
 
 
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testEnumSeqNarrowingOutbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqEnumEntNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqEnumEntWide.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.OUTBOUND);
+    }
+
+    @Test(expected = IncompatibleSchemaException.class)
+    public void testEnumSeqNarrowingInbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqEnumEntNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqEnumEntWide.class);
+        new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.INBOUND);
+    }
+
+    @Test
+    public void testEnumSeqWideningOutbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqEnumEntNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqEnumEntWide.class);
+        new SchemaBinder(schemaNarrow).bind(schemaWide, g -> Direction.OUTBOUND);
+    }
+
+    @Test
+    public void testEnumSeqWideningInbound() throws IncompatibleSchemaException {
+        Schema schemaNarrow = new SchemaBuilder().build(SeqEnumEntNarrow.class);
+        Schema schemaWide = new SchemaBuilder().build(SeqEnumEntWide.class);
+        new SchemaBinder(schemaWide).bind(schemaNarrow, g -> Direction.INBOUND);
+    }
+
+
     @Name("SameNameDifferentId")
     @Id(1000)
     public static class SameNameDifferentId1 extends MsgObject {
@@ -415,6 +444,32 @@ public class SchemaBinderTest {
 
         public EnumEntWide(EnumWide eValue) {
             enumeration = eValue;
+        }
+    }
+
+    @Name("SeqEnumEnt")
+    @Id(11)
+    public static class SeqEnumEntNarrow extends MsgObject {
+        public EnumNarrow[] enumerationSeq;
+
+        public SeqEnumEntNarrow() {
+        }
+
+        public SeqEnumEntNarrow(EnumNarrow[] eValue) {
+            enumerationSeq = eValue;
+        }
+    }
+
+    @Name("SeqEnumEnt")
+    @Id(11)
+    public static class SeqEnumEntWide extends MsgObject {
+        public EnumWide[] enumerationSeq;
+
+        public SeqEnumEntWide() {
+        }
+
+        public SeqEnumEntWide(EnumWide[] eValue) {
+            enumerationSeq = eValue;
         }
     }
 
