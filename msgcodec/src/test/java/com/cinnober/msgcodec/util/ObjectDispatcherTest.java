@@ -66,6 +66,23 @@ public class ObjectDispatcherTest {
         } catch (InvocationTargetException e) {}
     }
 
+    /**
+     * Verifies that iteration order is important when deciding who to dispatch to.
+     */
+    @Test
+    public void testOverridingServices() throws Exception {
+        ObjectDispatcher dispatcher = new ObjectDispatcher(Arrays.asList(new MyService()));
+        ObjectDispatcher customizedDispatcher = new ObjectDispatcher(Arrays.asList(
+                new MyCustomizedService(), new MyService()));
+        ObjectDispatcher customizedDispatcherIncorrectOrder = new ObjectDispatcher(Arrays.asList(
+                new MyService(), new MyCustomizedService()));
+
+
+        assertEquals(2, dispatcher.dispatch(1)); // standard
+        assertEquals(3, customizedDispatcher.dispatch(1)); // customized behavior
+        assertEquals(2, customizedDispatcherIncorrectOrder.dispatch(1)); // standard!!
+    }
+
 
     public static class MyService {
         public void onNumber(Number number) {
@@ -82,6 +99,13 @@ public class ObjectDispatcherTest {
         public void fooDate(Date date) {
             System.out.println("fooDate: " + date);
             fail("Should be ignored");
+        }
+    }
+
+    public static class MyCustomizedService extends MyService {
+        @Override
+        public int onInteger(Integer number){
+            return number + 2;
         }
     }
 

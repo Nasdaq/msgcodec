@@ -74,6 +74,29 @@ import java.util.regex.Pattern;
  * result = dispatcher.dispatch(new Thing()); // calls MyErrorHandler.onUnhandledType(..)
  * </pre>
  *
+ * <p>If several delegates are registered with the same object type the first registered will be called.
+ *
+ * <p><b>Example 2:</b> You have the following delegates:
+ * <pre>
+ * class MyService1 {
+ *   public Pong onPing(Ping ping) { }
+ * }
+ * class MyService2 {*
+ *   public Pong onPing(Ping ping) { }
+ * }
+ * </pre>
+ *
+ * Then create a dispatcher:
+ * <pre>
+ * MyService1 myService1 = ...;
+ * MyService2 myService2 = ...;
+ * // Note the order!! service2 is before service1 in the list, so Ping messages will be
+ * // dispatched to MyService2.
+ * ObjectDispatcher dispatcher = new ObjectDispatcher(Arrays.asList(myService2, myService1));
+ *
+ * Object result;
+ * result = dispatcher.dispatch(new Ping()); // calls MyService2.onPing(..)
+ * </pre>
  *
  * @author Mikael Brannstrom
  *
@@ -96,7 +119,8 @@ public class ObjectDispatcher {
      * <p>The default super type traverser is used, which traverses super class then implemented interfaces on each
      * level in the inheritance tree.
      *
-     * @param delegates the delegates that should be called, not null.
+     * @param delegates the delegates that should be called, not null. NB! The iteration order of delegates may decide
+     * which delegates that will be used, see Example 2 in the class javadoc
      */
     public ObjectDispatcher(Collection<Object> delegates) {
         this(delegates, new Class<?>[0], DEFAULT_PATTERN, new DefaultInheritanceTraverser());
@@ -110,7 +134,8 @@ public class ObjectDispatcher {
      * <p>The default super type traverser is used, which traverses super class then implemented interfaces on each
      * level in the inheritance tree.
      *
-     * @param delegates the delegates that should be called, not null.
+     * @param delegates the delegates that should be called, not null. NB! The iteration order of delegates may decide
+     * which delegates that will be used, see Example 2 in the class javadoc
      * @param methodSignature the method signature for all but the first parameter, not null.
      */
     public ObjectDispatcher(Collection<Object> delegates,
@@ -124,7 +149,8 @@ public class ObjectDispatcher {
      * <p>The default super type traverser is used, which traverses super class then implemented interfaces on each
      * level in the inheritance tree.
      *
-     * @param delegates the delegates that should be called, not null.
+     * @param delegates the delegates that should be called, not null. NB! The iteration order of delegates may decide
+     * which delegates that will be used, see Example 2 in the class javadoc
      * @param methodSignature the method signature for all but the first parameter, not null.
      * @param methodPattern the pattern of the methods names in the delegates, or null for any method name.
      */
@@ -138,7 +164,8 @@ public class ObjectDispatcher {
     /**
      * Create an object dispatcher using the specified delegates.
      *
-     * @param delegates the delegates that should be called, not null.
+     * @param delegates the delegates that should be called, not null. NB! The iteration order of delegates may decide
+     * which delegates that will be used, see Example 2 in the class javadoc
      * @param methodSignature the method signature for all but the first parameter, not null.
      * @param methodPattern the pattern of the methods names in the delegates, or null for any method name.
      * @param superTypeTraverser object that can traverse the inheritance tree of a type, not null.
