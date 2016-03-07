@@ -653,6 +653,48 @@ public class Schema implements Annotatable<Schema> {
         visit(this, sv);
     }
 
+    /**
+     * Merges the given schemas into a common schema.
+     * @param schemasToMerge the schemas to merge.
+     * @return the merged schema.
+     */
+    public static Schema merge(Schema... schemasToMerge) {
+        Schema firstDictionary = schemasToMerge[0];
+        Map<String, GroupDef> groupsByName = new LinkedHashMap<>();
+        Map<String, NamedType> typesByName = new LinkedHashMap<>();
+        for (Schema dict : schemasToMerge) {
+            for (NamedType namedType : dict.getNamedTypes()) {
+                NamedType prevNamedType = typesByName.get(namedType.getName());
+                if (prevNamedType != null) {
+                    // verify that type is the same
+                    if (!prevNamedType.getType().equals(namedType.getType())) {
+                        throw new IllegalArgumentException("NamedType mismatch '" + namedType.getName() + "': type");
+                    }
+                } else {
+                    typesByName.put(namedType.getName(), namedType);
+                }
+            }
+            for (GroupDef group : dict.getGroups()) {
+                GroupDef prevGroup = groupsByName.get(group.getName());
+                if (prevGroup != null) {
+                    // verify that the structure is the same
+                    if (!prevGroup.unbind().equals(group.unbind())) {
+                        throw new IllegalArgumentException("GroupDef mismatch '" + group.getName() + "': structure");
+                    }
+                    // verify that the group type binding is the same
+                    if (!prevGroup.getBinding().getGroupType().equals(group.getBinding().getGroupType())) {
+                        throw new IllegalArgumentException("GroupDef mismatch '" + group.getName() +
+                                "': binding object type");
+                    }
+                } else {
+                    groupsByName.put(group.getName(), group);
+                }
+            }
+        }
+        return new Schema(groupsByName.values(), typesByName.values(),
+                firstDictionary.getAnnotations(), firstDictionary.getBinding());
+    }
+
     private static void visit(Schema schema, SchemaVisitor sv) {
         sv.visit(schema.getBinding());
         schema.getAnnotations().forEach(sv::visitAnnotation);
