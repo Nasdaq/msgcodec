@@ -27,6 +27,8 @@ package com.cinnober.msgcodec;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
+import java.util.Collection;
+
 /**
  *
  * @author mikael.brannstrom
@@ -45,5 +47,17 @@ public class SchemaTest {
         assertEquals(schema1.hashCode(), schema2.hashCode());
         assertNotEquals(schema1.getUID(), schema2.getUID());
     }
+    
+    @Test
+    //This tests the bug where Schema.getDynamicGroups only returned the direct descendants of 
+    //the group and not all descendants. Before the bug fix Bar2Message wasn't not be included. 
+    public void testMultipleInheritance () {
+        Schema schema = new SchemaBuilder().build(FooMessage.class, BarMessage.class, Bar2Message.class);
 
+        Collection<GroupDef> groups = schema.getDynamicGroups("FooMessage");
+        for (GroupDef g : groups) {
+        	System.out.println(g.getName());
+        }
+        assertEquals(3, groups.size());
+    }
 }

@@ -464,17 +464,39 @@ public class Schema implements Annotatable<Schema> {
         if (name == null) {
             return getGroups();
         }
-        HashSet<String> superNames = new HashSet<>();
         LinkedList<GroupDef> subGroups = new LinkedList<>();
         for (GroupDef group : sortedGroups) {
-            if (group.getName().equals(name)) {
-                superNames.add(name);
-                subGroups.add(group);
-            } else if (superNames.contains(group.getSuperGroup())) {
-                subGroups.add(group);
-            }
+        	if (isInstanceOf(name, group.getName())) {
+        		subGroups.add(group);
+        	}
         }
         return subGroups;
+    }
+    
+    
+    /**
+     * Checks recursively if group is an instance of groupToMatch.
+     * @param groupToMatch
+     * @param groupName
+     * @return true if group is an instance of groupToMatch, else false.
+     */
+    public boolean isInstanceOf(String groupToMatch, String groupName) {
+    	if(groupName == null) {
+    		return false;
+    	}
+    	if (groupToMatch.equals(groupName)) {
+    		return true;
+    	}
+    		
+    	GroupDef group = groupsByName.get(groupName);
+    	String superGroupName = group.getSuperGroup();
+    	if (groupName.equals(superGroupName)) {
+    		return false;
+    	}
+    	if (groupToMatch.equals(superGroupName)) {
+    		return true;
+    	}
+    	else return isInstanceOf(groupToMatch, superGroupName);
     }
 
     /** Returns all groups.
