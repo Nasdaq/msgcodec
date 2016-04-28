@@ -859,6 +859,10 @@ public abstract class JsonValueHandler<T> {
             return requiredSlot;
         }
 
+        String getName() {
+            return name;
+        }
+
         public JsonValueHandler getValueHandler() {
             return valueHandler;
         }
@@ -937,7 +941,20 @@ public abstract class JsonValueHandler<T> {
             }
 
             if (!requiredFields.isEmpty()) {
-                throw new DecodeException("Some required fields are missing");
+                StringBuilder str = new StringBuilder("Missing required ")
+                        .append(requiredFields.cardinality() == 1 ? "field" : "fields")
+                        .append(": ");
+                boolean comma = false;
+                for (FieldHandler fieldHandler : fields.values()) {
+                    if (fieldHandler.isRequired() && requiredFields.get(fieldHandler.getRequiredSlot())) {
+                        if (comma) {
+                            str.append(", ");
+                        }
+                        str.append(fieldHandler.getName());
+                        comma = true;
+                    }
+                }
+                throw new DecodeException(str.toString());
             }
         }
 
