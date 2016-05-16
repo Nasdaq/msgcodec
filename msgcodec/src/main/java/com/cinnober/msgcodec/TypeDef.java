@@ -163,6 +163,10 @@ public abstract class TypeDef {
          * @see TypeDef#UINT8
          */
         UINT8,
+        /** 16-bit unicode character (unsigned 16-bit integer). Java type: char or Character.
+         * @see TypeDef#CHAR
+         */
+        CHAR,
         /** Unsigned 16-bit integer. Java type: short or Short.
          * @see TypeDef#UINT16
          */
@@ -248,6 +252,7 @@ public abstract class TypeDef {
     }
 
     public static final TypeDef UINT8 = new Simple(Type.UINT8, Byte.class, "u8", MetaTypeDef.UINT8);
+    public static final TypeDef CHAR = new Simple(Type.CHAR, Character.class, "u16", MetaTypeDef.UINT16);
     public static final TypeDef UINT16 = new Simple(Type.UINT16, Short.class, "u16", MetaTypeDef.UINT16);
     public static final TypeDef UINT32 = new Simple(Type.UINT32, Integer.class, "u32", MetaTypeDef.UINT32);
     public static final TypeDef UINT64 = new Simple(Type.UINT64, Long.class, "u64", MetaTypeDef.UINT64);

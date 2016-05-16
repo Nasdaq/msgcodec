@@ -115,6 +115,7 @@ public class SchemaBuilder {
                     BigInteger.class,
                     Date.class,
                     boolean.class, Boolean.class,
+                    char.class, Character.class,
                     String.class,
                     byte[].class
                     )));
@@ -764,6 +765,9 @@ public class SchemaBuilder {
         } else if (type.equals(boolean.class) || type.equals(Boolean.class)) {
             assertNotAnnotated(type.getName(), unsignedAnot, dynamicAnot, smallDecimalAnot, maxSizeAnot);
             return TypeDef.BOOLEAN;
+        } else if (type.equals(char.class) || type.equals(Character.class)) {
+            assertNotAnnotated(type.getName(), dynamicAnot, smallDecimalAnot, maxSizeAnot);
+            return TypeDef.CHAR;
         }
 
         // reference
