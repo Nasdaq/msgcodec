@@ -378,6 +378,8 @@ public class SchemaBinder {
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::shortToLong);
             case UINT16:
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uShortToLong);
+            case CHAR:
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::charToLong);
             case INT8:
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::byteToLong);
             case UINT8:
@@ -392,6 +394,8 @@ public class SchemaBinder {
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::shortToInt);
             case UINT16:
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uShortToInt);
+            case CHAR:
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::charToInt);
             case INT8:
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::byteToInt);
             case UINT8:
@@ -402,10 +406,25 @@ public class SchemaBinder {
         case INT16:
         case UINT16:
             switch (dstType.getType()) {
+            case CHAR:
+                if (srcType.getType() == Type.UINT16) {
+                    return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::charToShort);
+                } else {
+                    return null;
+                }
             case INT8:
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::byteToShort);
             case UINT8:
                 return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uByteToShort);
+            default:
+                return null;
+            }
+        case CHAR:
+            switch (dstType.getType()) {
+            case UINT8:
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uByteToChar);
+            case UINT16:
+                return new ConverterAccessor<>(accessor, SchemaBinder::invalidConversion, SchemaBinder::uShortToChar);
             default:
                 return null;
             }
@@ -449,6 +468,8 @@ public class SchemaBinder {
                 return new ConverterAccessor<>(accessor, SchemaBinder::byteToShort, SchemaBinder::invalidConversion);
             case UINT16:
                 return new ConverterAccessor<>(accessor, SchemaBinder::uByteToShort, SchemaBinder::invalidConversion);
+            case CHAR:
+                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToChar, SchemaBinder::invalidConversion);
             case INT32:
                 return new ConverterAccessor<>(accessor, SchemaBinder::byteToInt, SchemaBinder::invalidConversion);
             case UINT32:
@@ -457,6 +478,20 @@ public class SchemaBinder {
                 return new ConverterAccessor<>(accessor, SchemaBinder::byteToLong, SchemaBinder::invalidConversion);
             case UINT64:
                 return new ConverterAccessor<>(accessor, SchemaBinder::uByteToLong, SchemaBinder::invalidConversion);
+            default:
+                return null;
+            }
+
+        case CHAR:
+            switch (dstType.getType()) {
+            case UINT16:
+                return new ConverterAccessor<>(accessor, SchemaBinder::charToShort, SchemaBinder::invalidConversion);
+            case INT32:
+            case UINT32:
+                return new ConverterAccessor<>(accessor, SchemaBinder::charToInt, SchemaBinder::invalidConversion);
+            case INT64:
+            case UINT64:
+                return new ConverterAccessor<>(accessor, SchemaBinder::charToLong, SchemaBinder::invalidConversion);
             default:
                 return null;
             }
@@ -572,6 +607,14 @@ public class SchemaBinder {
         return (short) (v & 0xff);
     }
 
+    private static Character uByteToChar(Byte v) {
+        return (char) (v & 0xff);
+    }
+
+    private static Character uShortToChar(Short v) {
+        return (char)(v & 0xffff);
+    }
+
     private static Integer uByteToInt(Byte v) {
         return v & 0xff;
     }
@@ -584,7 +627,19 @@ public class SchemaBinder {
         return v & 0xffff;
     }
 
+    private static Integer charToInt(Character v) {
+        return v & 0xffff;
+    }
+
+    private static Short charToShort(Character v) {
+        return (short)v.charValue();
+    }
+
     private static Long uShortToLong(Short v) {
+        return v & 0xffffL;
+    }
+
+    private static Long charToLong(Short v) {
         return v & 0xffffL;
     }
 

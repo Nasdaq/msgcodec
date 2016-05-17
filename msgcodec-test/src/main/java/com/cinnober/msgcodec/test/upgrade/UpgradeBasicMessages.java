@@ -42,18 +42,22 @@ public class UpgradeBasicMessages {
                 new PairedTestProtocols.PairedMessages(new ShortNum3((byte)90),new LongNum2((byte)90)));
         testMessages.put("IntToLong",
                 new PairedTestProtocols.PairedMessages(new IntNum3((byte)90),new LongNum3((byte)90)));
+        testMessages.put("CharPrimitiveToCharObject",
+            new PairedTestProtocols.PairedMessages(new CharNum('a'),new OptCharNum('a')));
+        testMessages.put("CharToInt",
+            new PairedTestProtocols.PairedMessages(new CharNum1('\u1234'),new IntNum4('\u1234')));
         return testMessages;
     }
 
     public static Collection<Class<?>> getOriginalSchemaClasses() {
         return Arrays.asList(DecimalNarrow.class, ByteNum.class, ByteNum2.class, ByteNum3.class, ByteNum4.class,
-                ShortNum2.class, ShortNum3.class, IntNum3.class);
+                ShortNum2.class, ShortNum3.class, IntNum3.class, CharNum.class, CharNum1.class);
 
     }
 
     public static Collection<Class<?>> getUpgradedSchemaClasses() {
         return Arrays.asList(DecimalWide.class, OptByteNum.class, ShortNum.class, IntNum.class, LongNum.class,
-                IntNum2.class, LongNum2.class, LongNum3.class);
+                IntNum2.class, LongNum2.class, LongNum3.class, OptCharNum.class, IntNum4.class);
     }
 
     @Name("Decimal")
@@ -219,6 +223,42 @@ public class UpgradeBasicMessages {
 
         public LongNum3() {}
         public LongNum3(int n) { this.n = n; }
+    }
+
+    @Name("Number8")
+    @Id(1008)
+    public static class CharNum extends MsgObject {
+        public char n;
+
+        public CharNum() {}
+        public CharNum(char n) { this.n = n; }
+    }
+
+    @Name("Number8")
+    @Id(1008)
+    public static class OptCharNum extends MsgObject {
+        public Character n;
+
+        public OptCharNum() {}
+        public OptCharNum(Character n) { this.n = n; }
+    }
+
+    @Name("Number9")
+    @Id(1009)
+    public static class CharNum1 extends MsgObject {
+        public char n;
+
+        public CharNum1() {}
+        public CharNum1(char n) { this.n = n; }
+    }
+
+    @Name("Number9")
+    @Id(1009)
+    public static class IntNum4 extends MsgObject {
+        public int n;
+
+        public IntNum4() {}
+        public IntNum4(int n) { this.n = n; }
     }
 
     public enum EnumNarrow {

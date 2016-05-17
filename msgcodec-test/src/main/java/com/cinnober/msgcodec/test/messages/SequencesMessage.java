@@ -48,6 +48,8 @@ public class SequencesMessage extends MsgObject {
     public short[] arrayShorts;
     public int[] arrayInts;
     public long[] arrayLongs;
+    public boolean[] arrayBooleans;
+    public char[] arrayChars;
 
     @Unsigned
     public int[] arrayUInts;
@@ -61,6 +63,10 @@ public class SequencesMessage extends MsgObject {
     public int[] arrayIntsReq;
     @Required
     public long[] arrayLongsReq;
+    @Required
+    public boolean[] arrayBooleansReq;
+    @Required
+    public char[] arrayCharsReq;
 
     @Required @Time
     public long[] arrayTime;
@@ -70,6 +76,12 @@ public class SequencesMessage extends MsgObject {
 
     @Sequence(Integer.class)
     public List<Integer> listInts;
+
+    @Sequence(Boolean.class)
+    public List<Boolean> listBooleans;
+
+    @Sequence(Character.class)
+    public List<Character> listCharacters;
 
     @Unsigned @Sequence(Integer.class)
     public List<Integer> listUInts;
@@ -107,6 +119,8 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayBooleansReq = new boolean[]{};
+        msg.arrayCharsReq = new char[]{};
         msg.arrayTime = new long[]{};
 
         msg = new SequencesMessage();
@@ -115,6 +129,8 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayBooleansReq = new boolean[]{};
+        msg.arrayCharsReq = new char[]{};
         msg.arrayTime = new long[]{};
         msg.arrayEmployees = new Employee[] { createEmployee("Bob", 123), createEmployee("Alice", 456) };
 
@@ -124,6 +140,8 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayBooleansReq = new boolean[]{};
+        msg.arrayCharsReq = new char[]{};
         msg.arrayTime = new long[]{};
         msg.arrayColors = new Color[]{};
         msg.listColors = Arrays.asList();
@@ -134,6 +152,8 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayBooleansReq = new boolean[]{};
+        msg.arrayCharsReq = new char[]{};
         msg.arrayTime = new long[]{};
         msg.arrayColors = new Color[]{ Color.RED };
         msg.listColors = Arrays.asList(Color.RED);
@@ -144,6 +164,8 @@ public class SequencesMessage extends MsgObject {
         msg.arrayShortsReq = new short[]{};
         msg.arrayIntsReq = new int[]{};
         msg.arrayLongsReq = new long[]{};
+        msg.arrayBooleansReq = new boolean[]{};
+        msg.arrayCharsReq = new char[]{};
         msg.arrayTime = new long[]{};
         msg.arrayColors = new Color[]{ Color.GREEN, Color.BLUE };
         msg.listColors = Arrays.asList(Color.GREEN, Color.BLUE);
