@@ -40,6 +40,9 @@ import com.cinnober.msgcodec.TypeDef.Type;
  */
 public class Group {
 
+    /**
+     * Synchronize on this object when accessing.
+     */
     private static final WeakHashMap<Object, SchemaInfo> schemaInfoBySchemaUID = new WeakHashMap<>();
     private static final GroupTypeAccessorImpl GROUP_TYPE_ACCESSOR = new GroupTypeAccessorImpl();
 
@@ -48,7 +51,10 @@ public class Group {
 
 
     private static GroupInfo getGroupInfo(Schema schema, String groupName) {
-        SchemaInfo dictInfo = schemaInfoBySchemaUID.get(schema.getUID());
+        SchemaInfo dictInfo;
+        synchronized (schemaInfoBySchemaUID) {
+            dictInfo = schemaInfoBySchemaUID.get(schema.getUID());
+        }
         if (dictInfo == null) {
             throw new IllegalArgumentException("Schema not bound to Group");
         }
@@ -151,7 +157,9 @@ public class Group {
                 new Schema(groups, schema.getNamedTypes(), schema.getAnnotations(), binding);
 
         SchemaInfo schemaInfo = new SchemaInfo(groupInfos);
-        schemaInfoBySchemaUID.put(boundSchema.getUID(), schemaInfo);
+        synchronized (schemaInfoBySchemaUID) {
+            schemaInfoBySchemaUID.put(boundSchema.getUID(), schemaInfo);
+        }
         return boundSchema;
     }
 
