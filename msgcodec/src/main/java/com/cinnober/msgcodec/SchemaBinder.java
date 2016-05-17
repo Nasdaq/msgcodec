@@ -469,7 +469,10 @@ public class SchemaBinder {
             case UINT16:
                 return new ConverterAccessor<>(accessor, SchemaBinder::uByteToShort, SchemaBinder::invalidConversion);
             case CHAR:
-                return new ConverterAccessor<>(accessor, SchemaBinder::uByteToChar, SchemaBinder::invalidConversion);
+                if (srcType.getType() == Type.UINT8) {
+                    return new ConverterAccessor<>(accessor, SchemaBinder::uByteToChar, SchemaBinder::invalidConversion);
+                }
+                return null;
             case INT32:
                 return new ConverterAccessor<>(accessor, SchemaBinder::byteToInt, SchemaBinder::invalidConversion);
             case UINT32:
