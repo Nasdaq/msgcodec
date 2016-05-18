@@ -642,7 +642,7 @@ public class SchemaBinder {
         return v & 0xffffL;
     }
 
-    private static Long charToLong(Short v) {
+    private static Long charToLong(Character v) {
         return v & 0xffffL;
     }
 
