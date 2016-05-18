@@ -58,6 +58,9 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
                 if(field.getType().getType() == Type.INT16 || field.getType().getType() == Type.UINT16) {
                     value = (V) Short.valueOf((short) 0);
                 }
+                else if(field.getType().getType() == Type.CHAR) {
+                    value = (V) Character.valueOf((char) 0);
+                }
                 else if(field.getType().getType() == Type.BOOLEAN) {
                     value = (V) Boolean.valueOf(false);
                 }
@@ -86,6 +89,9 @@ public final class CreateAccessor<O, V> implements Accessor<O, V> {
             if(field.getJavaClass() == short.class) {
                 value = (V) Short.valueOf((short) 0);
             }
+            else if(field.getJavaClass() == char.class) {
+                value = (V) Character.valueOf((char) 0);
+            } 
             else if(field.getJavaClass() == int.class) {
                 value = (V) Integer.valueOf(0);
             }

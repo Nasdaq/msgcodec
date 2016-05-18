@@ -69,6 +69,7 @@ public abstract class JsonValueHandler<T> {
 
     public static final JsonValueHandler<Byte> UINT8 = new UInt8Handler();
     public static final JsonValueHandler<Short> UINT16 = new UInt16Handler();
+    public static final JsonValueHandler<Character> CHAR = new CharacterHandler();
     public static final JsonValueHandler<Integer> UINT32 = new UInt32Handler();
     public static final JsonValueHandler<Long> UINT64 = new UInt64Handler(false);
     public static final JsonValueHandler<Long> UINT64_SAFE = new UInt64Handler(true);
@@ -129,6 +130,9 @@ public abstract class JsonValueHandler<T> {
         case UINT8:
             checkType(javaClass, byte.class, Byte.class);
             return (JsonValueHandler<T>) JsonValueHandler.UINT8;
+        case CHAR:
+            checkType(javaClass, char.class, Character.class);
+            return (JsonValueHandler<T>) JsonValueHandler.CHAR;
         case UINT16:
             checkType(javaClass, short.class, Short.class);
             return (JsonValueHandler<T>) JsonValueHandler.UINT16;
@@ -305,6 +309,17 @@ public abstract class JsonValueHandler<T> {
         @Override
         public Short readValue(JsonParser p) throws IOException {
             return (short) p.getIntValue();
+        }
+    }
+    static class CharacterHandler extends JsonValueHandler<Character> {
+        private CharacterHandler() {}
+        @Override
+        public void writeValue(Character value, JsonGenerator g) throws IOException {
+            g.writeNumber(value.charValue() & 0xffff);
+        }
+        @Override
+        public Character readValue(JsonParser p) throws IOException {
+            return (char) p.getIntValue();
         }
     }
     static class UInt32Handler extends JsonValueHandler<Integer> {

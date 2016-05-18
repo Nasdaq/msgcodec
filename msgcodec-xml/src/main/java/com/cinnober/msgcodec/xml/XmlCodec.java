@@ -415,6 +415,8 @@ public class XmlCodec implements MsgCodec {
             return XmlNumberFormat.INT64;
         case UINT8:
             return XmlNumberFormat.UINT8;
+        case CHAR:
+            return XmlNumberFormat.CHAR;
         case UINT16:
             return XmlNumberFormat.UINT16;
         case UINT32:

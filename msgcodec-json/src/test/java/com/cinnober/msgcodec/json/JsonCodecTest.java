@@ -100,6 +100,26 @@ public class JsonCodecTest {
     }
 
     @Test
+    public void testCharacterMessage() throws Exception {
+        Schema schema = new SchemaBuilder().build(CharacterMessage.class);
+        MsgCodec codec = new JsonCodec(schema, false);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        CharacterMessage msg = new CharacterMessage('a', 'B', null);
+        codec.encode(msg, out);
+
+        ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+        Object msg2 = codec.decode(in);
+        assertEquals(msg, msg2);
+
+        final int chara = new Character('a').charValue();
+        final int charB = new Character('B').charValue();
+        final String data = "{\"$type\":\"CharacterMessage\", \"data1\":" + chara + ", \"data2\":" + charB + "}";
+        in = new ByteArrayInputStream(data.getBytes(Charset.forName("UTF8")));
+        msg2 = codec.decode(in);
+        assertEquals(msg, msg2);
+    }
+
+    @Test
     public void testDecodeNestedTypeOutOfOrder1() throws Exception {
         Schema schema = new SchemaBuilder().build(Nested.class, Hello.class);
         MsgCodec codec = new JsonCodec(schema, false);
@@ -216,6 +236,18 @@ public class JsonCodecTest {
         }
         public BinaryMessage(byte[] data) {
             this.data = data;
+        }
+    }
+    public static class CharacterMessage extends MsgObject {
+        public char data1;
+        public Character data2;
+        public Character data3;
+        public CharacterMessage() {
+        }
+        public CharacterMessage(char data1, Character data2, Character data3) {
+            this.data1 = data1;
+            this.data2 = data2;
+            this.data3 = data3;
         }
     }
     public static abstract class AbstractMessage extends MsgObject {

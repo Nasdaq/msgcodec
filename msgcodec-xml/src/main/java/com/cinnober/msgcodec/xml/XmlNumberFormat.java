@@ -39,6 +39,7 @@ abstract class XmlNumberFormat<T> implements XmlFormat<T> {
     public static final Int64NumberFormat INT64 = new Int64NumberFormat();
 
     public static final UInt8NumberFormat UINT8 = new UInt8NumberFormat();
+    public static final CharacterNumberFormat CHAR = new CharacterNumberFormat();
     public static final UInt16NumberFormat UINT16 = new UInt16NumberFormat();
     public static final UInt32NumberFormat UINT32 = new UInt32NumberFormat();
     public static final UInt64NumberFormat UINT64 = new UInt64NumberFormat();
@@ -161,6 +162,16 @@ abstract class XmlNumberFormat<T> implements XmlFormat<T> {
         @Override
         public Short parse(String str) throws FormatException {
             return (short) parseUInt(str);
+        }
+    }
+    public static class CharacterNumberFormat extends XmlNumberFormat<Character> {
+        @Override
+        public String format(Character value) {
+            return formatInt(0xffffL & value);
+        }
+        @Override
+        public Character parse(String str) throws FormatException {
+            return (char) parseUInt(str);
         }
     }
     public static class UInt8NumberFormat extends XmlNumberFormat<Byte> {

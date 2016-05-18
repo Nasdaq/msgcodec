@@ -23,20 +23,23 @@
  */
 package com.cinnober.msgcodec.xml;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.cinnober.msgcodec.Annotations;
 import com.cinnober.msgcodec.DecodeException;
-import com.cinnober.msgcodec.Schema;
-import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.MsgCodec;
 import com.cinnober.msgcodec.MsgObject;
+import com.cinnober.msgcodec.Schema;
+import com.cinnober.msgcodec.SchemaBuilder;
 import com.cinnober.msgcodec.anot.Dynamic;
 import com.cinnober.msgcodec.anot.Required;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.Charset;
 
 /**
  * @author mikael.brannstrom
@@ -166,6 +169,17 @@ public class XmlCodecTest {
         codec.decode(in);
     }
 
+    @Test
+    public void testDecodeCharacter() throws Exception {
+        Schema schema = new SchemaBuilder().build(TestChar.class);
+        XmlCodec codec = new XmlCodec(schema);
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        codec.encode(new TestChar('a', 'B'), out);
+        final byte[] encoded = out.toByteArray();
+        final TestChar decoded = (TestChar) codec.decode(new ByteArrayInputStream(encoded));
+        assertEquals('a', decoded.data1);
+        assertEquals((Character) 'B', decoded.data2);
+    }
 
     public static class Hello {
         @Required
@@ -223,7 +237,15 @@ public class XmlCodecTest {
                     + "]";
         }
     }
-
+    public static class TestChar {
+        public char data1;
+        public Character data2;
+        public TestChar() {}
+        public TestChar(char d1, Character d2) {
+            this.data1 = d1;
+            this.data2 = d2;
+        }
+    }
     public static abstract class AbstractMessage extends MsgObject {
     }
 

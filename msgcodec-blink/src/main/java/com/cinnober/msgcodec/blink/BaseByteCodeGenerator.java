@@ -79,6 +79,8 @@ import static org.objectweb.asm.Opcodes.ATHROW;
 import static org.objectweb.asm.Opcodes.BALOAD;
 import static org.objectweb.asm.Opcodes.BASTORE;
 import static org.objectweb.asm.Opcodes.CHECKCAST;
+import static org.objectweb.asm.Opcodes.CALOAD;
+import static org.objectweb.asm.Opcodes.CASTORE;
 import static org.objectweb.asm.Opcodes.DALOAD;
 import static org.objectweb.asm.Opcodes.DASTORE;
 import static org.objectweb.asm.Opcodes.DUP;
@@ -87,6 +89,8 @@ import static org.objectweb.asm.Opcodes.FASTORE;
 import static org.objectweb.asm.Opcodes.F_SAME;
 import static org.objectweb.asm.Opcodes.GETFIELD;
 import static org.objectweb.asm.Opcodes.GOTO;
+import static org.objectweb.asm.Opcodes.I2C;
+import static org.objectweb.asm.Opcodes.I2S;
 import static org.objectweb.asm.Opcodes.IALOAD;
 import static org.objectweb.asm.Opcodes.IASTORE;
 import static org.objectweb.asm.Opcodes.ICONST_0;
@@ -121,6 +125,7 @@ import static org.objectweb.asm.Opcodes.SASTORE;
 import static org.objectweb.asm.Opcodes.SWAP;
 import static org.objectweb.asm.Opcodes.T_BOOLEAN;
 import static org.objectweb.asm.Opcodes.T_BYTE;
+import static org.objectweb.asm.Opcodes.T_CHAR;
 import static org.objectweb.asm.Opcodes.T_DOUBLE;
 import static org.objectweb.asm.Opcodes.T_FLOAT;
 import static org.objectweb.asm.Opcodes.T_INT;
@@ -1029,6 +1034,9 @@ class BaseByteCodeGenerator {
             case UINT8:
                 generateEncodeUInt8Value(required, mv);
                 break;
+            case CHAR:
+                generateEncodeCharacterValue(required, mv);
+                break;
             case INT16:
                 generateEncodeInt16Value(required, mv);
                 break;
@@ -1322,8 +1330,36 @@ class BaseByteCodeGenerator {
                     "(Lcom/cinnober/msgcodec/io/ByteSink;Ljava/lang/Integer;)V", false);
         }
     }
-
-    /**                                                    en
+    
+    /**
+     * Generate value encoding using the blink output.
+     *
+     * <p>Defaults to <code>writeUInt16Null].</code>
+     *
+     * @param required true if the field is required, otherwise false.
+     * @param mv the method visitor, not null.
+     * @see #generateEncodeValue
+     */
+    protected void generateEncodeCharacterValue(boolean required, MethodVisitor mv) {
+        if (required) {
+            mv.visitInsn(I2S);
+            mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeUInt16",
+                    "(Lcom/cinnober/msgcodec/io/ByteSink;S)V", false);
+        } else {
+            Label nullLabel = new Label();
+            mv.visitInsn(DUP);
+            mv.visitJumpInsn(IFNULL, nullLabel);
+            unbox(mv, Character.class);
+            mv.visitInsn(I2S);
+            box(mv, Short.class);
+            mv.visitLabel(nullLabel);
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Short.class));
+            mv.visitMethodInsn(INVOKESTATIC, blinkOutputIName, "writeUInt16Null",
+                    "(Lcom/cinnober/msgcodec/io/ByteSink;Ljava/lang/Short;)V", false);
+        }
+    }
+    
+    /**
      * Generate value encoding using the blink output.
      *
      * <p>Defaults to <code>writeUInt16Null].</code>
@@ -1528,6 +1564,8 @@ class BaseByteCodeGenerator {
                 mv.visitInsn(FALOAD);
             } else if (componentJavaClass == double.class) {
                 mv.visitInsn(DALOAD);
+            } else if (componentJavaClass == char.class) {
+                mv.visitInsn(CALOAD);
             } else {
                 mv.visitInsn(AALOAD);
                 mv.visitTypeInsn(CHECKCAST, Type.getInternalName(componentJavaClass));
@@ -1777,6 +1815,9 @@ class BaseByteCodeGenerator {
                 break;
             case UINT8:
                 generateDecodeUInt8Value(required, mv);
+                break;
+            case CHAR:
+                generateDecodeCharacterValue(required, mv);
                 break;
             case INT16:
                 generateDecodeInt16Value(required, mv);
@@ -2100,6 +2141,34 @@ class BaseByteCodeGenerator {
         } else {
             mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readInt32Null",
                     "(Lcom/cinnober/msgcodec/io/ByteSource;)Ljava/lang/Integer;", false);
+        }
+    }
+
+    /**
+     * Generate value decoding using the blink input.
+     *
+     * <p>Defaults to <code>readUInt16[Null].</code>
+     *
+     * @param required true if the field is required, otherwise false.
+     * @param mv the method visitor, not null.
+     * @see #generateDecodeValue
+     */
+    protected void generateDecodeCharacterValue(boolean required, MethodVisitor mv) {
+        if (required) {
+            mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readUInt16",
+                    "(Lcom/cinnober/msgcodec/io/ByteSource;)S", false);
+            mv.visitInsn(I2C);
+        } else {
+            mv.visitMethodInsn(INVOKESTATIC, blinkInputIName, "readUInt16Null",
+                    "(Lcom/cinnober/msgcodec/io/ByteSource;)Ljava/lang/Short;", false);
+            Label nullLabel = new Label();
+            mv.visitInsn(DUP);
+            mv.visitJumpInsn(IFNULL, nullLabel);
+            unbox(mv, Short.class);
+            mv.visitInsn(I2C);
+            box(mv, Character.class);
+            mv.visitLabel(nullLabel);
+            mv.visitTypeInsn(CHECKCAST, Type.getInternalName(Character.class));
         }
     }
 
@@ -2523,6 +2592,8 @@ class BaseByteCodeGenerator {
             mv.visitInsn(FASTORE);
         } else if (componentJavaClass == double.class) {
             mv.visitInsn(DASTORE);
+        } else if (componentJavaClass == char.class) {
+            mv.visitInsn(CASTORE);
         } else {
             mv.visitInsn(AASTORE);
         }
@@ -2549,6 +2620,8 @@ class BaseByteCodeGenerator {
             mv.visitIntInsn(NEWARRAY, T_FLOAT);
         } else if (componentJavaClass == double.class) {
             mv.visitIntInsn(NEWARRAY, T_DOUBLE);
+        } else if (componentJavaClass == char.class) {
+            mv.visitIntInsn(NEWARRAY, T_CHAR);
         } else {
             mv.visitTypeInsn(ANEWARRAY, Type.getInternalName(componentJavaClass));
         }
@@ -2569,6 +2642,8 @@ class BaseByteCodeGenerator {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Double", "doubleValue", "()D", false);
         } else if (javaClass == Boolean.class || javaClass == boolean.class) {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Boolean", "booleanValue", "()Z", false);
+        } else if (javaClass == Character.class || javaClass == char.class) {
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Character", "charValue", "()C", false);
         }
     }
     public static void box(MethodVisitor mv, Class<?> javaClass) {
@@ -2586,6 +2661,8 @@ class BaseByteCodeGenerator {
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
         } else if (javaClass == Boolean.class || javaClass == boolean.class) {
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+        } else if (javaClass == Character.class || javaClass == char.class) {
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
         }
     }
 
@@ -2604,6 +2681,8 @@ class BaseByteCodeGenerator {
             return double.class;
         } else if (javaClass == Boolean.class) {
             return boolean.class;
+        } else if (javaClass == Character.class) {
+            return char.class;
         }
         return javaClass;
     }
@@ -2622,6 +2701,8 @@ class BaseByteCodeGenerator {
             return Double.class;
         } else if (javaClass == boolean.class) {
             return Boolean.class;
+        } else if (javaClass == char.class) {
+            return Character.class;
         }
         return javaClass;
     }
