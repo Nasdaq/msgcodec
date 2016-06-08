@@ -53,6 +53,8 @@ The code is divided into the following projects:
 
 - `msgcodec`: contains annotations etc required for defining messages and protocols
 - `msgcodec-json`: JSON codec
+- `msgcodec-json-jaxrs`: JSON codec JAX-RS support
+- `msgcodec-json-swagger`: JSON codec Swagger support
 - `msgcodec-xml`: XML codec
 - `msgcodec-blink`: Blink (compact format) codec
 - `msgcodec-javadoc`: Javadoc doclet for extracting javadoc comments from messages.
