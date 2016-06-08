@@ -1,5 +1,17 @@
 # MsgCodec Changelog
 
+## 3.3.0 (?)
+
+### msgcodec-json-jaxrs
+New module for simplified usage of JSON Codec in a REST API.
+
+### msgcodec-json-swagger
+New module to generate Swagger documentation in a REST API.
+
+## 3.2.0
+
+TODO: Missing
+
 ## 3.1.0
 
 ### msgcodec
