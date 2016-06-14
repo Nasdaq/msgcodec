@@ -36,14 +36,14 @@ import com.cinnober.msgcodec.anot.Name;
 import com.cinnober.msgcodec.anot.Required;
 import com.cinnober.msgcodec.anot.Time;
 import com.cinnober.msgcodec.anot.Unsigned;
+import com.cinnober.msgcodec.blink.BlinkCodecFactory;
 import com.cinnober.msgcodec.io.ByteArrayBuf;
 import com.cinnober.msgcodec.io.ByteBuf;
-import com.cinnober.msgcodec.json.JsonCodec;
-import com.cinnober.msgcodec.json.JsonCodecFactory;
 import com.cinnober.msgcodec.messages.MetaProtocol;
 import com.cinnober.msgcodec.messages.MetaSchema;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * Example demonstrating the SchemaBinder in the context of
@@ -83,24 +83,26 @@ public class ProtocolUpgradeExample {
     }
 
     /** Codec used for both client and server for encoding/decoding the meta (handshake) protocol. */
-    private final JsonCodec metaCodec;
+    private final MsgCodec metaCodec;
     /** Buffer used for communication between client and server. */
     private final ByteBuf buf;
 
     /** The schema the server was built with. */
     private final Schema serverSchema;
     /** Server side codec. */
-    private final JsonCodec serverCodec;
+    private final MsgCodec serverCodec;
     
     /** The schema the client was built with. */
     private final Schema clientSchema;
     /** The client side schema after handshake. */
     private Schema upgradedClientSchema;
     /** Client side codec, after handshake, using the upgradedClientSchema. */
-    private JsonCodec clientCodec;
+    private MsgCodec clientCodec;
+    /** Create a message codec for the specified schema. */
+    private Function<Schema, MsgCodec> codecFactory = s -> new BlinkCodecFactory(s).createCodec();
 
     public ProtocolUpgradeExample() {
-        metaCodec = new JsonCodecFactory(MetaProtocol.getSchema()).createCodec();
+        metaCodec = codecFactory.apply(MetaProtocol.getSchema());
         buf = new ByteArrayBuf(new byte[1000_000]);
 
         serverSchema = new SchemaBuilder().addMessages(
@@ -110,15 +112,15 @@ public class ProtocolUpgradeExample {
                 CreateUserReq2.class,
                 CreateUserRsp2.class,
                 GetUserReq2.class,
-                GetUserRsp2.class).build();
-        serverCodec = new JsonCodecFactory(serverSchema).createCodec();
+                GetUserRsp2.class).build().assignGroupIds();
+        serverCodec = codecFactory.apply(serverSchema);
 
         clientSchema = new SchemaBuilder().addMessages(
                 Request1.class,
                 Response1.class,
                 User1.class,
                 CreateUserReq1.class,
-                CreateUserRsp1.class).build();
+                CreateUserRsp1.class).build().assignGroupIds();
     }
 
     public void handshake() throws IOException, IncompatibleSchemaException {
@@ -131,7 +133,7 @@ public class ProtocolUpgradeExample {
         upgradedClientSchema = new SchemaBinder(clientSchema).bind(
                 schemaMessage.toSchema(),
                 ProtocolUpgradeExample::getClientDir);
-        clientCodec = new JsonCodecFactory(upgradedClientSchema).createCodec();
+        clientCodec = codecFactory.apply(upgradedClientSchema);
     }
 
     private static Direction getClientDir(Annotatable<?> a) {
