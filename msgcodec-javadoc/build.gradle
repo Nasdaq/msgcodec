@@ -10,3 +10,10 @@ dependencies {
 
   testCompile group: 'junit', name: 'junit', version:junit_version
 }
+
+eclipse {
+    classpath.file {
+        whenMerged {classpath -> classpath.entries.findAll {entry -> entry.path.toString().endsWith(".jnilib")}.each {classpath.entries.removeAll (it)}
+        }
+    }
+}
