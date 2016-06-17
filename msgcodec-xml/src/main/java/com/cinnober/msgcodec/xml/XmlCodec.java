@@ -73,7 +73,7 @@ import java.util.Map;
 
 /**
  * The XML codec can serialize and deserialize Java objects to/from XML.
- * 
+ *
  * <p>XML codec support a number of annotations to the schema that control the encoding.
  * <table>
  * <caption>XML specific annotations</caption>
@@ -89,7 +89,7 @@ import java.util.Map;
  * <td><code>xml:field</code></td>
  * <td>FieldDef</td>
  * <td>Values:
- * <br><code>attribute</code> = the field is encoded as an attribute in the group element. 
+ * <br><code>attribute</code> = the field is encoded as an attribute in the group element.
  * Default for simple field types. Not applicable to group types.
  * <br><code>element</code> = the field is encoded as an child element in the group element.
  * Default for complex field types (group, sequence).
@@ -98,7 +98,7 @@ import java.util.Map;
  * </td>
  * </tr>
  * </table>
- * 
+ *
  * <p>The following mapping between msgcodec types and XML constructs applies:
  * <table>
  * <caption>Mapping between msgcodec and XML types.</caption>
@@ -119,13 +119,13 @@ import java.util.Map;
  * <tr><td>enum</td><td>xs:string (name)</td></tr>
  * <tr><td>time</td><td>xs:string, see {@link TimeFormat}. PENDING: use xs:time and xs:date?</td></tr>
  * <tr><td>binary</td><td>xs:base64Binary</td></tr>
- * <tr><td>sequence</td><td>XML list (tokens separated by whitespace). 
+ * <tr><td>sequence</td><td>XML list (tokens separated by whitespace).
  * String and binary values are wrapped by <code>&lt;i&gt;</code> elements.
  * Groups are already represented as elements.</td></tr>
- * <tr><td>group</td><td>element with group name as element name. 
+ * <tr><td>group</td><td>element with group name as element name.
  * Fields are represented as nested attributes or elements.</td></tr>
  * </table>
- * 
+ *
  * @author mikael.brannstrom
  *
  */
@@ -158,7 +158,6 @@ public class XmlCodec implements MsgCodec {
         }
 
         this.schema = schema;
-        System.err.println("XmlCodec created with Schema where ="+this.schema.toString());
         groupTypeAccessor = schema.getBinding().getGroupTypeAccessor();
         int mapSize = schema.getGroups().size() * 2;
         staticGroupsByNsName = new HashMap<>(mapSize);
@@ -386,7 +385,7 @@ public class XmlCodec implements MsgCodec {
                 return new DummyJavaEnumFormat<>();
             }
             return new SymbolMappingEnumFormat<>(symbolMapping);
-            
+
         case TIME:
             if (javaClass.equals(Date.class)) {
                 return new XmlTimeFormat.DateTimeFormat((TypeDef.Time) type);
