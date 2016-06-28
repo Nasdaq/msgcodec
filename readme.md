@@ -1,3 +1,14 @@
+# MsgCodec Github project currently on hold !
+
+The MsgCodec project is currently on hold here on github, due to a lack of resources for managing the open source project at Cinnober. 
+Bug reports and feature requests will not be processed anytime soon, nor will there be any new releases.
+
+<br>
+<br>
+<br>
+<br>
+
+
 # msgcodec #
 [![Build Status](https://travis-ci.org/cinnober/msgcodec.svg?branch=master)](https://travis-ci.org/cinnober/msgcodec)
 
