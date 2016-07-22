@@ -27,6 +27,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 import com.cinnober.msgcodec.Accessor;
@@ -169,7 +172,7 @@ class XmlElementHandler {
         private Map<NsName, FieldHandler> elementFields;
         private SimpleField inlineField;
         private int numRequiredFields;
-        
+
         /**
          * @param nsName the name, not null.
          * @param groupDef the group, not null.
@@ -213,7 +216,7 @@ class XmlElementHandler {
                 XmlContext ctx,
                 NsName name,
                 Map<NsName, String> attributes) throws SAXException {
-            
+
             BitSet bits = ctx.pushRequiredFields(numRequiredFields);
             ctx.pushValue(factory.newInstance());
             for (Map.Entry<NsName, String> attribute : attributes.entrySet()) {
@@ -251,8 +254,40 @@ class XmlElementHandler {
                 }
             }
             if (!bits.isEmpty()) {
-                throw new SAXException("Some required fields are missing: " + bits);
+                StringBuilder errorMessage =
+                    new StringBuilder("The following required fields are missing in " + groupDef.getName() + ": ");
+
+                // Iterate over all missing fields
+                for (int missingField = bits.nextSetBit(0);
+                     missingField >= 0; missingField = bits.nextSetBit(missingField + 1)) {
+
+                    boolean found = false;
+                    // Find the field with this missingFieldSlot
+                    String fieldName = getMissingFieldName(getAttributeFields().values(), missingField);
+                    if (fieldName == null) {
+                        fieldName = getMissingFieldName(getElementFields().values(), missingField);
+                    }
+                    if (fieldName == null && inlineField.getRequiredFieldSlot() == missingField) {
+                        fieldName = inlineField.getNsName().getName();
+                    }
+                    errorMessage.append(fieldName).append(", ");
+                    if (missingField == Integer.MAX_VALUE) {
+                        break; // or (missingField+1) would overflow
+                    }
+                }
+                // Remove trailing ,
+                errorMessage.delete(errorMessage.length() - 2, errorMessage.length());
+                throw new SAXException(errorMessage.toString());
             }
+        }
+
+        private String getMissingFieldName(Collection<? extends FieldHandler> fields, int missingField) {
+            for (FieldHandler field : fields) {
+                if (field.getRequiredFieldSlot() == missingField) {
+                    return field.getNsName().getName();
+                }
+            }
+            return null;
         }
 
         @Override
@@ -580,7 +615,7 @@ class XmlElementHandler {
                 NsName nsName,
                 FieldDef field,
                 int requiredFieldSlot,
-                ValueHandler valueHandler, 
+                ValueHandler valueHandler,
                 Class<?> componentType) {
             super(nsName, field, requiredFieldSlot, valueHandler);
             this.componentType = componentType;
@@ -707,7 +742,7 @@ class XmlElementHandler {
                 NsName nsName,
                 FieldDef field,
                 int requiredFieldSlot,
-                XmlFormat<?> valueHandler, 
+                XmlFormat<?> valueHandler,
                 Class<?> componentType) {
             super(nsName, field, requiredFieldSlot);
             this.valueFormat = valueHandler;
