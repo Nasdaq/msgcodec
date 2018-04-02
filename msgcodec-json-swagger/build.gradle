@@ -1,0 +1,11 @@
+description = 'JSON Swagger documentation support'
+
+dependencies {
+  compile project(':msgcodec')
+  compile project(':msgcodec-json')
+  compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: jaxrs_version
+//  compile group: 'javax.annotation', name: 'javax.annotation-api', version: javax_annotation_version
+  compile group: 'io.swagger', name: 'swagger-jersey2-jaxrs', version: swagger_version
+  
+  testCompile group: 'junit', name: 'junit', version:junit_version
+}
