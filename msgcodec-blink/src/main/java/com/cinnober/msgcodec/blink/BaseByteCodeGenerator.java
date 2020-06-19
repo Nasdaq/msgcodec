@@ -2451,7 +2451,7 @@ class BaseByteCodeGenerator {
             String genClassInternalName,
             Class<?> javaClass, TypeDef type, boolean javaClassCodec) throws IllegalArgumentException {
         if (refGroup != null) {
-            String groupDescriptor = getTypeDescriptor(javaClass,javaClassCodec);
+            String groupDescriptor = getTypeDescriptor(refGroup.getGroupType(), javaClassCodec);
             if (required) {
                 mv.visitInsn(POP); // input stream
                 mv.visitVarInsn(ALOAD, 0);
